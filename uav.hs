@@ -1,12 +1,12 @@
 data Variable = B | 
-                Q
+                Q deriving (Show)
 
 data Constraint = True |
                   False |
-                  LessThan Variable Double | 
-                  GreaterThan Variable Double |
+                  LessThanEqual Variable Double | 
+                  GreaterThanEqual Variable Double |
                   And Constraint Constraint |
-                  Or Constraint Constraint
+                  Or Constraint Constraint deriving (Show)
 
 updateConstraint :: (Double, Double) -> Constraint -> Constraint
-updateConstraint (b,q) constraint = And (And (GreaterThan B b) (LessThan Q q)) constraint
+updateConstraint (b,q) constraint = Or (And (GreaterThanEqual B b) (LessThanEqual Q q)) constraint
