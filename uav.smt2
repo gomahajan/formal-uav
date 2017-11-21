@@ -21,7 +21,11 @@
 (declare-fun t2 () Real)
 (declare-fun t3 () Real)
 
-;Constants
+;space constraint
+(define-fun constraint((b Real) (q Real)) Bool
+	(and (= b 100) (= q 0))) 
+
+;constants
 (declare-fun battery_charging_rate () Real)
 (declare-fun battery_discharge_rate () Real)
 (declare-fun queue_data_rate () Real)
@@ -34,9 +38,12 @@
 (assert(= queue_upload_rate 1))
 (assert(= drone_velocity 10))
 
-;[bi,qi,C]
-(assert(= bi 100)) ;Sample remove
-(assert(= qi 0))   ;Sample remove
+(assert(>= t0 0))
+(assert(>= t1 0))
+(assert(>= t2 0))
+(assert(>= t3 0))
+
+(assert (constraint bi qi))
 
 ;charging
 (assert(= x0 0))
@@ -66,7 +73,8 @@
 (assert(= q3 (+ q2 (* queue_data_rate t3))))
 (assert(= b3 (- b2 (* battery_discharge_rate t3)))) 
 
-;Check:
-(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100))) ;[b3,q3,not(C)]
+;goal
+(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (constraint b3 q3))))
 (check-sat)
+(get-value (b3 q3))
 (exit)
