@@ -1,0 +1,323 @@
+#!/usr/bin/env bash
+#This version is slightly modified by Fedor Shmarov (FS) (email: f.shmarov@ncl.ac.uk)
+
+SCRIPT_PATHNAME=`python -c "import os,sys; print(os.path.realpath(\"$0\"))"`
+SCRIPT_PATH="$( cd "$( dirname "${SCRIPT_PATHNAME}" )" && pwd )"
+
+# TODO: Specify the paths for BMC tool and DREAL
+for BMC_NAME in bmc bmc_main.native; do
+    BMC=${SCRIPT_PATH}/${BMC_NAME}
+    if [ -e ${BMC} ] ; then
+        break
+    fi
+done
+SOLVER=${SCRIPT_PATH}/dReal
+
+#################################################################
+# USAGE
+#################################################################
+usage()
+{
+    cat << EOF
+usage: $0 options <*.drh> <options to dReal>
+
+dReach: Bounded Model Checking for for Nonlinear Hybrid Systems
+
+OPTIONS:
+
+   -k <N> / -u <N>  specify the upperbound of unrolling steps (default: 3)
+
+   -l <N>           specify the lowerbound of unrolling steps (default: 0)
+
+   -p <PATH>        only consider the specified path
+
+   -b               use BMC heuristic with disjunctive path encoding (default: do not use)
+
+   -r               -b and filter unreachable modes from SMT encoding (default: do not use)
+
+   -e               -r and filter continuous variables from SMT encoding (default: do not use)
+
+   -d               disjunctive path encoding (default: do not use)
+
+   -z               apply exit codes (default: do not use):
+                                51 if SAT,
+                                52 if UNSAT,
+                                1 abnormal termination
+
+   -n               parse new .drh file format (default: do not use)
+
+   -s               parse new .drh file format and use synchronous encoding (default: do not use)
+
+EXAMPLE:
+
+   dReach -k 10      bouncing_ball.drh --verbose --precision 0.001 --visualize
+   dReach -l 3 -u 10 bouncing_ball.drh --verbose --precision 0.001 --visualize
+
+EOF
+}
+
+#################################################################
+# Parse Option
+#################################################################
+K=NONE
+L=0
+U=NONE
+P=NONE
+DEFAULT_U=3
+Z_OPT=FALSE #(edited: FS)
+NEW=""
+FILTER=""
+
+while getopts "zohdk:l:u:p:irnc" OPTION
+do
+    case $OPTION in
+        h)
+            usage
+            exit 0          #(edited: FS)
+            ;;
+        k)
+            K=$OPTARG
+            ;;
+        l)
+            L=$OPTARG
+            ;;
+        u)
+            U=$OPTARG
+            ;;
+        d)
+            BMCH=2
+            ;;
+        r)
+            BMCH=3
+            ;;
+        z)                  #(edited: FS)
+            Z_OPT=TRUE      #
+            ;;              #
+        n)
+            NEW=" --new_format"
+            ;;
+        c)
+            NEW=" --new_format_composed"
+            ;;
+        p)
+            P=$OPTARG
+            ;;
+        \?)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+#################################################################
+# Set L and U using -k, -l, and -u
+#################################################################
+
+if [[ ! $K == "NONE" ]] && [[ ! $U == "NONE" ]] && [[ ! $K == $U ]]
+then
+    echo "-k $K and -u $U options are specified at the same time."
+    exit 1
+fi
+
+if [[ $K == "NONE" ]] && [[ $U == "NONE" ]] ; then
+    U=$DEFAULT_U
+fi
+
+if [[ ! $K == "NONE" ]] ; then
+    U=$K
+fi
+
+if [ $L -gt $U ] ; then
+    echo "The lowerbound (-l $L) should not be greater than the upperbound (-u $U)."
+    exit 1
+fi
+
+#################################################################
+# Check main.native
+#################################################################
+if [ ! -e "$BMC" ]
+then
+    cat << EOF
+
+Error: Can't find BMC at ${BMC}. Please compile it by typing "make" at
+"dReal/tools" directory.
+EOF
+    exit 1
+fi
+
+if [ ! -e "$SOLVER" ]
+then
+    cat << EOF
+Error: Can't find dReal. Please try "build.sh" first to compile it.
+EOF
+    exit 1
+fi
+
+shift $(($OPTIND - 1))
+if [[ ! -e $1 || ! ${1: -4} == ".drh" ]]
+then
+    usage
+    exit 1
+fi
+
+BASE=${1%.drh}
+DRH=$BASE.drh
+PDRH=$BASE.preprocessed.drh
+PATH_FILE=$BASE.paths
+
+# Extract dReal Options
+shift 1
+SOLVER_OPT=$*
+echo dReal Options: $SOLVER_OPT
+
+# Preprocessing
+sed "s/\/\/.*//g" $DRH | cpp -P -w > $PDRH
+
+# Append option to parse new file format and filter mode encodings
+BMC=$BMC$NEW
+
+if [[ ! $P == "NONE" ]] ; then
+    SMT=${BASE}.smt2
+    OUT=${BASE}.output
+    $BMC --path $P $PDRH > ${SMT}
+    echo SMT: ${SMT}, PATH : "$P"
+    if [ $Z_OPT == TRUE ];                                          # (edited: FS)
+    then                                                            #
+        ${SOLVER} ${SOLVER_OPT} --short_sat ${SMT} 2>$ERR 1>$OUT    #
+        if [ $? == 0 ];                                             #
+        then                                                        #
+            rm $ERR                                                 #
+            rm $SMT                                                 #
+        else                                                        #
+            echo "dReal terminated abnormally. ERROR LOG is written to" $ERR #
+            rm $SMT                                                 #
+            rm $OUT                                                 #
+            exit 1                                                  #
+        fi                                                          #
+    else
+        ${SOLVER} ${SOLVER_OPT} --short_sat ${SMT} 2>&1 | tee $OUT
+    fi
+    RESULT=`tail -n 1 $OUT`
+    if [[ $RESULT == delta-sat* ]]
+    then
+        echo "$P -- SAT"
+        if [ $Z_OPT == TRUE ];      # (edited: FS)
+        then                        #
+            rm $OUT                 #
+            exit 51                 #
+        else                        #
+            exit 0
+        fi
+    fi
+    if [ $Z_OPT == TRUE ];      # (edited: FS)
+    then                        #
+        rm $OUT                 #
+    fi                          #
+
+    exit 1
+fi
+
+UNROLLS=`seq $L $U`
+for K in $UNROLLS
+do
+    if [ $BMCH ]
+    then
+        #  invoke dReal w/o paths
+        SMT=${BASE}_${K}.smt2
+        OUT=${BASE}_${K}.output
+        HEURISTIC=${BASE}_${K}.bh
+
+        if [ $BMCH -lt 3 ]
+        then
+            #Generate Disjunctive Encoding w/o pruning
+            $BMC -k $K $PDRH > ${SMT}
+            MY_SOLVER_OPT="${SOLVER_OPT}"
+        fi
+
+
+        #Construct Heuristic Function and use it to prune encoding
+        if [ $BMCH -eq 3 ]
+        then
+            #Construct pruned encoding and heuristic
+            $BMC -k $K --bmc_heuristic_prune $HEURISTIC $PDRH  > ${SMT}
+            MY_SOLVER_OPT="${SOLVER_OPT} --bmc_heuristic ${HEURISTIC} --heuristic_forward"
+            #exit
+        fi
+
+        #echo SMT: ${SMT}
+
+        #Solve
+        echo "${SOLVER} ${MY_SOLVER_OPT} ${SMT} --short_sat --delta_heuristic --delta --sat-prep-bool 2>&1 | tee $OUT"
+        ${SOLVER} ${MY_SOLVER_OPT} ${SMT} --short_sat --delta_heuristic --delta --sat-prep-bool 2>&1 | tee $OUT
+        #        ${SOLVER} ${MY_SOLVER_OPT} ${SMT} --short_sat --delta_heuristic --delta  2>&1 | tee $OUT
+        RESULT=`tail -n 1 $OUT`
+        if [[ $RESULT == delta-sat* ]]
+        then
+            echo "For k = $K, $P -- SAT"
+            if [ $Z_OPT == TRUE ];      # (edited: FS)
+            then                        #
+                rm $OUT                 #
+                exit 51                 #
+            else                        #
+                exit 0
+            fi
+        fi
+    else
+        # Enumerate all paths and call dReal with options
+        PATH_NUM=0
+        $BMC -k $K --pathgen $DRH > ${PATH_FILE}
+        if [[ -s ${PATH_FILE} ]] ; then
+            while read P
+            do
+                if [ -z "${P}" ]; then
+                    continue;
+                fi
+                SMT=${BASE}_${K}_${PATH_NUM}.smt2
+                OUT=${BASE}_${K}_${PATH_NUM}.output
+                ERR=${BASE}.err
+                $BMC -k $K --path "$P" $DRH > ${SMT}
+                echo SMT: ${SMT}, PATH : "$P"
+                if [ $Z_OPT == TRUE ];                                          # (edited: FS)
+                then                                                            #
+                    ${SOLVER} ${SOLVER_OPT} ${SMT} 2>$ERR 1>$OUT    #
+                    if [ $? == 0 ];                                             #
+                    then                                                        #
+                        rm $ERR                                                 #
+                        rm $SMT                                                 #
+                    else                                                        #
+                        echo "dReal terminated abnormally. ERROR LOG is written to" $ERR #
+                        rm $SMT                                                 #
+                        rm $OUT                                                 #
+                        exit 1                                                  #
+                    fi                                                          #
+                else
+                    ${SOLVER} ${SOLVER_OPT} ${SMT} 2>&1 | tee $OUT
+                fi
+                RESULT=`tail -n 1 $OUT`
+                if [[ $RESULT == delta-sat* ]]
+                then
+                    echo "For k = $K, $P -- SAT"
+                    if [ $Z_OPT == TRUE ];      # (edited: FS)
+                    then                        #
+                        rm $OUT                 #
+                        exit 51                 #
+                    else                        #
+                        exit 0
+                    fi
+                fi
+                if [ $Z_OPT == TRUE ];      # (edited: FS)
+                then                        #
+                    rm $OUT                 #
+                fi                          #
+                PATH_NUM=$((${PATH_NUM} + 1))
+            done < ${PATH_FILE}
+            echo "For k = $K, dReach tried ${PATH_NUM} feasible paths, all of them are unsat."
+        else
+            echo "For k = $K, there is no feasible path to check."
+        fi
+    fi
+done
+if [ $Z_OPT == TRUE ];  # (edited: FS)
+then                    #
+    exit 52             #
+fi                      #

@@ -1,0 +1,9 @@
+Name: dReal
+Description: nonlinear SMT Solver
+Version: 3.16.09.01
+
+prefix=/usr/local
+includedir=${prefix}/include/dreal
+libdir=${prefix}/lib/dreal
+Libs: -L${libdir} -ldreal -libex -lClpSolver -lClp -lCoinUtils -lcapd -ladept -lnlopt -lglpk -lprim -lpicosat -lpthread -lm
+Cflags: -I${includedir}
