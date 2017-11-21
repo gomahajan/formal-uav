@@ -1,11 +1,11 @@
-module Dreach where
+module SMTSolver where
 import System.IO
 import System.Exit
 import System.Process
 
 run :: IO String
 run = do
-    let p = (shell "./dReal/bin/dReach -k 0 uav.drh --visualize --precision=0.1")
+    let p = (shell "./z3/bin/z3 -smt2 uav.smt2")
             { std_in  = Inherit
             , std_out = CreatePipe
             , std_err = Inherit
