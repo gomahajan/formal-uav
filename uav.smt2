@@ -1,4 +1,3 @@
-(set-logic QF_NRA)
 (declare-fun x0 () Real)
 (declare-fun x1 () Real)
 (declare-fun x2 () Real)
@@ -23,7 +22,7 @@
 
 ;space constraint
 (define-fun constraint((b Real) (q Real)) Bool
-	(and (= b 100) (= q 0))) 
+	(or (and (>= b 20) (<= q 10))))
 
 ;constants
 (declare-fun battery_charging_rate () Real)
@@ -62,13 +61,13 @@
 (assert (>= x3 0))
 
 (assert (constraint bi qi))
-
 ;charging
 (assert(= x0 0))
 (assert(= b0 (+ bi (* battery_charging_rate t0))))
 (assert(= q0 (+ qi (* queue_data_rate t0))))
-;program: q=40
-(assert (or (=> (< qi 40) (= q0 40)) (<= b0 100)))
+;program: stay until b>4
+(assert (=> (>= bi 4) (= b0 bi)))
+(assert (=> (< bi 4) (= b0 4)))
 
 ;flying to D
 (assert(= x1 10))
@@ -80,8 +79,9 @@
 (assert(= x2 10))
 (assert(= q2 (- q1 (* queue_upload_rate t2))))
 (assert(= b2 (- b1 (* battery_discharge_rate t2))))
-;program: b=20
-(assert (or (=> (> b1 20) (= b2 20)) (= q2 0)))
+;program: stay until b<4
+(assert (=> (>= b1 4) (= b2 4)))
+(assert (=> (< b1 4) (= b2 b1)))
 
 ;flying back
 (assert(= x3 0))
@@ -92,5 +92,12 @@
 ;goal
 (assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (constraint b3 q3))))
 (check-sat)
-(get-value (b3 q3))
+(get-value (b0))
+(get-value (b1))
+(get-value (b2))
+(get-value (b3))
+(get-value (q0))
+(get-value (q1))
+(get-value (q2))
+(get-value (q3))
 (exit)
