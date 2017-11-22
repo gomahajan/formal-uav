@@ -42,6 +42,24 @@
 (assert(>= t1 0))
 (assert(>= t2 0))
 (assert(>= t3 0))
+(assert (<= bi 100))
+(assert (<= b0 100))
+(assert (<= b1 100))
+(assert (<= b2 100))
+(assert (<= b3 100))
+(assert (>= qi 0))
+(assert (>= q0 0))
+(assert (>= q1 0))
+(assert (>= q2 0))
+(assert (>= q3 0))
+(assert (<= x0 10))
+(assert (<= x1 10))
+(assert (<= x2 10))
+(assert (<= x3 10))
+(assert (>= x0 0))
+(assert (>= x1 0))
+(assert (>= x2 0))
+(assert (>= x3 0))
 
 (assert (constraint bi qi))
 
@@ -49,9 +67,8 @@
 (assert(= x0 0))
 (assert(= b0 (+ bi (* battery_charging_rate t0))))
 (assert(= q0 (+ qi (* queue_data_rate t0))))
-;program: 90<= b0 <=100
-(assert(<= 90 b0))
-(assert(>= 100 b0)) 
+;program: q=40
+(assert (or (=> (< qi 40) (= q0 40)) (<= b0 100)))
 
 ;flying to D
 (assert(= x1 10))
@@ -63,9 +80,8 @@
 (assert(= x2 10))
 (assert(= q2 (- q1 (* queue_upload_rate t2))))
 (assert(= b2 (- b1 (* battery_discharge_rate t2))))
-;program: 0<= q2 <=20
-(assert(<= 0 q2))
-(assert(>= 20 q2))
+;program: b=20
+(assert (or (=> (> b1 20) (= b2 20)) (= q2 0)))
 
 ;flying back
 (assert(= x3 0))
