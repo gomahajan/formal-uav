@@ -47,5 +47,12 @@ getCS s1 s2 (Response r vs) = case (lookup s1 vs) of
     Nothing -> Nothing
     Just y -> (x,y)
 
+-- Create SMT with new constraints. Also overwrites if it already exists --
+changeConstraint constraintI constraintG = do
+        s     <- readFile "uav_dreal.smt2"
+	let s_i = replace "constraintI" constraintI s
+	let s_i_g  = replace "constraintG" constraintG s_i
+        writeFile "uav_dreal_1.smt2" s_i_g
+
 main :: IO ()
 main = do
