@@ -23,3 +23,29 @@ solve n constraint
         | n > 0     = solve (n-1) constraint'
         | otherwise = constraint
         where constraint' = updateConstraint (checkConstraint constraint) constraint
+
+-- Read solver response
+read :: String -> IO (Either Exception Response)
+read src = do
+  resp <- readFile src
+  putStr $ show resp
+  return $ parseSat resp
+
+test :: IO (Either Exception Response) -> IO ()
+test inp = do
+  r <- inp
+  case r of
+    (Left e) -> putStr $ show e
+    (Right resp) -> putStr $ show resp
+
+-- Extract Counterexample from solver response
+getCX :: String -> String -> Response -> Maybe (Double, Double)
+getCX _ _ (Response _ []) = Nothing
+getCS s1 s2 (Response r vs) = case (lookup s1 vs) of
+  Nothing -> Nothing
+  Just x -> case (lookup s2 vs) of
+    Nothing -> Nothing
+    Just y -> (x,y)
+
+main :: IO ()
+main = do

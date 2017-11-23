@@ -1,3 +1,5 @@
+(set-option :produce-proofs true)
+
 (declare-fun x0 () Real)
 (declare-fun x1 () Real)
 (declare-fun x2 () Real)
@@ -87,7 +89,7 @@
 (assert(= x3 0))
 (assert(= x3 (- x2 (* drone_velocity t3))))
 (assert(= q3 (+ q2 (* queue_data_rate t3))))
-(assert(= b3 (- b2 (* battery_discharge_rate t3)))) 
+(assert(= b3 (- b2 (* battery_discharge_rate t3))))
 
 ;goal
 (assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (constraint b3 q3))))
@@ -100,4 +102,5 @@
 (get-value (q1))
 (get-value (q2))
 (get-value (q3))
+;(get-proof)
 (exit)
