@@ -48,6 +48,13 @@ getCX s1 s2 (Response r vs) = case lookup s1 vs of
     Nothing -> Nothing
     Just y -> Just (x,y)
 
+-- Create SMT with new constraints. Also overwrites if it already exists --
+addConstraints constraintI constraintG = do
+  s <- System.IO.readFile "uav_dreal.smt2"
+  let s_i = Data.String.Utils.replace "constraintI" constraintI s
+  let s_i_g  = Data.String.Utils.replace "constraintG" constraintG s_i
+  System.IO.writeFile "uav_dreal_1.smt2" s_i_g
+
 main :: IO ()
 main = do
   resp <- run
