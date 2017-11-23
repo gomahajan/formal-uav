@@ -6,6 +6,8 @@ import Text.Parsec
 import Data.Map
 import Control.Monad.Except
 
+type Counterexample = (Double, Double)
+
 -- Environment
 type Env = Map String Exp
 
@@ -96,5 +98,6 @@ data Exception = NumArgs Integer [Val]
                | TypeMismatch String Val
                | Parser ParseError
                | BadSpecialForm String Val
+               deriving (Show)
 
 type ThrowsError = Either Exception
