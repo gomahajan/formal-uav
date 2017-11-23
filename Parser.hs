@@ -17,7 +17,7 @@ data Response = Response String [Assignment] deriving (Show)
 --Clears whitespace
 whitespace = void . many $ oneOf " \t\n"
 
-
+-- Parse a variable assignment from z3
 parseVar :: Parser Assignment
 parseVar = do
   string "(("
@@ -31,6 +31,8 @@ parseVar = do
   string "))"
   whitespace
   return (s, fst . head $ readFloat (x ++ "." ++ y))
+
+--parseDRealVar :: Parser Assignment
 
 parseResponse :: Parser Response
 parseResponse = do

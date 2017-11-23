@@ -38,7 +38,14 @@ test inp = do
     (Left e) -> putStr $ show e
     (Right resp) -> putStr $ show resp
 
+-- Extract Counterexample from solver response
+getCX :: String -> String -> Response -> Maybe (Double, Double)
+getCX _ _ (Response _ []) = Nothing
+getCS s1 s2 (Response r vs) = case (lookup s1 vs) of
+  Nothing -> Nothing
+  Just x -> case (lookup s2 vs) of
+    Nothing -> Nothing
+    Just y -> (x,y)
 
-
---main :: IO ()
---main = do
+main :: IO ()
+main = do
