@@ -2,6 +2,7 @@ module UAV where
 
 import Logic
 import Parser
+import SMTSolver
 
 
 
@@ -41,11 +42,13 @@ test inp = do
 -- Extract Counterexample from solver response
 getCX :: String -> String -> Response -> Maybe (Double, Double)
 getCX _ _ (Response _ []) = Nothing
-getCS s1 s2 (Response r vs) = case (lookup s1 vs) of
+getCX s1 s2 (Response r vs) = case lookup s1 vs of
   Nothing -> Nothing
-  Just x -> case (lookup s2 vs) of
+  Just x -> case lookup s2 vs of
     Nothing -> Nothing
-    Just y -> (x,y)
+    Just y -> Just (x,y)
 
 main :: IO ()
 main = do
+  resp <- run
+  putStr $ show resp
