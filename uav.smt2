@@ -22,7 +22,7 @@
 
 ;space constraint
 (define-fun constraint((b Real) (q Real)) Bool
-	(or (and (>= b 20) (<= q 10))))
+	(or (and (= b 100) (= q 0))))
 
 ;constants
 (declare-fun battery_charging_rate () Real)
@@ -67,7 +67,7 @@
 (assert(= q0 (+ qi (* queue_data_rate t0))))
 ;program: stay until b>4
 (assert (=> (>= bi 4) (= b0 bi)))
-(assert (=> (< bi 4) (= b0 4)))
+(assert (or (=> (< bi 4) (= b0 4)) (= q0 100)))
 
 ;flying to D
 (assert(= x1 10))
@@ -80,7 +80,7 @@
 (assert(= q2 (- q1 (* queue_upload_rate t2))))
 (assert(= b2 (- b1 (* battery_discharge_rate t2))))
 ;program: stay until b<4
-(assert (=> (>= b1 4) (= b2 4)))
+(assert (or (=> (>= b1 4) (= b2 4)) (= q2 0)))
 (assert (=> (< b1 4) (= b2 b1)))
 
 ;flying back
