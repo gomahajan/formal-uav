@@ -62,9 +62,9 @@
 (assert(= x0 0))
 (assert(= b0 (+ bi (* battery_charging_rate t0))))
 (assert(= q0 (+ qi (* queue_data_rate t0))))
-;program: stay until b>4
-(assert (=> (>= bi 4) (= b0 bi)))
-(assert (or (=> (< bi 4) (= b0 4)) (= q0 100)))
+;program: charge till battery >= 20
+(assert (=> (>= bi 20) (= b0 bi)))
+(assert (or (=> (< bi 20) (= b0 20)) (= q0 100)))
 
 ;flying to D
 (assert(= x1 10))
@@ -76,15 +76,15 @@
 (assert(= x2 10))
 (assert(= q2 (- q1 (* queue_upload_rate t2))))
 (assert(= b2 (- b1 (* battery_discharge_rate t2))))
-;program: stay until b<4
-(assert (or (=> (>= b1 4) (= b2 4)) (= q2 0)))
-(assert (=> (< b1 4) (= b2 b1)))
+;program: empty queue till battery <= 4
+(assert (or (=> (> b1 4) (= b2 4)) (= q2 0)))
+(assert (=> (<= b1 4) (= b2 b1)))
 
 ;flying back
 (assert(= x3 0))
 (assert(= x3 (- x2 (* drone_velocity t3))))
 (assert(= q3 (+ q2 (* queue_data_rate t3))))
-(assert(= b3 (- b2 (* battery_discharge_rate t3)))) 
+(assert(= b3 (- b2 (* battery_discharge_rate t3))))
 
 ;goal
 (assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not constraintG)))
