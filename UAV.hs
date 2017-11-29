@@ -1,8 +1,12 @@
 module UAV where
 
+import System.IO
+import Data.String.Utils
+
 import Logic
 import Parser
 import SMTSolver
+import Pretty
 
 
 
@@ -12,8 +16,11 @@ If dReach says yes, then we have found a region which is safe/stable wrt battery
 Otherwise, we add the counterexample and its implied space to the constraints.
 -}
 -- TODO: Update the checkConstraint implementation to call dReach.
+-- write string to file, run solver, parse response
+-- Make this a maybe!
 checkConstraint :: Pred -> (Double, Double)
 checkConstraint p = (100, 0)
+
 
 {- Adds the counterexample and its implied space to the constraints -}
 updateConstraint :: (Double, Double) -> Pred -> Pred
@@ -50,10 +57,10 @@ getCX s1 s2 (Response r vs) = case lookup s1 vs of
 
 -- Create SMT with new constraints. Also overwrites if it already exists --
 addConstraints constraintI constraintG = do
-  s <- System.IO.readFile "uav_dreal.smt2"
-  let s_i = Data.String.Utils.replace "constraintI" constraintI s
-  let s_i_g  = Data.String.Utils.replace "constraintG" constraintG s_i
-  System.IO.writeFile "uav_dreal_1.smt2" s_i_g
+  s <- readFile "uav_dreal.smt2"
+  let s_i = replace "constraintI" constraintI s
+  let s_i_g  = replace "constraintG" constraintG s_i
+  writeFile "uav_dreal_1.smt2" s_i_g
 
 main :: IO ()
 main = do
