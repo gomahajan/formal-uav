@@ -17,6 +17,8 @@ data Response = Response String [Assignment] deriving (Show)
 --Clears whitespace
 whitespace = void . many $ oneOf " \t\n"
 
+parseDRealVar :: Parser Assignment
+
 -- Parse a variable assignment from z3
 parseVar :: Parser Assignment
 parseVar = do
