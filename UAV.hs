@@ -16,14 +16,16 @@ is it possible to end in a state not specified by the constraints?
 If dReach says yes, then we have found a region which is safe/stable wrt battery and queue size.
 Otherwise, we add the counterexample and its implied space to the constraints.
 -}
--- TODO: Update the checkConstraint implementation to call dReach.
--- write string to file, run solver, parse response
--- Make this a maybe!
-checkConstraint :: Int -> String -> Pred -> IO (Maybe (Double, Double)) --oe, return updated Maybe Pred and iterate?
---checkConstraint f p = (100, 0)
-checkConstraint 0 _ _ = return Nothing
-checkConstraint f p = do
-  addConstraints f
+checkConstraint :: Pred -> IO (Maybe (Double, Double))
+checkConstraint p = do
+  let constraint = printConstraint' p
+  let constraint_i = (replace "q" "qi" (replace "b" "bi" s))
+  let constraint_g = (replace "q" "q3" (replace "b" "b3" s))
+  addConstraints "uav_dreal_template.smt2" "uav_dreal_complete.smt2" constraint_i constraint_g
+  output <- run
+  let response = parseSat output
+  -- convert response from parser into counterexample of form Maybe(Double, Double)
+
 
 
 {- Adds the counterexample and its implied space to the constraints -}
@@ -54,13 +56,13 @@ getCX s1 s2 (Response r vs) = case lookup s1 vs of
     Just y -> Just (x,y)
 
 -- Create SMT with new constraints. Also overwrites if it already exists --
-addConstraints :: String -> String -> String -> IO ()
-addConstraints file constraintI constraintG = do
+addConstraints :: String -> String -> String -> String -> IO ()
+addConstraints templateFile completeFile constraintI constraintG = do
   --s <- readFile "uav_dreal.smt2"
-  s <- readFile file
+  s <- readFile templateFile
   let s_i = replace "constraintI" constraintI s
   let s_i_g  = replace "constraintG" constraintG s_i
-  writeFile file s_i_g
+  writeFile completeFile s_i_g
 
 main :: IO ()
 main = do
