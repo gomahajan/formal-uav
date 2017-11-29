@@ -77,7 +77,7 @@ main = do
               (y:ys) -> (x, Prelude.read y)
       tmpf = filename ++ "_template.smt2"
       cmpf = filename ++ "_complete.smt2"
-      initp = (And (Expr (EBin Geq (EVar "bi") (ERealLit 100))) (Expr (EBin Leq (EVar "qi") (ERealLit 0))))
+      initp = And (Expr (EBin Geq (EVar "bi") (ERealLit 100))) (Expr (EBin Leq (EVar "qi") (ERealLit 0)))
   p <- genInvt tmpf cmpf iters initp
   case p of
     Nothing -> putStr "Nothing"
