@@ -1,11 +1,11 @@
 
 ==================== FINAL INTERFACE ====================
-2017-11-29 20:44:43.106931 UTC
+2017-11-29 21:55:20.981794 UTC
 
 interface main@main:Main 8002
-  interface hash: bea68daf513a1fad50a5e32ac5f4661f
-  ABI hash: b305ce5c09b4b2289800fc8be7a77e2f
-  export-list hash: 90eee2b16c3f9801f4c5628328598174
+  interface hash: 61bc45be0e764f3843ef1ca19cdbd0a2
+  ABI hash: cf51d284540bac8a57079501089463b3
+  export-list hash: 7e8a521de3c550bc12b10ba97ec056e4
   orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
   flag hash: 4b8bf3c143fb4982e2ee7c8b02cff46c
   sig of: Nothing
@@ -14,10 +14,10 @@ interface main@main:Main 8002
 exports:
   Main.addConstraints
   Main.checkConstraint
+  Main.genInvt
   Main.getCX
   Main.main
   Main.read
-  Main.solve
   Main.updateConstraint
 module dependencies: Logic Parser Pretty SMTSolver
 package dependencies: MissingH-1.4.0.1@MissingH-1.4.0.1-4I5T4TbNA9RIo1FM0FgAP
@@ -206,33 +206,41 @@ de12425ef325f12d1d19d2290d633888
 b482921ce3e8d399d57ed3c93b600e6d
   addConstraints3 :: [GHC.Types.Char]
   {- Unfolding: (GHC.CString.unpackCString# "constraintG"#) -}
-2390476ed001f8055164e5b34a0f5d93
+e900bb214e0cd279190aebdf1e43ec95
   checkConstraint ::
-    Logic.Pred
+    GHC.Base.String
+    -> GHC.Base.String
+    -> Logic.Pred
     -> GHC.Types.IO
          (GHC.Base.Maybe (GHC.Types.Double, GHC.Types.Double))
-  {- Arity: 2, Strictness: <L,1*U><S,U>,
+  {- Arity: 4, Strictness: <L,U><L,U><L,1*U><S,U>,
      Unfolding: InlineRule (0, True, True)
                 Main.checkConstraint1
                   `cast`
-                (<Logic.Pred>_R
+                (<GHC.Base.String>_R
+                 ->_R <GHC.Base.String>_R
+                 ->_R <Logic.Pred>_R
                  ->_R Sym (GHC.Types.N:IO[0]
                                <GHC.Base.Maybe (GHC.Types.Double, GHC.Types.Double)>_R)) -}
-1137a907368dca75fee1aecab67d82a0
+adde222f55829978781b8fc3fcf2cbb2
   checkConstraint1 ::
-    Logic.Pred
+    GHC.Base.String
+    -> GHC.Base.String
+    -> Logic.Pred
     -> GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld,
           GHC.Base.Maybe (GHC.Types.Double, GHC.Types.Double) #)
-  {- Arity: 2, Strictness: <L,1*U><S,U>,
-     Unfolding: (\ (p :: Logic.Pred)
+  {- Arity: 4, Strictness: <L,U><L,U><L,1*U><S,U>,
+     Unfolding: (\ (tmpf :: GHC.Base.String)
+                   (outf :: GHC.Base.String)
+                   (p :: Logic.Pred)
                    (eta :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
                  let {
                    constraint :: GHC.Base.String = Pretty.printConstraint' p
                  } in
                  case Main.addConstraints1
-                        Main.checkConstraint9
-                        Main.checkConstraint8
+                        tmpf
+                        outf
                         (case Data.List.Utils.split
                                 @ GHC.Types.Char
                                 GHC.Classes.$fEqChar
@@ -277,12 +285,19 @@ b482921ce3e8d399d57ed3c93b600e6d
                                       xs)) })
                         eta of ds1 { (#,#) ipv ipv1 ->
                  case SMTSolver.run1 ipv of ds2 { (#,#) ipv2 ipv3 ->
-                 (# ipv2,
-                    case Parser.parseSat ipv3 of ww { Parser.Response ww1 ww2 ->
+                 case GHC.IO.Handle.FD.openFile1
+                        ipv3
+                        GHC.IO.IOMode.ReadMode
+                        ipv2 of ds3 { (#,#) ipv4 ipv5 ->
+                 case GHC.IO.Handle.Text.hGetContents1
+                        ipv5
+                        ipv4 of ds4 { (#,#) ipv6 ipv7 ->
+                 (# ipv6,
+                    case Parser.parseSat ipv7 of ww { Parser.Response ww1 ww2 ->
                     Main.$wgetCX
                       Main.checkConstraint3
                       Main.checkConstraint2
-                      ww2 } #) } }) -}
+                      ww2 } #) } } } }) -}
 90f40fbcd4fa789b018ef50cffb30e96
   checkConstraint2 :: [GHC.Types.Char]
   {- Unfolding: (GHC.CString.unpackCString# "q3"#) -}
@@ -301,14 +316,33 @@ a0c8c5224b81e0bb522d1e7f48ba3cfa
 01cad0340207c9b42c25bcccb3a2df09
   checkConstraint7 :: [GHC.Types.Char]
   {- Unfolding: (GHC.CString.unpackCString# "q"#) -}
-58b504ebcc9f0fb495515d68b375c030
-  checkConstraint8 :: [GHC.Types.Char]
-  {- Unfolding: (GHC.CString.unpackCString#
-                   "uav_dreal_complete.smt2"#) -}
-5e770c1462dc990658cd9f29918ad969
-  checkConstraint9 :: [GHC.Types.Char]
-  {- Unfolding: (GHC.CString.unpackCString#
-                   "uav_dreal_template.smt2"#) -}
+100894a19d058250a3d2597f583e0f64
+  genInvt ::
+    GHC.Base.String
+    -> GHC.Base.String
+    -> GHC.Types.Int
+    -> Logic.Pred
+    -> GHC.Types.IO (GHC.Base.Maybe (Logic.Pred, GHC.Types.Bool))
+  {- Arity: 5, Strictness: <L,U><L,U><L,1*U(1*U)><L,U><S,U>,
+     Unfolding: InlineRule (0, True, True)
+                Main.genInvt1
+                  `cast`
+                (<GHC.Base.String>_R
+                 ->_R <GHC.Base.String>_R
+                 ->_R <GHC.Types.Int>_R
+                 ->_R <Logic.Pred>_R
+                 ->_R Sym (GHC.Types.N:IO[0]
+                               <GHC.Base.Maybe (Logic.Pred, GHC.Types.Bool)>_R)) -}
+78e6ba4bda674d0b11fdcfb7ff38cefb
+  genInvt1 ::
+    GHC.Base.String
+    -> GHC.Base.String
+    -> GHC.Types.Int
+    -> Logic.Pred
+    -> GHC.Prim.State# GHC.Prim.RealWorld
+    -> (# GHC.Prim.State# GHC.Prim.RealWorld,
+          GHC.Base.Maybe (Logic.Pred, GHC.Types.Bool) #)
+  {- Arity: 5, Strictness: <L,U><L,U><L,1*U(1*U)><L,U><S,U> -}
 36a08dc8225cc085ef717c64f302aac8
   getCX ::
     GHC.Base.String
@@ -323,93 +357,25 @@ a0c8c5224b81e0bb522d1e7f48ba3cfa
                    (w2 :: Parser.Response) ->
                  case w2 of ww { Parser.Response ww1 ww2 ->
                  Main.$wgetCX w w1 ww2 }) -}
-cbfc6d65052aa902b773da6a352c1743
+d9c0dee8a685c5ed422401aaa63f23bf
   main :: GHC.Types.IO ()
   {- Arity: 1, Strictness: <S,U>,
      Unfolding: InlineRule (0, True, True)
                 Main.main1 `cast` (Sym (GHC.Types.N:IO[0] <()>_R)) -}
-e2adf8b5d65fca9c00cc06df694df23a
+01d62c2c484918d4b5d94b688c90c90e
   main1 ::
     GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
-  {- Arity: 1, Strictness: <S,U>,
-     Unfolding: (\ (s :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
-                 case System.Environment.getArgs1 s of ds1 { (#,#) ipv ipv1 ->
-                 GHC.IO.Handle.Text.hPutStr2
-                   GHC.IO.Handle.FD.stdout
-                   (case ipv1 of wild {
-                      [] -> case Main.main4 ret_ty GHC.Base.String of {}
-                      : x xs
-                      -> case xs of wild1 {
-                           []
-                           -> case GHC.Show.$w$cshowsPrec1
-                                     0#
-                                     Main.main3
-                                     (GHC.Types.[] @ GHC.Types.Char) of ww2 { (#,#) ww3 ww4 ->
-                              GHC.Types.: @ GHC.Types.Char ww3 ww4 }
-                           : y ys
-                           -> case Text.Read.readEither6
-                                     @ GHC.Integer.Type.Integer
-                                     (Text.ParserCombinators.ReadP.run
-                                        @ GHC.Integer.Type.Integer
-                                        Main.main2
-                                        y) of wild2 {
-                                []
-                                -> case GHC.Err.error
-                                          @ 'GHC.Types.PtrRepLifted
-                                          @ GHC.Integer.Type.Integer
-                                          GHC.Err.errorWithoutStackTrace_wild1
-                                            `cast`
-                                          (Sym (GHC.Classes.N:IP[0]
-                                                    <"callStack">_N <GHC.Stack.Types.CallStack>_N))
-                                          Text.Read.readEither4
-                                   ret_ty GHC.Base.String
-                                   of {}
-                                : x1 ds
-                                -> case ds of wild3 {
-                                     []
-                                     -> case GHC.Show.$w$cshowsPrec1
-                                               0#
-                                               x1
-                                               (GHC.Types.[]
-                                                  @ GHC.Types.Char) of ww2 { (#,#) ww3 ww4 ->
-                                        GHC.Types.: @ GHC.Types.Char ww3 ww4 }
-                                     : ipv2 ipv3
-                                     -> case GHC.Err.error
-                                               @ 'GHC.Types.PtrRepLifted
-                                               @ GHC.Integer.Type.Integer
-                                               GHC.Err.errorWithoutStackTrace_wild1
-                                                 `cast`
-                                               (Sym (GHC.Classes.N:IP[0]
-                                                         <"callStack">_N
-                                                         <GHC.Stack.Types.CallStack>_N))
-                                               Text.Read.readEither2
-                                        ret_ty GHC.Base.String
-                                        of {} } } } })
-                   GHC.Types.False
-                   ipv }) -}
-144e5d60363176bc1a25748e33d7d124
-  main2 :: Text.ParserCombinators.ReadP.P GHC.Integer.Type.Integer
-  {- Unfolding: (GHC.Read.$fReadInteger3
-                   GHC.Read.$fReadInteger_$sconvertInt
-                   Text.ParserCombinators.ReadPrec.minPrec
-                   @ GHC.Integer.Type.Integer
-                   (Text.Read.readEither5 @ GHC.Integer.Type.Integer)) -}
-d0bbbd5844d3480712c8673ef08b360a
-  main3 :: GHC.Integer.Type.Integer
-  {- HasNoCafRefs, Unfolding: (10) -}
-a789876e9e299e4bd0efaf2fc685b14e
-  main4 :: (GHC.Base.String, GHC.Integer.Type.Integer)
-  {- Strictness: x -}
-0ddb527e75362382a473bc0cf07d48fa
-  main5 ::
+  {- Arity: 1, Strictness: <S,U> -}
+129a1a814fa667791781f32a098e848d
+  main2 ::
     GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, () #)
   {- Arity: 1,
      Unfolding: (GHC.TopHandler.runMainIO1
                    @ ()
                    Main.main1 `cast` (Sym (GHC.Types.N:IO[0] <()>_R))) -}
-7d3b57ba78e8c4754bd3f9d0e7dc3bf5
+2706cd0c3cf8e872341d3802520c0759
   read :: GHC.Base.String -> GHC.Types.IO Parser.Response
   {- Arity: 2, Strictness: <L,U><S,U>,
      Unfolding: InlineRule (0, True, True)
@@ -417,13 +383,14 @@ a789876e9e299e4bd0efaf2fc685b14e
                   `cast`
                 (<GHC.Base.String>_R
                  ->_R Sym (GHC.Types.N:IO[0] <Parser.Response>_R)) -}
-a50ac5ad5f58bf7ac9f5c4b6d98c19fa
+cad082c0215853bfa6d2fb76365dd63b
   read1 ::
     GHC.Base.String
     -> GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, Parser.Response #)
   {- Arity: 2, Strictness: <L,U><S,U>,
-     Unfolding: (\ (src :: GHC.Base.String)
+     Unfolding: InlineRule (2, True, False)
+                (\ (src :: GHC.Base.String)
                    (eta :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
                  case GHC.IO.Handle.FD.openFile1
                         src
@@ -432,35 +399,14 @@ a50ac5ad5f58bf7ac9f5c4b6d98c19fa
                  case GHC.IO.Handle.Text.hGetContents1
                         ipv1
                         ipv of ds2 { (#,#) ipv2 ipv3 ->
-                 case GHC.IO.Handle.Text.hPutStr2
-                        GHC.IO.Handle.FD.stdout
-                        (GHC.Show.$fShow[]_$s$cshow1 ipv3)
-                        GHC.Types.False
-                        ipv2 of ds3 { (#,#) ipv4 ipv5 ->
-                 (# ipv4, Parser.parseSat ipv3 #) } } }) -}
-db0ca08d9d6ea6c00a75aa2a9af78dea
-  solve :: GHC.Types.Int -> Logic.Pred -> GHC.Types.IO Logic.Pred
-  {- Arity: 3, Strictness: <L,1*U(1*U)><L,U><S,U>,
-     Unfolding: InlineRule (0, True, True)
-                Main.solve1
-                  `cast`
-                (<GHC.Types.Int>_R
-                 ->_R <Logic.Pred>_R
-                 ->_R Sym (GHC.Types.N:IO[0] <Logic.Pred>_R)) -}
-69ed27206f1d18fa58671a777a6df4fe
-  solve1 ::
-    GHC.Types.Int
-    -> Logic.Pred
-    -> GHC.Prim.State# GHC.Prim.RealWorld
-    -> (# GHC.Prim.State# GHC.Prim.RealWorld, Logic.Pred #)
-  {- Arity: 3, Strictness: <L,1*U(1*U)><L,U><S,U> -}
-26ef191694d91ed4eb756bc870f669c5
+                 (# ipv2, Parser.parseSat ipv3 #) } }) -}
+f50d7aff50be945e91a7aaa96227d390
   updateConstraint ::
     (GHC.Types.Double, GHC.Types.Double) -> Logic.Pred -> Logic.Pred
   {- Arity: 2, Strictness: <S,1*U(U,U)><L,U>m4,
      Unfolding: InlineRule (2, True, False)
                 (\ (ds :: (GHC.Types.Double, GHC.Types.Double))
-                   (p :: Logic.Pred) ->
+                   (eta :: Logic.Pred) ->
                  case ds of wild { (,) b q ->
                  Logic.Or
                    (Logic.And
@@ -468,7 +414,7 @@ db0ca08d9d6ea6c00a75aa2a9af78dea
                          (Logic.EBin Logic.Geq Main.updateConstraint3 (Logic.ERealLit b)))
                       (Logic.Expr
                          (Logic.EBin Logic.Leq Main.updateConstraint1 (Logic.ERealLit q))))
-                   p }) -}
+                   eta }) -}
 0516124be254842eb3bf5b48f6916662
   updateConstraint1 :: Logic.Exp
   {- Strictness: m7,
