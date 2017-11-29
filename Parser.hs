@@ -18,6 +18,17 @@ data Response = Response String [Assignment] deriving (Show)
 whitespace = void . many $ oneOf " \t\n"
 
 parseDRealVar :: Parser Assignment
+parseDRealVar = do
+  s <- many1 (letter <|> digit)
+  whitespace
+  string ": [ ENTIRE ] = ["
+  whitespace
+  x <- parseDouble
+  char ','
+  whitespace
+  y <- parseDouble
+  whitespace
+  return (s, x) -- TODO: be smarter about which val to return
 
 -- Parse a variable assignment from z3
 parseVar :: Parser Assignment
@@ -26,15 +37,25 @@ parseVar = do
   whitespace
   s <- many1 (letter <|> digit)
   whitespace
-  x <- many1 digit
-  char '.'
-  y <- many1 digit
+  x <- parseDouble
   whitespace
   string "))"
   whitespace
-  return (s, fst . head $ readFloat (x ++ "." ++ y))
+  return (s, x)
 
---parseDRealVar :: Parser Assignment
+parseDouble :: Parser Double
+parseDouble = do
+  x <- many1 digit
+  char '.'
+  y <- many1 digit
+  return $ fst . head $ readFloat (x ++ "." ++ y)
+
+parseDRealResponse :: Parser Response
+parseDRealResponse = do
+  s <- many1 letter
+  whitespace
+  vs <- many parseDRealVar
+  return $ Response s vs
 
 parseResponse :: Parser Response
 parseResponse = do
@@ -43,7 +64,7 @@ parseResponse = do
   vs <- many parseVar
   return $ Response s vs
 
-parseSat :: String -> ThrowsError Response
-parseSat s = case parse (parseResponse <* eof) "" s of
-  Left err -> throwError $ Parser err
-  Right v -> return v
+parseSat :: String -> Response
+parseSat s = case parse (parseDRealResponse <* eof) "" s of
+  Left err -> error $ show $ Parser err
+  Right v -> v

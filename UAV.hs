@@ -19,26 +19,29 @@ Otherwise, we add the counterexample and its implied space to the constraints.
 checkConstraint :: Pred -> IO (Maybe (Double, Double))
 checkConstraint p = do
   let constraint = printConstraint' p
-  let constraint_i = (replace "q" "qi" (replace "b" "bi" s))
-  let constraint_g = (replace "q" "q3" (replace "b" "b3" s))
+      constraint_i = replace "q" "qi" (replace "b" "bi" constraint)
+      constraint_g = replace "q" "q3" (replace "b" "b3" constraint)
   addConstraints "uav_dreal_template.smt2" "uav_dreal_complete.smt2" constraint_i constraint_g
   output <- run
-  getCX "b3" "q3" (parseSat output)
+  return $ getCX "b3" "q3" (parseSat output)
 
 {- Adds the counterexample and its implied space to the constraints -}
 updateConstraint :: (Double, Double) -> Pred -> Pred
 updateConstraint (b,q) p = Or (And (Expr $ EBin Geq (EVar "B") (ERealLit b)) (Expr $ EBin Leq (EVar "Q") (ERealLit q))) p
 
 {- Tries to find the safe invariant in given integral steps -}
-solve :: Int -> Pred -> Pred
-solve n constraint
-        | n > 0     =  case checkConstraint constraint of
-          Nothing -> constraint
-          Just counterExample -> solve (n-1) (updateConstraint counterExample constraint)
-        | otherwise = constraint
+solve :: Int -> Pred -> IO Pred
+solve n constraint = do
+    c <- checkConstraint constraint
+    let p = case n of
+          0 -> return constraint
+          n -> case c of
+            Nothing -> return constraint
+            Just cx -> solve (n-1) (updateConstraint cx constraint)
+    p
 
 -- Read solver response
-read :: String -> IO (Either Exception Response)
+read :: String -> IO Response
 read src = do
   resp <- readFile src
   putStr $ show resp
@@ -66,9 +69,9 @@ addConstraints templateFile completeFile constraintI constraintG = do
 main :: IO ()
 main = do
   args <- getArgs
-  -- Not sure why but I have to indent it like this...
   let (filename, iters) = case args of
-                            [] -> error "Please provide an smt file"
-                            (x:xs) -> case xs of
-                                       [] -> (x, 10)
-                                       (y:ys) -> (x, Prelude.read y)
+       [] -> error "Please provide an smt file"
+       (x:xs) -> case xs of
+              [] -> (x, 10)
+              (y:ys) -> (x, Prelude.read y)
+  putStr $ show iters
