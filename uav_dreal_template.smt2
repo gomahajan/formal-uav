@@ -1,5 +1,4 @@
-(set-option :produce-proofs true)
-
+(set-logic QF_NRA)
 (declare-fun x0 () Real)
 (declare-fun x1 () Real)
 (declare-fun x2 () Real)
@@ -21,10 +20,6 @@
 (declare-fun t1 () Real)
 (declare-fun t2 () Real)
 (declare-fun t3 () Real)
-
-;space constraint
-(define-fun constraint((b Real) (q Real)) Bool
-	(or (and (>= b 3) (<= q 13))))
 
 ;constants
 (declare-fun battery_charging_rate () Real)
@@ -62,7 +57,7 @@
 (assert (>= x2 0))
 (assert (>= x3 0))
 
-(assert (constraint bi qi))
+(assert constraintI)
 ;charging
 (assert(= x0 0))
 (assert(= b0 (+ bi (* battery_charging_rate t0))))
@@ -92,15 +87,6 @@
 (assert(= b3 (- b2 (* battery_discharge_rate t3))))
 
 ;goal
-(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (constraint b3 q3))))
+(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not constraintG)))
 (check-sat)
-(get-value (b0))
-(get-value (b1))
-(get-value (b2))
-(get-value (b3))
-(get-value (q0))
-(get-value (q1))
-(get-value (q2))
-(get-value (q3))
-;(get-proof)
 (exit)
