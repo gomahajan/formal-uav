@@ -1,7 +1,8 @@
-module UAV where
+module Main where
 
 import System.IO
 import Data.String.Utils
+import System.Environment
 
 import Logic
 import Parser
@@ -18,8 +19,11 @@ Otherwise, we add the counterexample and its implied space to the constraints.
 -- TODO: Update the checkConstraint implementation to call dReach.
 -- write string to file, run solver, parse response
 -- Make this a maybe!
-checkConstraint :: Pred -> (Double, Double)
-checkConstraint p = (100, 0)
+checkConstraint :: Int -> String -> Pred -> IO (Maybe (Double, Double)) --oe, return updated Maybe Pred and iterate?
+--checkConstraint f p = (100, 0)
+checkConstraint 0 _ _ = return Nothing
+checkConstraint f p = do
+  addConstraints f
 
 
 {- Adds the counterexample and its implied space to the constraints -}
@@ -39,12 +43,6 @@ read src = do
   putStr $ show resp
   return $ parseSat resp
 
-test :: IO (Either Exception Response) -> IO ()
-test inp = do
-  r <- inp
-  case r of
-    (Left e) -> putStr $ show e
-    (Right resp) -> putStr $ show resp
 
 -- Extract Counterexample from solver response
 getCX :: String -> String -> Response -> Maybe (Double, Double)
@@ -56,13 +54,20 @@ getCX s1 s2 (Response r vs) = case lookup s1 vs of
     Just y -> Just (x,y)
 
 -- Create SMT with new constraints. Also overwrites if it already exists --
-addConstraints constraintI constraintG = do
-  s <- readFile "uav_dreal.smt2"
+addConstraints :: String -> String -> String -> IO ()
+addConstraints file constraintI constraintG = do
+  --s <- readFile "uav_dreal.smt2"
+  s <- readFile file
   let s_i = replace "constraintI" constraintI s
   let s_i_g  = replace "constraintG" constraintG s_i
-  writeFile "uav_dreal_1.smt2" s_i_g
+  writeFile file s_i_g
 
 main :: IO ()
 main = do
-  resp <- run
-  putStr $ show resp
+  args <- getArgs
+  -- Not sure why but I have to indent it like this...
+  let (filename, iters) = case args of
+                            [] -> error "Please provide an smt file"
+                            (x:xs) -> case xs of
+                                       [] -> (x, 10)
+                                       (y:ys) -> (x, Prelude.read y)
