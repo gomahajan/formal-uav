@@ -24,9 +24,7 @@ checkConstraint p = do
   addConstraints "uav_dreal_template.smt2" "uav_dreal_complete.smt2" constraint_i constraint_g
   output <- run
   let response = parseSat output
-  -- convert response from parser into counterexample of form Maybe(Double, Double)
-
-
+  toCounterExample response
 
 {- Adds the counterexample and its implied space to the constraints -}
 updateConstraint :: (Double, Double) -> Pred -> Pred
@@ -34,9 +32,10 @@ updateConstraint (b,q) p = Or (And (Expr $ EBin Geq (EVar "B") (ERealLit b)) (Ex
 
 solve :: Int -> Pred -> Pred
 solve n constraint
-        | n > 0     = solve (n-1) constraint'
+        | n > 0     =  case checkConstraint constraint of
+          Nothing -> constraint
+          Just counterExample -> solve (n-1) (updateConstraint counterExample constraint)
         | otherwise = constraint
-        where constraint' = updateConstraint (checkConstraint constraint) constraint
 
 -- Read solver response
 read :: String -> IO (Either Exception Response)

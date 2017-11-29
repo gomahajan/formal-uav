@@ -45,3 +45,6 @@ parseSat :: String -> ThrowsError Response
 parseSat s = case parse (parseResponse <* eof) "" s of
   Left err -> throwError $ Parser err
   Right v -> return v
+
+-- TODO: convert parser response to Maybe (Double, Double)
+toCounterExample :: Response -> Maybe (Double, Double)
