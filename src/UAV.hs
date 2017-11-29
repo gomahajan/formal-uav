@@ -21,7 +21,7 @@ checkConstraint p = do
   let constraint = printConstraint' p
       constraint_i = replace "q" "qi" (replace "b" "bi" constraint)
       constraint_g = replace "q" "q3" (replace "b" "b3" constraint)
-  addConstraints "uav_dreal_template.smt2" "uav_dreal_complete.smt2" constraint_i constraint_g
+  addConstraints "smt/uav_dreal_template.smt2" "smt/uav_dreal_complete.smt2" constraint_i constraint_g
   output <- run
   return $ getCX "b3" "q3" (parseSat output)
 
