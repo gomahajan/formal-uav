@@ -71,7 +71,7 @@ evalNumeric op v1 v2 = case (v1, v2) of
   _                  -> Nothing
 
 
-evalArithBool :: Num a => (Double -> Double -> Bool) -> Maybe Val -> Maybe Val -> Maybe Val
+evalArithBool :: (Double -> Double -> Bool) -> Maybe Val -> Maybe Val -> Maybe Val
 evalArithBool op x y = case (x, y) of
   (Just (VReal x), Just (VReal y)) -> Just $ VBool $ op x y
   _                  -> Nothing

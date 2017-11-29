@@ -1,0 +1,171 @@
+
+==================== FINAL INTERFACE ====================
+2017-11-29 20:43:34.386646 UTC
+
+interface main@main:Pretty 8002
+  interface hash: 5ecb0859a2625f5decb3f9e69c8b372c
+  ABI hash: add402bc527ff8955b8855f44302e4d5
+  export-list hash: 04dc4433aa6cf98e7f237471f4e68c83
+  orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
+  flag hash: 5be978caf3232cebf80dca9aa250bb47
+  sig of: Nothing
+  used TH splices: False
+  where
+exports:
+  Pretty.printBOp
+  Pretty.printConstraint
+  Pretty.printConstraint'
+  Pretty.printE
+  Pretty.printUOp
+module dependencies: Logic
+package dependencies: array-0.5.1.1@array-0.5.1.1 base-4.9.1.0*
+                      binary-0.8.3.0@binary-0.8.3.0
+                      bytestring-0.10.8.1@bytestring-0.10.8.1
+                      containers-0.5.7.1@containers-0.5.7.1
+                      deepseq-1.4.2.0@deepseq-1.4.2.0 ghc-prim-0.5.0.0
+                      integer-gmp-1.0.0.1 mtl-2.2.1@mtl-2.2.1-BLKBelFsPB3BoFeSWSOYj6
+                      parsec-3.1.11@parsec-3.1.11-1aqiimsgq2dCv7eoaC8WuX
+                      text-1.2.2.2@text-1.2.2.2-9UQZjEJZQFSGMffj1Z5g00
+                      transformers-0.5.2.0@transformers-0.5.2.0
+orphans: base-4.9.1.0:GHC.Base base-4.9.1.0:GHC.Float
+         binary-0.8.3.0@binary-0.8.3.0:Data.Binary.Generic
+         bytestring-0.10.8.1@bytestring-0.10.8.1:Data.ByteString.Builder
+         text-1.2.2.2@text-1.2.2.2-9UQZjEJZQFSGMffj1Z5g00:Data.Text
+         text-1.2.2.2@text-1.2.2.2-9UQZjEJZQFSGMffj1Z5g00:Data.Text.Lazy
+         text-1.2.2.2@text-1.2.2.2-9UQZjEJZQFSGMffj1Z5g00:Data.Text.Show
+         transformers-0.5.2.0@transformers-0.5.2.0:Control.Monad.Trans.Error
+family instance modules: base-4.9.1.0:Control.Applicative
+                         base-4.9.1.0:Data.Complex base-4.9.1.0:Data.Either
+                         base-4.9.1.0:Data.Functor.Const base-4.9.1.0:Data.Functor.Identity
+                         base-4.9.1.0:Data.List.NonEmpty base-4.9.1.0:Data.Monoid
+                         base-4.9.1.0:Data.Semigroup base-4.9.1.0:Data.Type.Equality
+                         base-4.9.1.0:Data.Version base-4.9.1.0:Data.Void
+                         base-4.9.1.0:GHC.Exts base-4.9.1.0:GHC.Generics
+                         base-4.9.1.0:GHC.IO.Exception base-4.9.1.0:GHC.TypeLits
+                         containers-0.5.7.1@containers-0.5.7.1:Data.IntMap.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.IntSet.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Map.Base
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Sequence
+                         containers-0.5.7.1@containers-0.5.7.1:Data.Set.Base
+                         text-1.2.2.2@text-1.2.2.2-9UQZjEJZQFSGMffj1Z5g00:Data.Text
+                         text-1.2.2.2@text-1.2.2.2-9UQZjEJZQFSGMffj1Z5g00:Data.Text.Lazy
+import  -/  base-4.9.1.0:Data.Char 01433d23661edb6e5ef1536ef1e6774c
+import  -/  base-4.9.1.0:GHC.Base c4231c43c07e46080a26bf94094c7aa1
+import  -/  base-4.9.1.0:GHC.Show a027f5ac24879eaba752f44aa90fe511
+import  -/  base-4.9.1.0:GHC.Unicode a175ecf20bf1272d9ae31337e7da43ab
+import  -/  base-4.9.1.0:Prelude 22dd289b8469a8fa8dc81cab7b237771
+import  -/  Logic ab9e4531a868fce5f5f186c48023339d
+  exports: d4445b2602a05177d47d8cbb0c085d8b
+  And 1d24f1c9062a25cccb073e582733dec0
+  BinOp 3f4eaafefea89511be957ae95468704f
+  Div 3e3f11189ef5d40d87b260a5bc1bf21f
+  EBin 7dce87b3ee533594b112aec22c1c0f7d
+  EIf bcbc5f3723bf1c23f2a68c46ba7e4c6f
+  EParens 3363c2285d630eaad5c3508cf23191ab
+  ERealLit ae7413e5218e8b221e3ece036706e03a
+  EStrLit d5a31abdf64c4183727a5b8cae0cdd84
+  EUOp 3b840609fcfb92c4a9de84c1fc2d4c90
+  EVar 27974cb54fdbbc77c4b9aa822c029d7d
+  Eq 49d181e131a05b76f2cce9026cf050e9
+  Exp dff47c4539215b75216e34c1a8fdf0ee
+  Expr 0e334a774ef763ec0d9bf549e7cb7c9d
+  Geq 0a57c29050d083148f4c41133ac903e5
+  Gt 36ea99a2db9778c8877415cb797ea602
+  Leq e8d477fcd4809bab2b864ddbaef9cd9d
+  Lit a68d2b980c9e174c9b8a125b0b568c58
+  Lt e4f840865c1fb61fbdf0e2264eef4bfa
+  Neg ccd5e30093848fcd8f3b84fd4bb0d8b2
+  Not f50291899304d5fc7231ade819f2b799
+  Or acec3b5ed168439babeb51859c4acb55
+  Plus 5bb5fe33d9b11aeb8431150beb346711
+  Pred fc36050633ebc606543c48defe972137
+  Times 7ea39b1e0c6d2b7b582ac4f9f29f2fe9
+  UnOp 49b192856f451626713851d56f3f8439
+dfacfea8c53f39b31a261445b4aadcc9
+  $trModule :: GHC.Types.Module
+  {- HasNoCafRefs, Strictness: m,
+     Unfolding: (GHC.Types.Module
+                   Pretty.$trModule2
+                   Pretty.$trModule1) -}
+21737b06a9103b1812362beb7c23973c
+  $trModule1 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "Pretty"#) -}
+df6b615b48af5a7275127decf448f8f8
+  $trModule2 :: GHC.Types.TrName
+  {- HasNoCafRefs, Strictness: m1,
+     Unfolding: (GHC.Types.TrNameS "main"#) -}
+5719c47d1f3e9efdc3a9015a87b94908
+  printBOp :: Logic.BinOp -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*U>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: Logic.BinOp) ->
+                 case ds of wild {
+                   Logic.Lt -> Pretty.printBOp8
+                   Logic.Gt -> Pretty.printBOp7
+                   Logic.Leq -> Pretty.printBOp6
+                   Logic.Geq -> Pretty.printBOp5
+                   Logic.Plus -> Pretty.printBOp4
+                   Logic.Times -> Pretty.printBOp3
+                   Logic.Div -> Pretty.printBOp2
+                   Logic.Eq -> Pretty.printBOp1 }) -}
+ead7992ce9cff0745abe842171dd796e
+  printBOp1 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "="#) -}
+6c42c748fb749efec92774535e2e2c36
+  printBOp2 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "/"#) -}
+af708fe1d4cec5f3ed61c38cea2c653f
+  printBOp3 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "*"#) -}
+fb12a0d9799f321aa8d8d2f84c657239
+  printBOp4 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "+"#) -}
+3f54cb4e3424419173d156c32d8175ce
+  printBOp5 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# ">="#) -}
+9e3d3c637aa4b5dc1986f92ebaf475f7
+  printBOp6 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "<="#) -}
+e17dc38e58da9013c2dfb84640386a3e
+  printBOp7 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# ">"#) -}
+b591dfb8d62e7e9ed7a5e8be1f09ddf8
+  printBOp8 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "<"#) -}
+e8bf440e7248243cb7bfc27e14a4c9d3
+  printConstraint :: Logic.Pred -> GHC.Base.String
+  {- Arity: 1, Strictness: <L,1*U>,
+     Unfolding: (\ (p :: Logic.Pred) ->
+                 GHC.CString.unpackAppendCString#
+                   "(assert "#
+                   (GHC.Base.++
+                      @ GHC.Types.Char
+                      (Pretty.printConstraint' p)
+                      Pretty.printConstraint1)) -}
+14bfc17c8af24bfd71a32eb0d6d67404
+  printConstraint' :: Logic.Pred -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*U> -}
+c73e96d3e46cbf7b971e0737a65ad408
+  printConstraint1 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# ")"#) -}
+666f861ae50804844646284c2c490401
+  printE :: Logic.Exp -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*U> -}
+1be876f2d5f21a982f1714784bcfe808
+  printUOp :: Logic.UnOp -> GHC.Base.String
+  {- Arity: 1, Strictness: <S,1*H>,
+     Unfolding: InlineRule (1, True, False)
+                (\ (ds :: Logic.UnOp) ->
+                 case ds of wild { Logic.Neg -> Pretty.printUOp1 }) -}
+2b936ae7a138d659a9e0e1c71b4e63c8
+  printUOp1 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# "-"#) -}
+vectorised variables:
+vectorised tycons:
+vectorised reused tycons:
+parallel variables:
+parallel tycons:
+trusted: safe
+require own pkg trusted: False
+

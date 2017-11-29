@@ -1,0 +1,43 @@
+name:                uav
+version:             0.1.0.0
+synopsis:            Program synthesis for safe UAV control.
+homepage:            https://github.com/githubuser/uav#readme
+license:             BSD3
+license-file:        LICENSE
+author:              Tristan Knoth and Gaurav Mahajan
+maintainer:          tknoth@eng.ucsd.edu
+copyright:           2017 Tristan Knoth and Gaurav Mahajan
+category:            Web
+build-type:          Simple
+extra-source-files:  README.md
+cabal-version:       >=1.10
+
+-- To avoid duplicated efforts in documentation and dealing with the
+-- complications of embedding Haddock markup inside cabal files, it is
+-- common to point users to the README.md file.
+description:         Please see the README on Github at <https://github.com/githubuser/uav#readme>
+
+
+flag uav
+  Description: Build the executable
+  Default:     True
+
+executable uav
+  main-is:             UAV.hs
+  hs-source-dirs:      src
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:       base
+                       , process
+                       , parsec
+                       , containers
+                       , mtl
+                       , MissingH
+
+  default-language:    Haskell2010
+  If !flag(uav)
+    buildable: False
+
+
+source-repository head
+  type:     git
+  location: https://github.com/gomahajan/formal-uav
