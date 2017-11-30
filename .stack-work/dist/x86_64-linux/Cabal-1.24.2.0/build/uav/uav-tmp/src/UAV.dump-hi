@@ -1,10 +1,10 @@
 
 ==================== FINAL INTERFACE ====================
-2017-11-30 00:56:37.013675 UTC
+2017-11-30 01:00:59.4845 UTC
 
 interface main@main:Main 8002
-  interface hash: dcbb95935333d7c9ebd271bff7fa9886
-  ABI hash: 73ed4a33e12fd93e6a5c7001b81fe0c0
+  interface hash: 7f452ffd7c1e6ee07f02725cf76cd40a
+  ABI hash: dbf3f68364292e4e45c69f2eff9d5dae
   export-list hash: 4ca5d41b133725b13a6cdbbee7bfdb6a
   orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
   flag hash: 4b8bf3c143fb4982e2ee7c8b02cff46c
@@ -85,11 +85,11 @@ import  -/  Logic ab9e4531a868fce5f5f186c48023339d
   Leq e8d477fcd4809bab2b864ddbaef9cd9d
   Or acec3b5ed168439babeb51859c4acb55
   Pred fc36050633ebc606543c48defe972137
-import  -/  Parser 701a57d06f235ade3300051ce5938d2c
+import  -/  Parser 40a55e59e13a3c083b76dab087cdeeb5
   exports: 82d0119ba25fdee023e6cc2a8334f0b2
   Response a5c1e1c6d344a6c5971d4417aadc9762
   Response f5c5bb3ce1816c180c60d1dc7df2530f
-  parseDRealSat 0bffdd55bd027b27918bfdfc77cee30d
+  parseDRealSat 7be09ff56d7dac9d4b19b467caa12d41
 import  -/  Pretty add402bc527ff8955b8855f44302e4d5
   exports: 04dc4433aa6cf98e7f237471f4e68c83
   printConstraint' 14bfc17c8af24bfd71a32eb0d6d67404
@@ -207,7 +207,7 @@ de12425ef325f12d1d19d2290d633888
 b482921ce3e8d399d57ed3c93b600e6d
   addConstraints3 :: [GHC.Types.Char]
   {- Unfolding: (GHC.CString.unpackCString# "constraintG"#) -}
-239eb847712cd05659d48d85ef812520
+3db5b8db10fe644b24eb1f4c0edceca8
   checkConstraint ::
     GHC.Base.String
     -> GHC.Base.String
@@ -223,7 +223,7 @@ b482921ce3e8d399d57ed3c93b600e6d
                  ->_R <Logic.Pred>_R
                  ->_R Sym (GHC.Types.N:IO[0]
                                <GHC.Base.Maybe (GHC.Types.Double, GHC.Types.Double)>_R)) -}
-255e81d330021768738c8224aedfd5f4
+fc84989d711dcc9059ffe1b6b1fbe236
   checkConstraint1 ::
     GHC.Base.String
     -> GHC.Base.String
@@ -310,14 +310,14 @@ a0c8c5224b81e0bb522d1e7f48ba3cfa
 01cad0340207c9b42c25bcccb3a2df09
   checkConstraint7 :: [GHC.Types.Char]
   {- Unfolding: (GHC.CString.unpackCString# "q"#) -}
-a7aea6823ba755b03b01eb37af50fc8e
+100894a19d058250a3d2597f583e0f64
   genInvt ::
     GHC.Base.String
     -> GHC.Base.String
     -> GHC.Types.Int
     -> Logic.Pred
     -> GHC.Types.IO (GHC.Base.Maybe (Logic.Pred, GHC.Types.Bool))
-  {- Arity: 5, Strictness: <L,U><L,U><L,U(U)><L,U><S,U>,
+  {- Arity: 5, Strictness: <L,U><L,U><L,1*U(1*U)><L,U><S,U>,
      Unfolding: InlineRule (0, True, True)
                 Main.genInvt1
                   `cast`
@@ -327,7 +327,7 @@ a7aea6823ba755b03b01eb37af50fc8e
                  ->_R <Logic.Pred>_R
                  ->_R Sym (GHC.Types.N:IO[0]
                                <GHC.Base.Maybe (Logic.Pred, GHC.Types.Bool)>_R)) -}
-101f78d0168ced9b20b73838a5ead051
+78e6ba4bda674d0b11fdcfb7ff38cefb
   genInvt1 ::
     GHC.Base.String
     -> GHC.Base.String
@@ -336,7 +336,7 @@ a7aea6823ba755b03b01eb37af50fc8e
     -> GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld,
           GHC.Base.Maybe (Logic.Pred, GHC.Types.Bool) #)
-  {- Arity: 5, Strictness: <L,U><L,U><L,U(U)><L,U><S,U> -}
+  {- Arity: 5, Strictness: <L,U><L,U><L,1*U(1*U)><L,U><S,U> -}
 36a08dc8225cc085ef717c64f302aac8
   getCX ::
     GHC.Base.String
@@ -369,7 +369,7 @@ d9c0dee8a685c5ed422401aaa63f23bf
      Unfolding: (GHC.TopHandler.runMainIO1
                    @ ()
                    Main.main1 `cast` (Sym (GHC.Types.N:IO[0] <()>_R))) -}
-8af1cfe5acdf64b02fd5764c43b3eeba
+03d1f330964597ea61c90e64816c4976
   read :: GHC.Base.String -> GHC.Types.IO Parser.Response
   {- Arity: 2, Strictness: <L,U><S,U>,
      Unfolding: InlineRule (0, True, True)
@@ -377,7 +377,7 @@ d9c0dee8a685c5ed422401aaa63f23bf
                   `cast`
                 (<GHC.Base.String>_R
                  ->_R Sym (GHC.Types.N:IO[0] <Parser.Response>_R)) -}
-32a97d346a707ad15524dc4705e916df
+ec7394d5a2b1a0edc0d387b04cd7af25
   read1 ::
     GHC.Base.String
     -> GHC.Prim.State# GHC.Prim.RealWorld

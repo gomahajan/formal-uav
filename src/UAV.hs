@@ -33,7 +33,6 @@ updateConstraint (b,q) = Or (And (Expr $ EBin Geq (EVar "b") (ERealLit b)) (Expr
 {- Tries to find the safe invariant in given integral steps -}
 genInvt :: String -> String -> Int -> Pred -> IO (Maybe (Pred, Bool))
 genInvt tf cf n constraint = do
-    putStrLn $ "ITER: " ++ (show n)
     c <- checkConstraint tf cf constraint
     --putStrLn tf
     let pr = case n of

@@ -1,10 +1,10 @@
 
 ==================== FINAL INTERFACE ====================
-2017-11-30 01:00:08.86887 UTC
+2017-11-30 01:00:46.443026 UTC
 
 interface main@main:Parser 8002
-  interface hash: c134555f888a9c0e1215f8c1d83c5df4
-  ABI hash: 701a57d06f235ade3300051ce5938d2c
+  interface hash: b26fd5a5137d035bc9d5df4e7e9421b7
+  ABI hash: 40a55e59e13a3c083b76dab087cdeeb5
   export-list hash: 82d0119ba25fdee023e6cc2a8334f0b2
   orphan hash: 3a0cdfb8faa98e1705fbaf015560dbf4
   flag hash: 5be978caf3232cebf80dca9aa250bb47
@@ -722,78 +722,56 @@ f138c6aa78acd1fd414130105e7946dd
                    @ GHC.Base.String
                    Text.Parsec.Char.letter2
                    (GHC.Types.[] @ GHC.Base.String)) -}
-0bffdd55bd027b27918bfdfc77cee30d
+7be09ff56d7dac9d4b19b467caa12d41
   parseDRealSat :: GHC.Base.String -> Parser.Response
   {- Arity: 1, Strictness: <L,U>,
      Unfolding: (\ (s :: GHC.Base.String) ->
                  let {
-                   ds :: [[GHC.Types.Char]] = Parser.parseDRealSat8 s
+                   ds :: [[GHC.Types.Char]] = Parser.parseDRealSat7 s
                  } in
                  let {
                    fail :: GHC.Prim.Void# -> Parser.Response
                      {- Arity: 1, Strictness: <L,A> -}
                    = \ (ds1 :: GHC.Prim.Void#)[OneShot] ->
-                     Debug.Trace.trace
-                       @ Parser.Response
-                       (GHC.CString.unpackAppendCString#
-                          "\n\
-                          \\n"#
-                          (case ds of wild {
-                             [] -> Parser.parseDRealSat7
-                             : x ds2
-                             -> case ds2 of wild1 {
-                                  [] -> Parser.parseDRealSat7
-                                  : ipv ipv1
-                                  -> case GHC.List.init1 @ [GHC.Types.Char] x wild1 of wild2 {
-                                       [] -> Parser.parseDRealSat7
-                                       : x1 ds3
-                                       -> case ds3 of wild3 {
-                                            [] -> Parser.parseDRealSat7
-                                            : ipv2 ipv3
-                                            -> Parser.parseDRealSat_go1
-                                                 (GHC.List.init1
-                                                    @ [GHC.Types.Char]
-                                                    x1
-                                                    wild3) } } } }))
-                       (case (Text.Parsec.Prim.runPT
-                                @ GHC.Base.String
-                                @ Data.Functor.Identity.Identity
-                                @ GHC.Types.Char
-                                @ ()
-                                @ Parser.Response
-                                (Parser.$s$fStream[]mtok @ GHC.Types.Char)
-                                Parser.parseDRealSat4
-                                  `cast`
-                                (Sym (Text.Parsec.Prim.N:ParsecT[0]
-                                          <[GHC.Types.Char]>_R
-                                          <()>_R
-                                          <Data.Functor.Identity.Identity>_R
-                                          <Parser.Response>_R))
-                                GHC.Tuple.()
-                                (GHC.Types.[] @ GHC.Types.Char)
-                                (case ds of wild {
-                                   [] -> GHC.Types.[] @ GHC.Types.Char
-                                   : x ds2
-                                   -> case ds2 of wild1 {
-                                        [] -> GHC.Types.[] @ GHC.Types.Char
-                                        : ipv ipv1
-                                        -> case GHC.List.init1 @ [GHC.Types.Char] x wild1 of wild2 {
-                                             [] -> GHC.Types.[] @ GHC.Types.Char
-                                             : x1 ds3
-                                             -> case ds3 of wild3 {
-                                                  [] -> GHC.Types.[] @ GHC.Types.Char
-                                                  : ipv2 ipv3
-                                                  -> Parser.parseDRealSat_go
-                                                       (GHC.List.init1
-                                                          @ [GHC.Types.Char]
-                                                          x1
-                                                          wild3) } } } }))
+                     case (Text.Parsec.Prim.runPT
+                             @ GHC.Base.String
+                             @ Data.Functor.Identity.Identity
+                             @ GHC.Types.Char
+                             @ ()
+                             @ Parser.Response
+                             (Parser.$s$fStream[]mtok @ GHC.Types.Char)
+                             Parser.parseDRealSat4
                                `cast`
-                             (Data.Functor.Identity.N:Identity[0]
-                                  <Data.Either.Either
-                                     Text.Parsec.Error.ParseError Parser.Response>_R) of wild {
-                          Data.Either.Left err -> Parser.parseDRealSat3 err
-                          Data.Either.Right v -> v })
+                             (Sym (Text.Parsec.Prim.N:ParsecT[0]
+                                       <[GHC.Types.Char]>_R
+                                       <()>_R
+                                       <Data.Functor.Identity.Identity>_R
+                                       <Parser.Response>_R))
+                             GHC.Tuple.()
+                             (GHC.Types.[] @ GHC.Types.Char)
+                             (case ds of wild {
+                                [] -> GHC.Types.[] @ GHC.Types.Char
+                                : x ds2
+                                -> case ds2 of wild1 {
+                                     [] -> GHC.Types.[] @ GHC.Types.Char
+                                     : ipv ipv1
+                                     -> case GHC.List.init1 @ [GHC.Types.Char] x wild1 of wild2 {
+                                          [] -> GHC.Types.[] @ GHC.Types.Char
+                                          : x1 ds3
+                                          -> case ds3 of wild3 {
+                                               [] -> GHC.Types.[] @ GHC.Types.Char
+                                               : ipv2 ipv3
+                                               -> Parser.parseDRealSat_go
+                                                    (GHC.List.init1
+                                                       @ [GHC.Types.Char]
+                                                       x1
+                                                       wild3) } } } }))
+                            `cast`
+                          (Data.Functor.Identity.N:Identity[0]
+                               <Data.Either.Either
+                                  Text.Parsec.Error.ParseError Parser.Response>_R) of wild {
+                       Data.Either.Left err -> Parser.parseDRealSat3 err
+                       Data.Either.Right v -> v }
                  } in
                  case ds of wild {
                    [] -> fail GHC.Prim.void#
@@ -933,26 +911,18 @@ d87799a646a2cd1f1ac551685870ed55
                    cerr
                    (\ (x :: Parser.Response) -> eok (\ (ds :: ()) -> x))
                    eerr) -}
-86293869da0b84e0a39c328c3c467436
-  parseDRealSat7 :: [GHC.Types.Char]
-  {- Unfolding: (GHC.CString.unpackCString#
-                   "\n\
-                   \\n"#) -}
-ff738ca44e66e1a37c911df99567cd3a
-  parseDRealSat8 :: [GHC.Types.Char] -> [[GHC.Types.Char]]
+27bdbfa0217f0f2cc8516a09333a8850
+  parseDRealSat7 :: [GHC.Types.Char] -> [[GHC.Types.Char]]
   {- Unfolding: (Data.List.Split.Internals.splitOn
                    @ GHC.Types.Char
                    GHC.Classes.$fEqChar
-                   Parser.parseDRealSat9) -}
-f83563e666803faa910c34f8cb93fe27
-  parseDRealSat9 :: [GHC.Types.Char]
+                   Parser.parseDRealSat8) -}
+0be23a4e14b3052b19d2cb0b21b6b766
+  parseDRealSat8 :: [GHC.Types.Char]
   {- Unfolding: (GHC.CString.unpackCString# "\n"#) -}
 e6537748de99a1e1c334594edbd59f0e
   parseDRealSat_go :: [[GHC.Types.Char]] -> [GHC.Types.Char]
   {- Arity: 1, HasNoCafRefs, Strictness: <S,1*U> -}
-206092182e71feea8633e6dc894031f3
-  parseDRealSat_go1 :: [[GHC.Types.Char]] -> [GHC.Types.Char]
-  {- Arity: 1, Strictness: <S,1*U> -}
 a78d95462e99d73d790a8b53acf692f1
   parseDRealVar :: Text.Parsec.String.Parser Parser.Assignment
   {- Arity: 5,
