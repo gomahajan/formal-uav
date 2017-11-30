@@ -7,6 +7,8 @@ import Debug.Trace
 import Control.Monad.Except
 import System.IO
 import Numeric
+import Data.List.Split (splitOn)
+
 import Logic
 
 
@@ -17,16 +19,19 @@ data Response = Response String [Assignment] deriving (Show)
 --Clears whitespace
 whitespace = void . many $ oneOf " \t\n"
 
+nonWhitespace = many $ noneOf " \t\n"
+
 parseDRealVar :: Parser Assignment
 parseDRealVar = do
-  s <- many1 (letter <|> digit)
+  s <- nonWhitespace
   whitespace
   string ": [ ENTIRE ] = ["
   whitespace
-  x <- parseDouble
+  x <- parseInt <|> parseDouble
   char ','
   whitespace
-  y <- parseDouble
+  y <- parseInt <|> parseDouble
+  char ']'
   whitespace
   return (s, x) -- TODO: be smarter about which val to return
 
@@ -43,6 +48,11 @@ parseVar = do
   whitespace
   return (s, x)
 
+parseInt :: Parser Double -- still represented as a double lol
+parseInt = do
+  x <- many1 digit
+  return $ fst . head $ readFloat x
+
 parseDouble :: Parser Double
 parseDouble = do
   x <- many1 digit
@@ -53,6 +63,7 @@ parseDouble = do
 parseDRealResponse :: Parser Response
 parseDRealResponse = do
   s <- many1 letter
+  char ':'
   whitespace
   vs <- many parseDRealVar
   return $ Response s vs
@@ -64,7 +75,20 @@ parseResponse = do
   vs <- many parseVar
   return $ Response s vs
 
+-- For Z3
 parseSat :: String -> Response
-parseSat s = case parse (parseDRealResponse <* eof) "" s of
+parseSat s = case parse (parseResponse <* eof) "" s of
   Left err -> error $ show $ Parser err
   Right v -> v
+
+parseDRealSat :: String -> Response
+parseDRealSat s = case splitOn "\n" s of
+  ("unsat"):_ -> Response "unsat" []
+  strs -> case parse (parseDRealResponse <* eof) "" (join (rmLast (rmLast strs))) of
+      Left err -> error $ show $ Parser err
+      Right v -> v
+
+rmLast::[a]->[a]
+rmLast [] = []
+rmLast [x] = []
+rmLast xs = init xs

@@ -57,7 +57,7 @@
 (assert (>= x2 0))
 (assert (>= x3 0))
 
-(assert (and (>= bi 100.0) (<= qi 0.0)))
+(assert (or (and (>= bi 97.0) (<= qi 1.0)) (or (and (>= bi 97.0) (<= qi 1.0)) (or (and (>= bi 97.0) (<= qi 1.0)) (or (and (>= bi 97.0) (<= qi 1.0)) (or (and (>= bi 97.0) (<= qi 1.0)) (or (and (>= bi 97.0) (<= qi 1.0)) (or (and (>= bi 97.0) (<= qi 1.0)) (or (and (>= bi 97.0) (<= qi 1.0)) (or (and (>= bi 97.0) (<= qi 1.0)) (or (and (>= bi 97.0) (<= qi 1.0)) (and (>= bi 100.0) (<= qi 0.0)))))))))))))
 ;charging
 (assert(= x0 0))
 (assert(= b0 (+ bi (* battery_charging_rate t0))))
@@ -87,6 +87,6 @@
 (assert(= b3 (- b2 (* battery_discharge_rate t3))))
 
 ;goal
-(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (and (>= b3 100.0) (<= q3 0.0)))))
+(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (or (and (>= b3 97.0) (<= q3 1.0)) (or (and (>= b3 97.0) (<= q3 1.0)) (or (and (>= b3 97.0) (<= q3 1.0)) (or (and (>= b3 97.0) (<= q3 1.0)) (or (and (>= b3 97.0) (<= q3 1.0)) (or (and (>= b3 97.0) (<= q3 1.0)) (or (and (>= b3 97.0) (<= q3 1.0)) (or (and (>= b3 97.0) (<= q3 1.0)) (or (and (>= b3 97.0) (<= q3 1.0)) (or (and (>= b3 97.0) (<= q3 1.0)) (and (>= b3 100.0) (<= q3 0.0)))))))))))))))
 (check-sat)
 (exit)

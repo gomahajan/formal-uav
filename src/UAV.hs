@@ -28,12 +28,13 @@ checkConstraint tmpf outf p = do
 
 {- Adds the counterexample and its implied space to the constraints -}
 updateConstraint :: (Double, Double) -> Pred -> Pred
-updateConstraint (b,q) = Or (And (Expr $ EBin Geq (EVar "B") (ERealLit b)) (Expr $ EBin Leq (EVar "Q") (ERealLit q)))
+updateConstraint (b,q) = Or (And (Expr $ EBin Geq (EVar "b") (ERealLit b)) (Expr $ EBin Leq (EVar "q") (ERealLit q)))
 
 {- Tries to find the safe invariant in given integral steps -}
 genInvt :: String -> String -> Int -> Pred -> IO (Maybe (Pred, Bool))
 genInvt tf cf n constraint = do
     c <- checkConstraint tf cf constraint
+    --putStrLn tf
     let pr = case n of
           0 -> return $ Just (constraint, False)
           n -> case c of
@@ -43,10 +44,7 @@ genInvt tf cf n constraint = do
 
 -- Read solver response
 read :: String -> IO Response
-read src = do
-  resp <- readFile src
-  --putStr $ show resp
-  return $ parseSat resp
+read src = return $ parseDRealSat src
 
 
 -- Extract Counterexample from solver response
@@ -62,7 +60,6 @@ getCX s1 s2 (Response r vs) = case lookup s1 vs of
 addConstraints :: String -> String -> String -> String -> IO ()
 addConstraints templateFile completeFile constraintI constraintG = do
   --s <- readFile "uav_dreal.smt2"
-  putStrLn completeFile
   s <- readFile templateFile
   let s_i = replace "constraintI" constraintI s
   let s_i_g  = replace "constraintG" constraintG s_i
@@ -81,7 +78,7 @@ main = do
       initp = And (Expr (EBin Geq (EVar "b") (ERealLit 100))) (Expr (EBin Leq (EVar "q") (ERealLit 0)))
   p <- genInvt tmpf cmpf iters initp
   case p of
-    Nothing -> putStr "Nothing"
-    Just pr -> putStr $ case pr of
+    Nothing -> putStrLn "Nothing"
+    Just pr -> putStrLn $ case pr of
       (_, False) -> "The given system is unverifiable in " ++ show iters ++ " iterations"
       (p, True)  -> "The given system is provably safe with the following loop invariant: " ++ printConstraint' p
