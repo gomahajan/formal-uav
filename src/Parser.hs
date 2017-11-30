@@ -27,10 +27,10 @@ parseDRealVar = do
   whitespace
   string ": [ ENTIRE ] = ["
   whitespace
-  x <- parseInt <|> parseDouble
+  x <- try parseDouble <|> parseInt
   char ','
   whitespace
-  y <- parseInt <|> parseDouble
+  y <- try parseDouble <|> parseInt
   char ']'
   whitespace
   return (s, x) -- TODO: be smarter about which val to return
@@ -84,7 +84,7 @@ parseSat s = case parse (parseResponse <* eof) "" s of
 parseDRealSat :: String -> Response
 parseDRealSat s = case splitOn "\n" s of
   ("unsat"):_ -> Response "unsat" []
-  strs -> case parse (parseDRealResponse <* eof) "" (join (rmLast (rmLast strs))) of
+  strs -> trace ("\n\n" ++ (join (rmLast (rmLast strs))) ++ "\n\n") $ case parse (parseDRealResponse <* eof) "" (join (rmLast (rmLast strs))) of
       Left err -> error $ show $ Parser err
       Right v -> v
 

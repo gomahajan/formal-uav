@@ -33,6 +33,7 @@ updateConstraint (b,q) = Or (And (Expr $ EBin Geq (EVar "b") (ERealLit b)) (Expr
 {- Tries to find the safe invariant in given integral steps -}
 genInvt :: String -> String -> Int -> Pred -> IO (Maybe (Pred, Bool))
 genInvt tf cf n constraint = do
+    putStrLn $ "ITER: " ++ (show n)
     c <- checkConstraint tf cf constraint
     --putStrLn tf
     let pr = case n of
@@ -75,7 +76,7 @@ main = do
               (y:ys) -> (x, Prelude.read y)
       tmpf = filename ++ "_template.smt2"
       cmpf = filename ++ "_complete.smt2"
-      initp = And (Expr (EBin Geq (EVar "b") (ERealLit 100))) (Expr (EBin Leq (EVar "q") (ERealLit 0)))
+      initp = And (Expr (EBin Geq (EVar "b") (ERealLit 20))) (Expr (EBin Leq (EVar "q") (ERealLit 4)))
   p <- genInvt tmpf cmpf iters initp
   case p of
     Nothing -> putStrLn "Nothing"
