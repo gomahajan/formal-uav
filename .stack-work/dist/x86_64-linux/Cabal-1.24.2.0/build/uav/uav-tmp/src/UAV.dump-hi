@@ -1,10 +1,10 @@
 
 ==================== FINAL INTERFACE ====================
-2017-11-29 21:58:14.695592 UTC
+2017-11-29 23:16:32.598115 UTC
 
 interface main@main:Main 8002
-  interface hash: 61bc45be0e764f3843ef1ca19cdbd0a2
-  ABI hash: cf51d284540bac8a57079501089463b3
+  interface hash: 70717b9c0b03c64d0fa2c576a75aec41
+  ABI hash: 30e6d90715e5e5c98cc324f4805f537f
   export-list hash: 7e8a521de3c550bc12b10ba97ec056e4
   orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
   flag hash: 4b8bf3c143fb4982e2ee7c8b02cff46c
@@ -92,9 +92,9 @@ import  -/  Parser 28727d4bdef779ad2f5547a15de14eaf
 import  -/  Pretty add402bc527ff8955b8855f44302e4d5
   exports: 04dc4433aa6cf98e7f237471f4e68c83
   printConstraint' 14bfc17c8af24bfd71a32eb0d6d67404
-import  -/  SMTSolver a71a80f3de2c51d4512dfdb6c306cb4e
+import  -/  SMTSolver e851287304c6daab7bac51d1414065d5
   exports: 46376429425e293dd16408746b0551de
-  run d1aef652dbfbb6bbea3551c4d149d429
+  run 471127a6d60c68d5ecedfec64cbdc976
 d6831ef04cb9301b090dfae6f7bb7ec7
   $trModule :: GHC.Types.Module
   {- HasNoCafRefs, Strictness: m,
@@ -142,7 +142,7 @@ cb47fb6545b61bd5ad63485ad72e694d
                              -> GHC.Base.Just
                                   @ (GHC.Types.Double, GHC.Types.Double)
                                   (x, y) } } }) -}
-4460a65b988e472ec3e0662ed3e20421
+d8382f3cb82a58f2603898e940df6fb9
   addConstraints ::
     GHC.Base.String
     -> GHC.Base.String
@@ -158,7 +158,7 @@ cb47fb6545b61bd5ad63485ad72e694d
                  ->_R <GHC.Base.String>_R
                  ->_R <GHC.Base.String>_R
                  ->_R Sym (GHC.Types.N:IO[0] <()>_R)) -}
-d75a89e554a683370774ae32b73effa8
+577507573783cf2bb23d7e6c243d5e42
   addConstraints1 ::
     GHC.Base.String
     -> GHC.Base.String
@@ -172,13 +172,18 @@ d75a89e554a683370774ae32b73effa8
                    (constraintI :: GHC.Base.String)
                    (constraintG :: GHC.Base.String)
                    (eta :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+                 case GHC.IO.Handle.Text.hPutStr2
+                        GHC.IO.Handle.FD.stdout
+                        completeFile
+                        GHC.Types.True
+                        eta of ds1 { (#,#) ipv ipv1 ->
                  case GHC.IO.Handle.FD.openFile1
                         templateFile
                         GHC.IO.IOMode.ReadMode
-                        eta of ds1 { (#,#) ipv ipv1 ->
-                 case GHC.IO.Handle.Text.hGetContents1
-                        ipv1
                         ipv of ds2 { (#,#) ipv2 ipv3 ->
+                 case GHC.IO.Handle.Text.hGetContents1
+                        ipv3
+                        ipv2 of ds3 { (#,#) ipv4 ipv5 ->
                  System.IO.writeFile1
                    completeFile
                    (case Data.List.Utils.split
@@ -190,7 +195,7 @@ d75a89e554a683370774ae32b73effa8
                               GHC.Classes.$fEqChar
                               Main.addConstraints2
                               constraintI
-                              ipv3) of wild {
+                              ipv5) of wild {
                       [] -> GHC.Types.[] @ GHC.Types.Char
                       : x xs
                       -> Data.List.Utils.replace1
@@ -199,14 +204,14 @@ d75a89e554a683370774ae32b73effa8
                               @ [GHC.Types.Char]
                               x
                               (Data.OldList.prependToAll @ [GHC.Types.Char] constraintG xs)) })
-                   ipv2 } }) -}
+                   ipv4 } } }) -}
 de12425ef325f12d1d19d2290d633888
   addConstraints2 :: [GHC.Types.Char]
   {- Unfolding: (GHC.CString.unpackCString# "constraintI"#) -}
 b482921ce3e8d399d57ed3c93b600e6d
   addConstraints3 :: [GHC.Types.Char]
   {- Unfolding: (GHC.CString.unpackCString# "constraintG"#) -}
-e900bb214e0cd279190aebdf1e43ec95
+c8036595c6aa3a3a5fd23c98da409f31
   checkConstraint ::
     GHC.Base.String
     -> GHC.Base.String
@@ -222,7 +227,7 @@ e900bb214e0cd279190aebdf1e43ec95
                  ->_R <Logic.Pred>_R
                  ->_R Sym (GHC.Types.N:IO[0]
                                <GHC.Base.Maybe (GHC.Types.Double, GHC.Types.Double)>_R)) -}
-adde222f55829978781b8fc3fcf2cbb2
+8c6958f37930abc7a093cc08693ba480
   checkConstraint1 ::
     GHC.Base.String
     -> GHC.Base.String
@@ -284,7 +289,7 @@ adde222f55829978781b8fc3fcf2cbb2
                                       Main.checkConstraint2
                                       xs)) })
                         eta of ds1 { (#,#) ipv ipv1 ->
-                 case SMTSolver.run1 ipv of ds2 { (#,#) ipv2 ipv3 ->
+                 case SMTSolver.run1 outf ipv of ds2 { (#,#) ipv2 ipv3 ->
                  case GHC.IO.Handle.FD.openFile1
                         ipv3
                         GHC.IO.IOMode.ReadMode

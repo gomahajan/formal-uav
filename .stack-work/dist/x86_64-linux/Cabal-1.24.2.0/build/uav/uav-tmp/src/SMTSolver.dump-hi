@@ -1,10 +1,10 @@
 
 ==================== FINAL INTERFACE ====================
-2017-11-29 21:34:29.703613 UTC
+2017-11-29 23:14:28.376229 UTC
 
 interface main@main:SMTSolver 8002
-  interface hash: 39539c4bc223e99085364b8555d8d562
-  ABI hash: a71a80f3de2c51d4512dfdb6c306cb4e
+  interface hash: f202da31c1b293ded93e647f6c725802
+  ABI hash: e851287304c6daab7bac51d1414065d5
   export-list hash: 46376429425e293dd16408746b0551de
   orphan hash: 693e9af84d3dfcc71e640e005bdc5e2e
   flag hash: 5be978caf3232cebf80dca9aa250bb47
@@ -54,22 +54,28 @@ aac699f4de726ba496a9e0c0826190b2
     GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, GHC.Base.String #)
   {- Arity: 1, Strictness: <B,U>x, Inline: [0] -}
-d1aef652dbfbb6bbea3551c4d149d429
-  run :: GHC.Types.IO GHC.Base.String
-  {- Arity: 1, Strictness: <S,U>,
+471127a6d60c68d5ecedfec64cbdc976
+  run :: GHC.Base.String -> GHC.Types.IO GHC.Base.String
+  {- Arity: 2, Strictness: <L,1*U><S,U>,
      Unfolding: InlineRule (0, True, True)
                 SMTSolver.run1
                   `cast`
-                (Sym (GHC.Types.N:IO[0] <GHC.Base.String>_R)) -}
-200863b7fad4d67982563069c90e46c0
+                (<GHC.Base.String>_R
+                 ->_R Sym (GHC.Types.N:IO[0] <GHC.Base.String>_R)) -}
+8753f4afc78f629093aac3760c661d5f
   run1 ::
-    GHC.Prim.State# GHC.Prim.RealWorld
+    GHC.Base.String
+    -> GHC.Prim.State# GHC.Prim.RealWorld
     -> (# GHC.Prim.State# GHC.Prim.RealWorld, GHC.Base.String #)
-  {- Arity: 1, Strictness: <S,U>,
-     Unfolding: (\ (s :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
+  {- Arity: 2, Strictness: <L,1*U><S,U>,
+     Unfolding: (\ (f :: GHC.Base.String)
+                   (s :: GHC.Prim.State# GHC.Prim.RealWorld)[OneShot] ->
                  case System.Process.Posix.$wcreateProcess_Internal
                         System.Process.createProcess3
-                        SMTSolver.run2
+                        (System.Process.Common.ShellCommand
+                           (GHC.CString.unpackAppendCString#
+                              "./dReal/bin/dReal "#
+                              (GHC.Base.++ @ GHC.Types.Char f SMTSolver.run2)))
                         (GHC.Base.Nothing @ GHC.IO.FilePath)
                         (GHC.Base.Nothing @ [(GHC.Base.String, GHC.Base.String)])
                         System.Process.Common.Inherit
@@ -109,14 +115,9 @@ d1aef652dbfbb6bbea3551c4d149d429
                                 GHC.IO.Handle.Text.hGetContents1 out ipv11 } }
                              GHC.Base.Just ipv11 -> SMTSolver.$wfail ipv6 } }
                    GHC.Base.Just ipv11 -> SMTSolver.$wfail ipv6 } } } } } }) -}
-13d821a2f2ee79daa9b437398966248f
-  run2 :: System.Process.Common.CmdSpec
-  {- Unfolding: (System.Process.Common.ShellCommand
-                   SMTSolver.run3) -}
-49d5c9bb25d40acd53203cb2c4469df2
-  run3 :: [GHC.Types.Char]
-  {- Unfolding: (GHC.CString.unpackCString#
-                   "./dReal/bin/dReal uav_dreal_complete.smt2 --model"#) -}
+acbf861e01ea5cb17631ab09a56595d2
+  run2 :: [GHC.Types.Char]
+  {- Unfolding: (GHC.CString.unpackCString# " --model"#) -}
 vectorised variables:
 vectorised tycons:
 vectorised reused tycons:

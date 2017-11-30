@@ -22,7 +22,7 @@ checkConstraint tmpf outf p = do
       constraint_i = replace "q" "qi" (replace "b" "bi" constraint)
       constraint_g = replace "q" "q3" (replace "b" "b3" constraint)
   addConstraints tmpf outf constraint_i constraint_g
-  output <- run
+  output <- run outf
   resp <- Main.read output
   return $ getCX "b3" "q3" resp
 
@@ -62,6 +62,7 @@ getCX s1 s2 (Response r vs) = case lookup s1 vs of
 addConstraints :: String -> String -> String -> String -> IO ()
 addConstraints templateFile completeFile constraintI constraintG = do
   --s <- readFile "uav_dreal.smt2"
+  putStrLn completeFile
   s <- readFile templateFile
   let s_i = replace "constraintI" constraintI s
   let s_i_g  = replace "constraintG" constraintG s_i
@@ -77,7 +78,7 @@ main = do
               (y:ys) -> (x, Prelude.read y)
       tmpf = filename ++ "_template.smt2"
       cmpf = filename ++ "_complete.smt2"
-      initp = And (Expr (EBin Geq (EVar "bi") (ERealLit 100))) (Expr (EBin Leq (EVar "qi") (ERealLit 0)))
+      initp = And (Expr (EBin Geq (EVar "b") (ERealLit 100))) (Expr (EBin Leq (EVar "q") (ERealLit 0)))
   p <- genInvt tmpf cmpf iters initp
   case p of
     Nothing -> putStr "Nothing"
