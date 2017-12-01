@@ -46,7 +46,9 @@ data Params = Params {
 {- Algorithm: We ask dReal the following question: Starting from region specified by constraints,
 is it possible to end in a state not specified by the constraints?
 If dReal says no, then we have found a region which is safe/stable wrt battery and queue size.
-Otherwise, we add the counterexample and its implied space to the constraints.
+
+Otherwise, it gives us counterexample bi,qi. We ask another question to dReal, starting from bi,qi
+and other examples, find parameters for invariant and program which work. And this continues.
 -}
 checkConstraint :: Params -> IO (Maybe (Double, Double))
 checkConstraint p = do
