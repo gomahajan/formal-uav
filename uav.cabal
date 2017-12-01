@@ -33,6 +33,7 @@ executable uav
                        , mtl
                        , MissingH
                        , split
+                       , cmdargs
 
   default-language:    Haskell2010
   If !flag(uav)

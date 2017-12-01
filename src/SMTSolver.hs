@@ -4,9 +4,9 @@ import System.IO
 import System.Exit
 import System.Process
 
-run :: String -> IO String
-run f = do
-    let p = (shell ("./dReal/bin/dReal " ++ f ++ " --model --precision 1"))
+run :: String -> Double -> IO String
+run f delta = do
+    let p = (shell ("./dReal/bin/dReal " ++ f ++ " --model --precision " ++ show delta))
             { std_in  = Inherit
             , std_out = CreatePipe
             , std_err = Inherit

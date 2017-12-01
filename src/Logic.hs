@@ -11,7 +11,7 @@ type Counterexample = (Double, Double)
 -- Environment
 type Env = Map String Exp
 
-data SpVar = B | Q
+data SpVar = B | Q deriving (Eq, Show)
 
 data Val where
   VLit  :: String -> Val -- Special variable (b, q, etc)
@@ -80,7 +80,7 @@ data Pred = Lit Bool
   | And Pred Pred
   | Or Pred Pred
   | Not Pred
-  deriving (Show)
+  deriving (Eq, Show)
 
 -- Checks that predicate is well formed (ie all terms are booleans)
 checkPred :: Env -> Pred -> Bool
@@ -96,6 +96,6 @@ data Exception = NumArgs Integer [Val]
                | TypeMismatch String Val
                | Parser ParseError
                | BadSpecialForm String Val
-               deriving (Show)
+               deriving (Eq, Show)
 
 type ThrowsError = Either Exception
