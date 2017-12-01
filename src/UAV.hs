@@ -50,6 +50,14 @@ If dReal says no, then we have found a region which is safe/stable wrt battery a
 Otherwise, it gives us counterexample bi,qi. We ask another question to dReal, starting from bi,qi
 and other examples, find parameters for invariant and program which work. And this continues.
 -}
+
+-- build constraintI, constraintG using (or constraint (and (>= bi p0) (<= qi p1)))
+-- add parameter p2,p3
+-- run dreal, ask for counter example from uav_dreal_template.smt2
+-- using counterexample, build b (or currentbs (= bi c)) 
+-- using counterexample, build q (or currentqs (= qi c))
+-- run dreal, ask for ps which work, and continue
+
 checkConstraint :: Params -> IO (Maybe (Double, Double))
 checkConstraint p = do
   let constr = printConstraint' (constraint p)
