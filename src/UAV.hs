@@ -18,6 +18,9 @@ versionName = "0.0"
 
 {- Command Line Args -}
 
+
+{-# ANN module "HLint: ignore Use camelCase" #-}
+
 data CommandLineArgs = Args {
   smt_file :: String, -- file prefix
   depth :: Int,
@@ -39,7 +42,9 @@ data Params = Params {
   templateFile :: String,
   iterations :: Int,
   synthesisPrecision :: Double,
-  solverPrecision :: Double
+  solverPrecision :: Double,
+  bcxs :: [Double],
+  qcxs :: [Double]
 } deriving (Show, Eq)
 
 
@@ -61,19 +66,29 @@ checkConstraint p = do
 {- Adds the counterexample and its implied space to the constraints -}
 updateConstraint :: (Double, Double) -> Pred -> Pred
 --updateConstraint (b,q) = Or (And (Expr $ EBin Geq (EVar "b") (ERealLit b)) (Expr $ EBin Leq (EVar "q") (ERealLit q)))
-updateConstraint (b,q) _ = And (Expr $ EBin Eq (EVar "b") (ERealLit b)) (Expr $ EBin Eq (EVar "q") (ERealLit q))
+updateConstraint (b,q) _ = And [Expr $ EBin Eq (EVar "b") (ERealLit b), Expr $ EBin Eq (EVar "q") (ERealLit q)]
+
+makeEqPred :: String -> Double -> Pred
+makeEqPred s v = Expr $ EBin Eq (EVar s) (ERealLit v)
+
+generateVarConstraints :: String -> [Double] -> Maybe Pred
+generateVarConstraints s []  = Nothing
+generateVarConstraints s [v] = Just $ makeEqPred s v
+generateVarConstraints s vs  = Just $ Or (map (makeEqPred s) vs)
 
 {- Tries to find the safe invariant in given integral steps -}
 genInvt :: Params -> IO (Maybe (Pred, Bool))
 genInvt p = do
     c <- checkConstraint p
     --putStrLn tf
-    let n = iterations p
+    let bs = bcxs p
+        qs = qcxs p
+        n = iterations p
         pr = case n of
           0 -> return $ Just (constraint p, False)
           n -> case c of
             Nothing -> return $ Just (constraint p, True)
-            Just cx -> trace (show cx) $ genInvt p{ iterations = n - 1, constraint = updateConstraint cx (constraint p) }
+            Just cx -> trace (show cx) $ genInvt p{ iterations = n - 1, constraint = updateConstraint cx (constraint p), bcxs = fst cx : bs, qcxs = snd cx : qs }
     pr
 
 -- Read solver response
@@ -123,14 +138,16 @@ main = do
     (Args file iters precision delta) -> do
       let tmpf = file ++ "_template.smt2"
           cmpf = file ++ "_complete.smt2"
-          initp = And (Expr (EBin Geq (EVar "b") (ERealLit 100))) (Expr (EBin Leq (EVar "q") (ERealLit 20)))
+          initp = And [Expr (EBin Geq (EVar "b") (ERealLit 100)), Expr (EBin Leq (EVar "q") (ERealLit 20))]
           synthesisParams = Params {
             constraint = initp,
             completeFile = cmpf,
             templateFile = tmpf,
             iterations = iters,
             synthesisPrecision = precision,
-            solverPrecision = delta
+            solverPrecision = delta,
+            bcxs = [],
+            qcxs = []
           }
       p <- genInvt synthesisParams
       case p of
