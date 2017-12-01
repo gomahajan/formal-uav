@@ -21,16 +21,19 @@ whitespace = void . many $ oneOf " \t\n"
 
 nonWhitespace = many $ noneOf " \t\n"
 
+-- Various number formats
+parseNum = try parseSci <|> try parseDouble <|> parseInt
+
 parseDRealVar :: Parser Assignment
 parseDRealVar = do
   s <- nonWhitespace
   whitespace
   string ": [ ENTIRE ] = ["
   whitespace
-  x <- try parseDouble <|> parseInt
+  x <- parseNum
   char ','
   whitespace
-  y <- try parseDouble <|> parseInt
+  y <- parseNum
   char ']'
   whitespace
   return (s, x) -- TODO: be smarter about which val to return
@@ -59,6 +62,18 @@ parseDouble = do
   char '.'
   y <- many1 digit
   return $ fst . head $ readFloat (x ++ "." ++ y)
+
+-- Parser for doubles in scientific notation
+parseSci :: Parser Double
+parseSci = do
+  base <- parseDouble
+  char 'e'
+  ms <- many $ char '-'
+  ex <- many1 digit
+  let pwr = read ex
+  return $ case ms of
+    [] -> base * (10 ^ pwr)
+    _ -> base / (10 ^ pwr)
 
 parseDRealResponse :: Parser Response
 parseDRealResponse = do
