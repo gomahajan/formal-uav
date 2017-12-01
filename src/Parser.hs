@@ -88,7 +88,7 @@ parseDRealSat s = case splitOn "\n" s of
       Left err -> error $ show $ Parser err
       Right v -> v
 
-rmLast::[a]->[a]
+rmLast :: [a] -> [a]
 rmLast [] = []
 rmLast [x] = []
 rmLast xs = init xs

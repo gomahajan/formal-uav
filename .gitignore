@@ -8,6 +8,7 @@
 *.so
 *.hi
 *.model
+.stack-work/*
 UAV
 
 # Packages #

@@ -22,7 +22,6 @@ printE (ERealLit x)    = show x
 printE (EUOp op e)     = "(" ++ printUOp op ++ " " ++ printE e ++ ")"
 printE (EBin op e1 e2) = "(" ++ printBOp op ++ " " ++ printE e1 ++ " " ++ printE e2 ++ ")"
 printE (EIf g e1 e2)   = "(ite " ++ printE g ++ " " ++ printE e2 ++ " " ++ printE e2 ++ ")"
-printE (EParens e)     = printE e
 printE (EVar s)        = s
 
 printUOp :: UnOp -> String

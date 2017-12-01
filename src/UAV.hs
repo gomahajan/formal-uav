@@ -3,6 +3,7 @@ module Main where
 import System.IO
 import Data.String.Utils
 import System.Environment
+import Debug.Trace
 
 import Logic
 import Parser
@@ -28,7 +29,8 @@ checkConstraint tmpf outf p = do
 
 {- Adds the counterexample and its implied space to the constraints -}
 updateConstraint :: (Double, Double) -> Pred -> Pred
-updateConstraint (b,q) = Or (And (Expr $ EBin Geq (EVar "b") (ERealLit b)) (Expr $ EBin Leq (EVar "q") (ERealLit q)))
+--updateConstraint (b,q) = Or (And (Expr $ EBin Geq (EVar "b") (ERealLit b)) (Expr $ EBin Leq (EVar "q") (ERealLit q)))
+updateConstraint (b,q) _ = And (Expr $ EBin Eq (EVar "b") (ERealLit b)) (Expr $ EBin Eq (EVar "q") (ERealLit q))
 
 {- Tries to find the safe invariant in given integral steps -}
 genInvt :: String -> String -> Int -> Pred -> IO (Maybe (Pred, Bool))
@@ -39,7 +41,7 @@ genInvt tf cf n constraint = do
           0 -> return $ Just (constraint, False)
           n -> case c of
             Nothing -> return $ Just (constraint, True)
-            Just cx -> genInvt tf cf (n-1) (updateConstraint cx constraint)
+            Just cx -> trace (show cx) $ genInvt tf cf (n-1) (updateConstraint cx constraint)
     pr
 
 -- Read solver response
@@ -54,7 +56,15 @@ getCX s1 s2 (Response r vs) = case lookup s1 vs of
   Nothing -> Nothing
   Just x -> case lookup s2 vs of
     Nothing -> Nothing
-    Just y -> Just (x,y)
+    Just y -> Just $ adjustCX x y
+
+adjustCX :: Double -> Double -> (Double, Double)
+adjustCX x y = (fromIntegral (round (x * 10)) / 10.0, fromIntegral (round (y * 10)) / 10.0)
+  {-case (mod (truncate (x * 10)) 10, mod (truncate (y * 10)) 10) of
+  (0, 0) -> (round x, round y)
+  (0, _) -> (round x, y)
+  (_, 0) -> (x, round y)
+  _      -> (x, y) -}
 
 -- Create SMT with new constraints. Also overwrites if it already exists --
 addConstraints :: String -> String -> String -> String -> IO ()
@@ -64,6 +74,9 @@ addConstraints templateFile completeFile constraintI constraintG = do
   let s_i = replace "constraintI" constraintI s
   let s_i_g  = replace "constraintG" constraintG s_i
   writeFile completeFile s_i_g
+
+--roundn :: Num a => Int -> a -> a
+--roundn n x = (fromInteger $ round $ x * (10^n)) / (10.0^^n)
 
 main :: IO ()
 main = do
@@ -75,7 +88,7 @@ main = do
               (y:ys) -> (x, Prelude.read y)
       tmpf = filename ++ "_template.smt2"
       cmpf = filename ++ "_complete.smt2"
-      initp = And (Expr (EBin Geq (EVar "b") (ERealLit 20))) (Expr (EBin Leq (EVar "q") (ERealLit 4)))
+      initp = And (Expr (EBin Geq (EVar "b") (ERealLit 100))) (Expr (EBin Leq (EVar "q") (ERealLit 20)))
   p <- genInvt tmpf cmpf iters initp
   case p of
     Nothing -> putStrLn "Nothing"

@@ -6,7 +6,7 @@ import System.Process
 
 run :: String -> IO String
 run f = do
-    let p = (shell ("./dReal/bin/dReal " ++ f ++ " --model"))
+    let p = (shell ("./dReal/bin/dReal " ++ f ++ " --model --precision 1"))
             { std_in  = Inherit
             , std_out = CreatePipe
             , std_err = Inherit
