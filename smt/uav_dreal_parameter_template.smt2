@@ -64,13 +64,11 @@
 (assert (>= x3 0))
 
 ;template
-parametervalues
-;sample (assert (= p0 1))
-;sample (assert (= p1 1))
-;sample (assert (= p2 1))
-;sample (assert (= p3 1))
+;sample (assert (or (= bi 1) (= bi 2) (= bi 3))
+;sample (assert (or (= qi 1) (= qi 2) (= qi 3))
+batteryvalues
 
-;Question: Does there exist starting battery,queue values such that safety is not maintained
+;Question: Does there exist parameters such that starting from either of the battery,queue values, safety is maintained
 (assert constraintI)
 ;charging
 (assert(= x0 0))
@@ -101,6 +99,6 @@ parametervalues
 (assert(= b3 (- b2 (* battery_discharge_rate t3))))
 
 ;goal
-(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not constraintG)))
+(assert (and (>= b0 0) (>= b1 0) (>= b2 0) (>= b3 0) (<= q0 100) (<= q1 100) (<= q2 100) (<= q3 100) constraintG))
 (check-sat)
 (exit)
