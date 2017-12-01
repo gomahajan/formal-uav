@@ -1,6 +1,6 @@
 # Reactive UAV control
 
-Dafny and Dreach scripts to verify reactive uav control
+Program synthesis for hybrid systems.
 
 
 To build: ` stack build`

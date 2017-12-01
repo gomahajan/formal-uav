@@ -66,7 +66,7 @@ parseDouble = do
 -- Parser for doubles in scientific notation
 parseSci :: Parser Double
 parseSci = do
-  base <- parseDouble
+  base <- try parseDouble <|> parseInt
   char 'e'
   ms <- many $ char '-'
   ex <- many1 digit
