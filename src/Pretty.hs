@@ -11,8 +11,8 @@ printConstraint p = "(assert " ++ printConstraint' p ++ ")"
 printConstraint' :: Pred -> String
 printConstraint' (Lit b)     = map toLower (show b)
 printConstraint' (Expr e)    = printE e
-printConstraint' (And p1 p2) = "(and " ++ printConstraint' p1 ++ " " ++ printConstraint' p2 ++ ")"
-printConstraint' (Or p1 p2)  = "(or " ++ printConstraint' p1 ++ " " ++ printConstraint' p2 ++ ")"
+printConstraint' (And ps) = "(and " ++ unwords (map printConstraint' ps) ++ ")"
+printConstraint' (Or ps)  = "(or " ++ unwords (map printConstraint' ps) ++ ")"
 printConstraint' (Not p)     = "(not " ++ printConstraint' p ++ ")"
 
 

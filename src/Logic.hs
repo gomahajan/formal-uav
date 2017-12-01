@@ -77,8 +77,8 @@ evalArithBool op x y = case (x, y) of
 
 data Pred = Lit Bool
   | Expr Exp
-  | And Pred Pred
-  | Or Pred Pred
+  | And [Pred]
+  | Or [Pred]
   | Not Pred
   deriving (Eq, Show)
 
@@ -88,8 +88,10 @@ checkPred _ (Lit b) = True
 checkPred env (Expr e) = case eval env e of
   Just (VBool b) -> True
   _              -> False
-checkPred env (And e1 e2) = checkPred env e1 && checkPred env e2
-checkPred env (Or e1 e2)  = checkPred env e1 && checkPred env e2
+checkPred env (And []) = True
+checkPred env (And (e:es)) = checkPred env e && checkPred env (And es)
+checkPred env (Or []) = True
+checkPred env (Or (e:es))  = checkPred env e && checkPred env (And es)
 checkPred env (Not e)     = checkPred env e
 
 data Exception = NumArgs Integer [Val]
