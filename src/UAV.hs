@@ -84,21 +84,23 @@ cegisLoop p =
     output <- run (completeFile p) (solverPrecision p)
     resp <- Main.read output
     let cxs = getCX "bi" "qi" resp
-        const' =  Or [constraint p, (And [Expr (EBin Geq (EStrLit "b") (ERealLit (snd (head (params p))))), Expr (EBin Leq (EStrLit "q") (ERealLit (snd (head (tail (params p))))))])]
+        const' =  Or [constraint p, And [Expr (EBin Geq (EStrLit "b") (ERealLit (snd (head (params p))))), Expr (EBin Leq (EStrLit "q") (ERealLit (snd (head (tail (params p))))))]]
         constr' = printConstraint' const'
         paramConst_i = replace "q" "qi" (replace "b" "bi" constr')
         paramConst_g = replace "q" "q3" (replace "b" "b3" constr')
 
     case cxs of
       Nothing -> return $ Just (const', True)
-      Just (c1_naive, c2_naive) ->
+      Just (c1_naive, c2_naive) -> do
         addConstraints (paramTempFile p) (paramCompleteFile p) paramConst_i paramConst_g
-        let (c1,c2) = findCXBall (previous_b p) (previous_q p) c1_naive c2_naive
+        let (c1,c2) = findCXBall (previous_b p) (previous_q p) c1_naive c2_naive (synthesisPrecision p)
         -- TODO: update and add battery,queue using c1,c2
         new_params_output <- run (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read new_params_output
         let p0p1 = getCX "p0" "p1" new_params_output_string
-        let p2p3 = getCX "p2" "p3" new_params_output_string
+            p2p3 = getCX "p2" "p3" new_params_output_string
+            currentIter = iterations p
+        cegisLoop p { iterations = currentIter - 1 }
         -- TODO: cegisLoop with new params
 
 {-
@@ -166,17 +168,18 @@ getCX s1 s2 (Response r vs) = case lookup s1 vs of
     Just y -> Just $ adjustCX x y
 
 findCXBall :: Double -> Double -> Double -> Double -> Double -> (Double, Double)
-findCXBall previous_x previous_y x y epsilon = if(((x-previous_x)^2 + (y-previous_y)^2) > epsilon^2)
-                                               then return (x, y)
-                                               else let theta = getTheta (y-previous_y) (x-previous_x)
-                                                        new_x = previous_x + (cos(theta) * epsilon)
-                                                        new_y = previous_y + (sin(theta) * epsilon)
-                                                    return (new_x, new_y)
- 
+findCXBall previous_x previous_y x y epsilon =
+  if (((x - previous_x) ^ 2 + (y - previous_y) ^ 2) > epsilon ^ 2)
+  then (x, y)
+  else let theta = getTheta (y - previous_y) (x - previous_x)
+           new_x = previous_x + (cos(theta) * epsilon)
+           new_y = previous_y + (sin(theta) * epsilon)
+       in (new_x, new_y)
+
 getTheta :: Double -> Double -> Double
-getTheta y x = if x = 0
-               then return 0
-               else return atan (y/x)
+getTheta y x = if x == 0
+               then 0
+               else atan (y/x)
 
 adjustCX :: Double -> Double -> (Double, Double)
 adjustCX x y = (fromIntegral (round (x * 10)) / 10.0, fromIntegral (round (y * 10)) / 10.0)
