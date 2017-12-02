@@ -45,11 +45,13 @@
 (assert(>= t2 0))
 (assert(>= t3 0))
 (assert (<= bi 100))
+(assert (>= bi 0))
 (assert (<= b0 100))
 (assert (<= b1 100))
 (assert (<= b2 100))
 (assert (<= b3 100))
 (assert (>= qi 0))
+(assert (<= qi 100))
 (assert (>= q0 0))
 (assert (>= q1 0))
 (assert (>= q2 0))
@@ -70,8 +72,6 @@ parametervalues
 ;sample (assert (= p2 1))
 ;sample (assert (= p3 1))
 
-;Question: Does there exist starting battery,queue values such that safety is not maintained
-(assert (or constraintI (and (>= bi p0) (<= qi p1))))
 ;charging
 (assert(= x0 0))
 (assert(= b0 (+ bi (* battery_charging_rate t0))))
@@ -101,6 +101,9 @@ parametervalues
 (assert(= b3 (- b2 (* battery_discharge_rate t3))))
 
 ;goal
-(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (or constraintG (and (>= b3 p0) (<= q3 p1))))))
+;Question: Does there exist starting battery,queue values such that safety is not maintained
+; that is not (invariant => safety)
+(assert (and (>= bi p0) (<= qi p1)))
+(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (and (>= b3 p0) (<= q3 p1)))))
 (check-sat)
 (exit)

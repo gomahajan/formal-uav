@@ -62,14 +62,19 @@
 (assert (>= x1 0))
 (assert (>= x2 0))
 (assert (>= x3 0))
+(assert (<= p0 100))
+(assert (>= p0 0))
+(assert (<= p1 100))
+(assert (>= p1 0))
+(assert (<= p2 100))
+(assert (>= p2 0))
+(assert (<= p3 100))
+(assert (>= p3 0))
 
 ;template
-;sample (assert (or (= bi 1) (= bi 2) (= bi 3))
-;sample (assert (or (= qi 1) (= qi 2) (= qi 3))
+;sample (assert (or (and (= bi 1) (= qi 1)) (and (= bi 2) (= qi 2)) (and (= bi 3) (= qi 3))))
 batteryvalues
 
-;Question: Does there exist parameters such that starting from either of the battery,queue values, safety is maintained
-(assert (or constraintI (and (>= bi p0) (<= qi p1))))
 ;charging
 (assert(= x0 0))
 (assert(= b0 (+ bi (* battery_charging_rate t0))))
@@ -99,6 +104,7 @@ batteryvalues
 (assert(= b3 (- b2 (* battery_discharge_rate t3))))
 
 ;goal
-(assert (and (>= b0 0) (>= b1 0) (>= b2 0) (>= b3 0) (<= q0 100) (<= q1 100) (<= q2 100) (<= q3 100) (or constraintG (and (>= b3 p0) (<= q3 p1)))))
+;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
+(assert (=> (and (>= bi p0) (<= qi p1)) (and (>= b0 0) (>= b1 0) (>= b2 0) (>= b3 0) (<= q0 100) (<= q1 100) (<= q2 100) (<= q3 100) (and (>= b3 p0) (<= q3 p1)))))
 (check-sat)
 (exit)
