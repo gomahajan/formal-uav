@@ -40,11 +40,14 @@ data Params = Params {
   constraint :: Pred,
   completeFile :: String,
   templateFile :: String,
+  paramTempFile :: String,
+  paramCompleteFile :: String,
   iterations :: Int,
   synthesisPrecision :: Double,
   solverPrecision :: Double,
   bcxs :: [Double],
-  qcxs :: [Double]
+  qcxs :: [Double],
+  params :: [(String, Double)]
 } deriving (Show, Eq)
 
 
@@ -61,13 +64,36 @@ and other examples, find parameters for invariant and program which work. And th
    run dreal, ask for counter example bc,qc from uav_dreal_template.smt2
    update constraint using p0,p1,p2,p3
    add constraint
-   using counterexample, build b (or currentbs (= bi bc)) 
+   using counterexample, build b (or currentbs (= bi bc))
    using counterexample, build q (or currentqs (= qi qc))
    run dreal, ask for p which work, and continue
 -}
-cegisLoop :: Params -> Params
-cegisLoop p = do
-  addConstraints --initial true
+cegisLoop :: Params -> IO (Maybe (Pred, Bool))
+cegisLoop p =
+  if iterations p <= 0
+  then return $ Just (constraint p, False)
+  else do
+    let constr = printConstraint' (constraint p)
+        constraint_i = replace "q" "qi" (replace "b" "bi" constr)
+        constraint_g = replace "q" "q3" (replace "b" "b3" constr)
+        paramStr = unlines (fmap (printConstraint . Expr) (zipWith (EBin Eq) (fmap (EStrLit . fst) (params p)) (fmap (ERealLit . snd) (params p))))
+    addConstraints (templateFile p) (completeFile p) constraint_i constraint_g --initial false
+    addParams paramStr (completeFile p)
+    output <- run (completeFile p) (solverPrecision p)
+    resp <- Main.read output
+    let cxs = getCX "bi" "qi" resp
+        const' = Or [constraint p, (And [Expr (EBin Geq (EStrLit "b") (ERealLit (snd (head (params p))))), Expr (EBin Leq (EStrLit "q") (ERealLit (snd (head (tail (params p))))))])]
+        paramConst_i = replace "q" "qi" (replace "b" "bi" constr')
+        paramConst_g = replace "q" "q3" (replace "b" "b3" constr')
+
+    case cxs of
+      Nothing -> return $ Just (const', True)
+      Just (c1, c2) ->
+        addConstraints (paramTempFile p) (paramCompleteFile p) paramConst_i paramConst_g
+        -- TODO: finish this
+        -- Need to incorporate delta
+
+{-
   addParameters p0 p1 p2 p3 --initial 100 0 20 4
   bc qc = run uav_dreal_complete.smt2
   updateConstraint p0 p1
@@ -75,17 +101,16 @@ cegisLoop p = do
   updateBatteryAndQueue oldbs oldqs bc qc
   addBatteryAndQueue
   p0 p1 p2 p3 = run uav_dreal_parameter_complete.smt2
-  cegisLoop
+  cegisLoop p' -}
 
 
 
 checkConstraint :: Params -> IO (Maybe (Double, Double))
 checkConstraint p = do
-
   let constr = printConstraint' (constraint p)
       constraint_i = replace "q" "qi" (replace "b" "bi" constr)
       constraint_g = replace "q" "q3" (replace "b" "b3" constr)
-  addConstraints p constraint_i constraint_g
+  addConstraints (templateFile p) (completeFile p) constraint_i constraint_g
   output <- run (completeFile p) (solverPrecision p)
   resp <- Main.read output
   return $ getCX "b3" "q3" resp
@@ -141,13 +166,19 @@ adjustCX x y = (fromIntegral (round (x * 10)) / 10.0, fromIntegral (round (y * 1
   _      -> (x, y) -}
 
 -- Create SMT with new constraints. Also overwrites if it already exists --
-addConstraints :: Params -> String -> String -> IO ()
-addConstraints p constraintI constraintG = do
+addConstraints :: String -> String -> String -> String -> IO ()
+addConstraints tmpf cmpf constraintI constraintG = do
   --s <- readFile "uav_dreal.smt2"
-  s <- readFile (templateFile p)
+  s <- readFile tmpf
   let s_i = replace "constraintI" constraintI s
   let s_i_g  = replace "constraintG" constraintG s_i
-  writeFile (completeFile p) s_i_g
+  writeFile cmpf s_i_g
+
+addParams :: String -> String -> IO ()
+addParams ps file = do
+  s <- readFile file
+  let pstr = replace "parametervalues" ps s
+  writeFile file pstr
 
 --roundn :: Num a => Int -> a -> a
 --roundn n x = (fromInteger $ round $ x * (10^n)) / (10.0^^n)
@@ -165,16 +196,21 @@ main = do
     (Args file iters precision delta) -> do
       let tmpf = file ++ "_template.smt2"
           cmpf = file ++ "_complete.smt2"
+          paramtf = file ++ "_parameter_template.smt2"
+          paramcf = file ++ "_parameter_complete.smt2"
           initp = And [Expr (EBin Geq (EVar "b") (ERealLit 100)), Expr (EBin Leq (EVar "q") (ERealLit 20))]
           synthesisParams = Params {
             constraint = initp,
             completeFile = cmpf,
             templateFile = tmpf,
+            paramTempFile = paramtf,
+            paramCompleteFile = paramcf,
             iterations = iters,
             synthesisPrecision = precision,
             solverPrecision = delta,
             bcxs = [],
-            qcxs = []
+            qcxs = [],
+            params = [("p0",100), ("p1",0), ("p2",20), ("p3",4)]
           }
       p <- genInvt synthesisParams
       case p of
