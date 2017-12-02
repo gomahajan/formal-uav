@@ -70,33 +70,25 @@ and other examples, find parameters for invariant and program which work. And th
    using counterexample, build q (or currentqs (= qi qc))
    run dreal, ask for p which work, and continue
 -}
-cegisLoop :: Params -> IO (Maybe (Pred, Bool))
+cegisLoop :: Params -> IO (Maybe ([(String, Double)], Bool))
 cegisLoop p =
   if iterations p <= 0
-  then return $ Just (constraint p, False)
+  then return $ Just (params p, False)
   else do
-    let constr = printConstraint' (constraint p)
-        constraint_i = replace "q" "qi" (replace "b" "bi" constr)
-        constraint_g = replace "q" "q3" (replace "b" "b3" constr)
-        paramStr = unlines (fmap (printConstraint . Expr) (zipWith (EBin Eq) (fmap (EStrLit . fst) (params p)) (fmap (ERealLit . snd) (params p))))
-    addConstraints (templateFile p) (completeFile p) constraint_i constraint_g --initial false
+    let paramStr = unlines (fmap (printConstraint . Expr) (zipWith (EBin Eq) (fmap (EStrLit . fst) (params p)) (fmap (ERealLit . snd) (params p))))
     addParams paramStr (completeFile p)
     output <- run (completeFile p) (solverPrecision p)
     resp <- Main.read output
     let cxs = getCX "bi" "qi" resp
-        const' =  Or [constraint p, And [Expr (EBin Geq (EStrLit "b") (ERealLit (snd (head (params p))))), Expr (EBin Leq (EStrLit "q") (ERealLit (snd (head (tail (params p))))))]]
-        constr' = printConstraint' const'
-        paramConst_i = replace "q" "qi" (replace "b" "bi" constr')
-        paramConst_g = replace "q" "q3" (replace "b" "b3" constr')
-
     case cxs of
-      Nothing -> return $ Just (const', True)
+      Nothing -> return $ Just (params p, True)
       Just (c1_naive, c2_naive) -> do
-        addConstraints (paramTempFile p) (paramCompleteFile p) paramConst_i paramConst_g
         let (c1,c2) = findCXBall (previous_b p) (previous_q p) c1_naive c2_naive (synthesisPrecision p)
-            bcxs' = c1 : bcxs;
-            qcxs' = c2 : qcxs;
-        -- TODO: add battery,queue to smt
+            bcxs' = c1 : bcxs
+            qcxs' = c2 : qcxs
+            -- TODO: convert battery queue lists to (battery,queue) list
+            battery_constraint = ""            
+        addInitialConstraint battery_constraint (paramTempFile p)
         new_params_output <- run (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read new_params_output
         let p0 = getValue "p0" new_params_output_string
@@ -209,8 +201,11 @@ addParams ps file = do
   let pstr = replace "parametervalues" ps s
   writeFile file pstr
 
---roundn :: Num a => Int -> a -> a
---roundn n x = (fromInteger $ round $ x * (10^n)) / (10.0^^n)
+addInitialConstraint :: String -> String -> IO ()
+addInitialConstraint ps file = do
+  s <- readFile file
+  let pstr = replace "batteryvalues" ps s
+  writeFile file pstr
 
 mode = cmdArgsMode $ cargs &=
   help "Hybrid system synthesizer" &=
