@@ -69,7 +69,7 @@
 batteryvalues
 
 ;Question: Does there exist parameters such that starting from either of the battery,queue values, safety is maintained
-(assert constraintI)
+(assert (or constraintI (and (>= bi p0) (<= qi p1))))
 ;charging
 (assert(= x0 0))
 (assert(= b0 (+ bi (* battery_charging_rate t0))))
@@ -99,6 +99,6 @@ batteryvalues
 (assert(= b3 (- b2 (* battery_discharge_rate t3))))
 
 ;goal
-(assert (and (>= b0 0) (>= b1 0) (>= b2 0) (>= b3 0) (<= q0 100) (<= q1 100) (<= q2 100) (<= q3 100) constraintG))
+(assert (and (>= b0 0) (>= b1 0) (>= b2 0) (>= b3 0) (<= q0 100) (<= q1 100) (<= q2 100) (<= q3 100) (or constraintG (and (>= b3 p0) (<= q3 p1)))))
 (check-sat)
 (exit)

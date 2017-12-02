@@ -56,15 +56,32 @@ Otherwise, it gives us counterexample bi,qi. We ask another question to dReal, s
 and other examples, find parameters for invariant and program which work. And this continues.
 -}
 
--- build constraintI, constraintG using (or constraint (and (>= bi p0) (<= qi p1)))
--- add parameter p2,p3
--- run dreal, ask for counter example from uav_dreal_template.smt2
--- using counterexample, build b (or currentbs (= bi c)) 
--- using counterexample, build q (or currentqs (= qi c))
--- run dreal, ask for ps which work, and continue
+{- Add constraintI, constraintG
+   add parameter p2,p3
+   run dreal, ask for counter example bc,qc from uav_dreal_template.smt2
+   update constraint using p0,p1,p2,p3
+   add constraint
+   using counterexample, build b (or currentbs (= bi bc)) 
+   using counterexample, build q (or currentqs (= qi qc))
+   run dreal, ask for p which work, and continue
+-}
+cegisLoop :: Params -> Params
+cegisLoop p = do
+  addConstraints --initial true
+  addParameters p0 p1 p2 p3 --initial 100 0 20 4
+  bc qc = run uav_dreal_complete.smt2
+  updateConstraint p0 p1
+  addConstraints
+  updateBatteryAndQueue oldbs oldqs bc qc
+  addBatteryAndQueue
+  p0 p1 p2 p3 = run uav_dreal_parameter_complete.smt2
+  cegisLoop
+
+
 
 checkConstraint :: Params -> IO (Maybe (Double, Double))
 checkConstraint p = do
+
   let constr = printConstraint' (constraint p)
       constraint_i = replace "q" "qi" (replace "b" "bi" constr)
       constraint_g = replace "q" "q3" (replace "b" "b3" constr)
