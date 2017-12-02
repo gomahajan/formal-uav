@@ -94,14 +94,24 @@ cegisLoop p =
       Just (c1_naive, c2_naive) -> do
         addConstraints (paramTempFile p) (paramCompleteFile p) paramConst_i paramConst_g
         let (c1,c2) = findCXBall (previous_b p) (previous_q p) c1_naive c2_naive (synthesisPrecision p)
-        -- TODO: update and add battery,queue using c1,c2
+            bcxs' = c1 : bcxs;
+            qcxs' = c2 : qcxs;
+        -- TODO: add battery,queue to smt
         new_params_output <- run (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read new_params_output
-        let p0p1 = getCX "p0" "p1" new_params_output_string
-            p2p3 = getCX "p2" "p3" new_params_output_string
+        let p0 = getValue "p0" new_params_output_string
+            p1 = getValue "p1" new_params_output_string
+            p2 = getValue "p2" new_params_output_string
+            p3 = getValue "p3" new_params_output_string
             currentIter = iterations p
-        cegisLoop p { iterations = currentIter - 1 }
-        -- TODO: cegisLoop with new params
+            params' = [("p0", p0), ("p1", p1), ("p2", p2), ("p3", p3)]
+        cegisLoop p { previous_b = c1,
+                      previous_q = c2,
+                      iterations = currentIter - 1,
+                      bcxs = bcxs',
+                      qcxs = qcxs',
+                      params = params'
+                      }
 
 {-
   addParameters p0 p1 p2 p3 --initial 100 0 20 4
@@ -165,7 +175,10 @@ getCX s1 s2 (Response r vs) = case lookup s1 vs of
   Nothing -> Nothing
   Just x -> case lookup s2 vs of
     Nothing -> Nothing
-    Just y -> Just $ adjustCX x y
+    Just y -> Just (x, y)
+
+getValue :: String -> Response -> Maybe (Double)
+getValue s (Response r vs) = lookup s vs 
 
 findCXBall :: Double -> Double -> Double -> Double -> Double -> (Double, Double)
 findCXBall previous_x previous_y x y epsilon =
@@ -180,14 +193,6 @@ getTheta :: Double -> Double -> Double
 getTheta y x = if x == 0
                then 0
                else atan (y/x)
-
-adjustCX :: Double -> Double -> (Double, Double)
-adjustCX x y = (fromIntegral (round (x * 10)) / 10.0, fromIntegral (round (y * 10)) / 10.0)
-  {-case (mod (truncate (x * 10)) 10, mod (truncate (y * 10)) 10) of
-  (0, 0) -> (round x, round y)
-  (0, _) -> (round x, y)
-  (_, 0) -> (x, round y)
-  _      -> (x, y) -}
 
 -- Create SMT with new constraints. Also overwrites if it already exists --
 addConstraints :: String -> String -> String -> String -> IO ()
