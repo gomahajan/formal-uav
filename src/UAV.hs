@@ -7,6 +7,7 @@ import Data.String.Utils
 import System.Environment
 import Debug.Trace
 import System.Console.CmdArgs
+import Data.Map (fromList, (!))
 
 import Logic
 import Parser
@@ -84,10 +85,11 @@ cegisLoop p =
       Nothing -> return $ Just (params p, True)
       Just (c1_naive, c2_naive) -> do
         let (c1,c2) = findCXBall (previous_b p) (previous_q p) c1_naive c2_naive (synthesisPrecision p)
-            bcxs' = c1 : bcxs
-            qcxs' = c2 : qcxs
+            bcxs' = c1 : bcxs p
+            qcxs' = c2 : qcxs p
             -- TODO: convert battery queue lists to (battery,queue) list
-            battery_constraint = ""            
+
+            battery_constraint = printConstraint' $ generateVarConstraints "bi" "qi" bcxs' qcxs'
         addInitialConstraint battery_constraint (paramTempFile p)
         new_params_output <- run (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read new_params_output
@@ -135,10 +137,15 @@ updateConstraint (b,q) _ = And [Expr $ EBin Eq (EVar "b") (ERealLit b), Expr $ E
 makeEqPred :: String -> Double -> Pred
 makeEqPred s v = Expr $ EBin Eq (EVar s) (ERealLit v)
 
-generateVarConstraints :: String -> [Double] -> Maybe Pred
-generateVarConstraints s []  = Nothing
-generateVarConstraints s [v] = Just $ makeEqPred s v
-generateVarConstraints s vs  = Just $ Or (map (makeEqPred s) vs)
+generateVarConstraints :: String -> String -> [Double] -> [Double] -> Pred
+generateVarConstraints = generateVarConstraints' []
+
+generateVarConstraints' :: [Pred] -> String -> String -> [Double] -> [Double] -> Pred
+generateVarConstraints' ps s1 s2 [] _ = Or ps
+generateVarConstraints' ps s1 s2 _ [] = Or ps
+generateVarConstraints' ps s1 s2 (x:xs) (y:ys) = generateVarConstraints' (p':ps) s1 s2 xs ys
+  where p' = And [makeEqPred s1 x, makeEqPred s2 y]
+
 
 {- Tries to find the safe invariant in given integral steps -}
 genInvt :: Params -> IO (Maybe (Pred, Bool))
@@ -169,8 +176,8 @@ getCX s1 s2 (Response r vs) = case lookup s1 vs of
     Nothing -> Nothing
     Just y -> Just (x, y)
 
-getValue :: String -> Response -> Maybe (Double)
-getValue s (Response r vs) = lookup s vs 
+getValue :: String -> Response -> Double
+getValue s (Response r vs) = (fromList vs) ! s
 
 findCXBall :: Double -> Double -> Double -> Double -> Double -> (Double, Double)
 findCXBall previous_x previous_y x y epsilon =
