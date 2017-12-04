@@ -21,6 +21,12 @@
 (declare-fun t2 () Real)
 (declare-fun t3 () Real)
 
+;parameters
+(declare-fun p0 () Real)
+(declare-fun p1 () Real)
+(declare-fun p2 () Real)
+(declare-fun p3 () Real)
+
 ;constants
 (declare-fun battery_charging_rate () Real)
 (declare-fun battery_discharge_rate () Real)
@@ -39,11 +45,13 @@
 (assert(>= t2 0))
 (assert(>= t3 0))
 (assert (<= bi 100))
+(assert (>= bi 0))
 (assert (<= b0 100))
 (assert (<= b1 100))
 (assert (<= b2 100))
 (assert (<= b3 100))
 (assert (>= qi 0))
+(assert (<= qi 100))
 (assert (>= q0 0))
 (assert (>= q1 0))
 (assert (>= q2 0))
@@ -57,14 +65,24 @@
 (assert (>= x2 0))
 (assert (>= x3 0))
 
-(assert (and (= bi 15.9) (= qi 1.0)))
+;template
+(assert (= p0 6.311194001380471e-4))
+(assert (= p1 96.27568600825767))
+(assert (= p2 99.27987365982503))
+(assert (= p3 1.0033141885162))
+
+;sample (assert (= p0 1))
+;sample (assert (= p1 1))
+;sample (assert (= p2 1))
+;sample (assert (= p3 1))
+
 ;charging
 (assert(= x0 0))
 (assert(= b0 (+ bi (* battery_charging_rate t0))))
 (assert(= q0 (+ qi (* queue_data_rate t0))))
 ;program: charge till battery >= 20
-(assert (=> (>= bi 20) (= b0 bi)))
-(assert (or (=> (< bi 20) (= b0 20)) (= q0 100)))
+(assert (=> (>= bi p2) (= b0 bi)))
+(assert (or (=> (< bi p2) (= b0 p2)) (= q0 100)))
 
 ;flying to D
 (assert(= x1 10))
@@ -77,8 +95,8 @@
 (assert(= q2 (- q1 (* queue_upload_rate t2))))
 (assert(= b2 (- b1 (* battery_discharge_rate t2))))
 ;program: empty queue till battery <= 4
-(assert (or (=> (> b1 4) (= b2 4)) (= q2 0)))
-(assert (=> (<= b1 4) (= b2 b1)))
+(assert (or (=> (> b1 p3) (= b2 p3)) (= q2 0)))
+(assert (=> (<= b1 p3) (= b2 b1)))
 
 ;flying back
 (assert(= x3 0))
@@ -87,6 +105,9 @@
 (assert(= b3 (- b2 (* battery_discharge_rate t3))))
 
 ;goal
-(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (and (= b3 15.9) (= q3 1.0)))))
+;Question: Does there exist starting battery,queue values such that safety is not maintained
+; that is not (invariant => safety)
+(assert (and (>= bi p0) (<= qi p1)))
+(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (and (>= b3 p0) (<= q3 p1)))))
 (check-sat)
 (exit)

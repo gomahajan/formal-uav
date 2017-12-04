@@ -53,15 +53,23 @@ parseVar = do
 
 parseInt :: Parser Double -- still represented as a double lol
 parseInt = do
+  sign <- many $ char '-'
   x <- many1 digit
-  return $ fst . head $ readFloat x
+  let val = fst . head $ readFloat x
+  return $ case sign of
+    [] -> val
+    _  -> (-1) * val
 
 parseDouble :: Parser Double
 parseDouble = do
+  sign <- many $ char '-'
   x <- many1 digit
   char '.'
   y <- many1 digit
-  return $ fst . head $ readFloat (x ++ "." ++ y)
+  let val = fst . head $ readFloat (x ++ "." ++ y)
+  return $ case sign of
+    [] -> val
+    _  -> (-1) * val
 
 -- Parser for doubles in scientific notation
 parseSci :: Parser Double

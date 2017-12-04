@@ -27,10 +27,6 @@
 (declare-fun p2 () Real)
 (declare-fun p3 () Real)
 
-;counterexample
-(declare-fun bc () Real)
-(declare-fun qc () Real)
-
 ;constants
 (declare-fun battery_charging_rate () Real)
 (declare-fun battery_discharge_rate () Real)
@@ -105,7 +101,11 @@
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
-()
-(assert (=> (and (>= bi p0) (<= qi p1)) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))
+(assert (=> (and (and (>= bi p0) (<= qi p1)) (>= (^ 1.0 2.0) (+ (^ (- bi 6.31119400138047e-4) 2.0) (^ (- qi 95.29428880901652) 2.0)))) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))
+(assert (=> (and (and (>= bi p0) (<= qi p1)) (>= (^ 1.0 2.0) (+ (^ (- bi 99.28336142096464) 2.0) (^ (- qi 96.28336142096462) 2.0)))) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))
+(assert (=> (and (and (>= bi p0) (<= qi p1)) (>= (^ 1.0 2.0) (+ (^ (- bi 6.31119400138047e-4) 2.0) (^ (- qi 95.29428880901652) 2.0)))) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))
+(assert (=> (and (and (>= bi p0) (<= qi p1)) (>= (^ 1.0 2.0) (+ (^ (- bi 99.98532196711098) 2.0) (^ (- qi 96.98530361956986) 2.0)))) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))
+(assert (=> (and (and (>= bi p0) (<= qi p1)) (>= (^ 1.0 2.0) (+ (^ (- bi 100.0) 2.0) (^ (- qi 99.0) 2.0)))) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))
+
 (check-sat)
 (exit)

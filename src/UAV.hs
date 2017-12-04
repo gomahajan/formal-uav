@@ -49,8 +49,8 @@ data Params = Params {
   bcxs :: [Double],
   qcxs :: [Double],
   params :: [(String, Double)],
-  previous_b :: Double, -- could rename to previous counter-example
-  previous_q :: Double
+  previous_b :: Maybe Double, -- could rename to previous counter-example
+  previous_q :: Maybe Double
 } deriving (Show, Eq)
 
 
@@ -77,20 +77,26 @@ cegisLoop p =
   then return $ Just (params p, False)
   else do
     let paramStr = unlines (fmap (printConstraint . Expr) (zipWith (EBin Eq) (fmap (EStrLit . fst) (params p)) (fmap (ERealLit . snd) (params p))))
-    addParams paramStr (completeFile p)
+    addParams paramStr (templateFile p) (completeFile p)
     output <- run (completeFile p) (solverPrecision p)
     resp <- Main.read output
     let cxs = getCX "bi" "qi" resp
+    --putStrLn $ "Original cx: " ++ show cxs
     case cxs of
       Nothing -> return $ Just (params p, True)
-      Just (c1_naive, c2_naive) -> do
-        let (c1,c2) = findCXBall (previous_b p) (previous_q p) c1_naive c2_naive (synthesisPrecision p)
+      Just (c1, c2) -> do
+        let --(c1,c2) = findCXBall (previous_b p) (previous_q p) c1_naive c2_naive (synthesisPrecision p)
             bcxs' = c1 : bcxs p
             qcxs' = c2 : qcxs p
             -- TODO: convert battery queue lists to (battery,queue) list
-
-            battery_constraint = printConstraint' $ generateVarConstraints "bi" "qi" bcxs' qcxs'
-        addInitialConstraint battery_constraint (paramTempFile p)
+            constraintbq = "(assert (=> (and (and (>= bi p0) (<= qi p1)) constraintbq) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))"
+            -- replace "constraintbq" with
+            -- battery_constraint = printConstraint $ generateVarConstraints "bi" "qi" bcxs' qcxs'
+            battery_constraint = unlines $ fmap (((flip (replace "constraintbq")) constraintbq) . printConstraint') (zipWith (findCXBall (synthesisPrecision p)) bcxs' qcxs')
+        putStrLn $ "bcxs: " ++ show bcxs'
+        putStrLn $ "qcxs: " ++ show qcxs'
+        putStrLn $ "cx: " ++ show (c1, c2)
+        addInitialConstraint battery_constraint (paramTempFile p) (paramCompleteFile p)
         new_params_output <- run (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read new_params_output
         let p0 = getValue "p0" new_params_output_string
@@ -99,8 +105,10 @@ cegisLoop p =
             p3 = getValue "p3" new_params_output_string
             currentIter = iterations p
             params' = [("p0", p0), ("p1", p1), ("p2", p2), ("p3", p3)]
-        cegisLoop p { previous_b = c1,
-                      previous_q = c2,
+        putStrLn $ "Solved Params: " ++ show params'
+        --putStrLn $ "Previous params: " ++ show (params p)
+        cegisLoop p { previous_b = Just c1,
+                      previous_q = Just c2,
                       iterations = currentIter - 1,
                       bcxs = bcxs',
                       qcxs = qcxs',
@@ -144,7 +152,10 @@ generateVarConstraints' :: [Pred] -> String -> String -> [Double] -> [Double] ->
 generateVarConstraints' ps s1 s2 [] _ = Or ps
 generateVarConstraints' ps s1 s2 _ [] = Or ps
 generateVarConstraints' ps s1 s2 (x:xs) (y:ys) = generateVarConstraints' (p':ps) s1 s2 xs ys
-  where p' = And [makeEqPred s1 x, makeEqPred s2 y]
+  where p' = generateAndTerm s1 s2 x y
+
+generateAndTerm :: String -> String -> Double -> Double -> Pred
+generateAndTerm s1 s2 v1 v2 = And [makeEqPred s1 v1, makeEqPred s2 v2]
 
 
 {- Tries to find the safe invariant in given integral steps -}
@@ -179,19 +190,21 @@ getCX s1 s2 (Response r vs) = case lookup s1 vs of
 getValue :: String -> Response -> Double
 getValue s (Response r vs) = (fromList vs) ! s
 
-findCXBall :: Double -> Double -> Double -> Double -> Double -> (Double, Double)
-findCXBall previous_x previous_y x y epsilon =
-  if (((x - previous_x) ^ 2 + (y - previous_y) ^ 2) > epsilon ^ 2)
-  then (x, y)
-  else let theta = getTheta (y - previous_y) (x - previous_x)
-           new_x = previous_x + (cos(theta) * epsilon)
-           new_y = previous_y + (sin(theta) * epsilon)
-       in (new_x, new_y)
+--findCXBalls :: [Double] -> [Double] -> Double -> Double -> Double -> (Double, Double)
+--findCXBalls [] [] x y _ = (x,y)
+--findCXBalls []
+
+findCXBall :: Double -> Double -> Double -> Pred
+--findCXBall x y epsilon = (bi - x)^2 + (qi - y)^2 <= epsilon^2
+findCXBall epsilon x y = Expr $ EBin Geq (EBin Pow (ERealLit epsilon) (ERealLit 2)) (EBin Plus (EBin Pow (EBin Minus (EVar "bi") (ERealLit x)) (ERealLit 2)) (EBin Pow (EBin Minus (EVar "qi") (ERealLit y)) (ERealLit 2)))
 
 getTheta :: Double -> Double -> Double
 getTheta y x = if x == 0
-               then 0
+               then (pi / 2)
                else atan (y/x)
+
+phi :: Double -> Double -> String
+
 
 -- Create SMT with new constraints. Also overwrites if it already exists --
 addConstraints :: String -> String -> String -> String -> IO ()
@@ -202,17 +215,17 @@ addConstraints tmpf cmpf constraintI constraintG = do
   let s_i_g  = replace "constraintG" constraintG s_i
   writeFile cmpf s_i_g
 
-addParams :: String -> String -> IO ()
-addParams ps file = do
-  s <- readFile file
+addParams :: String -> String -> String -> IO ()
+addParams ps infile outfile  = do
+  s <- readFile infile
   let pstr = replace "parametervalues" ps s
-  writeFile file pstr
+  writeFile outfile pstr
 
-addInitialConstraint :: String -> String -> IO ()
-addInitialConstraint ps file = do
-  s <- readFile file
+addInitialConstraint :: String -> String -> String -> IO ()
+addInitialConstraint ps infile outfile = do
+  s <- readFile infile
   let pstr = replace "batteryvalues" ps s
-  writeFile file pstr
+  writeFile outfile pstr
 
 mode = cmdArgsMode $ cargs &=
   help "Hybrid system synthesizer" &=
@@ -241,13 +254,14 @@ main = do
             solverPrecision = delta,
             bcxs = [],
             qcxs = [],
-            params = [("p0",100), ("p1",0), ("p2",20), ("p3",4)],
-            previous_b = 100,
-            previous_q = 0
+            params = [("p0",90), ("p1",99), ("p2",100), ("p3",1)],
+            previous_b = Nothing,
+            previous_q = Nothing
           }
-      p <- genInvt synthesisParams
-      case p of
+      p <- cegisLoop synthesisParams
+      putStrLn $ show p
+      {-case p of
         Nothing -> putStrLn "Nothing"
         Just pr -> putStrLn $ case pr of
           (_, False) -> "The given system is unverifiable in " ++ show iters ++ " iterations"
-          (p, True)  -> "The given system is provably safe with the following loop invariant: " ++ printConstraint' p
+          (p, True)  -> "The given system is provably safe with the following loop invariant: " ++ printConstraint' p -}

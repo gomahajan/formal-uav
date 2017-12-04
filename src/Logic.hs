@@ -21,7 +21,7 @@ data Val where
 
 -- Binary Operations
 data BinOp =
-  Lt | Gt | Leq | Geq | Plus | Times | Div | Eq
+  Lt | Gt | Leq | Geq | Plus | Minus | Times | Div | Eq | Pow
   deriving (Eq, Show)
 
 -- Unary operations
@@ -49,7 +49,9 @@ eval env (EBin Gt e1 e2) = evalArithBool (>) (eval env e1) (eval env e2)
 eval env (EBin Leq e1 e2) = evalArithBool (<=) (eval env e1) (eval env e2)
 eval env (EBin Geq e1 e2) = evalArithBool (>=) (eval env e1) (eval env e2)
 eval env (EBin Plus e1 e2) = evalNumeric (+) (eval env e1) (eval env e2)
-eval env (EBin Times e1 e2) = evalNumeric(*) (eval env e1) (eval env e2)
+eval env (EBin Minus e1 e2) = evalNumeric (-) (eval env e1) (eval env e2)
+eval env (EBin Times e1 e2) = evalNumeric (*) (eval env e1) (eval env e2)
+eval env (EBin Pow e1 e2) = evalNumeric (**) (eval env e1) (eval env e2)
 eval env (EBin Div e1 e2) = evalNumeric (/) (eval env e1) (eval env e2)
 eval env (EIf g e1 e2) = case eval env g of
   (Just (VBool True)) -> eval env e1
