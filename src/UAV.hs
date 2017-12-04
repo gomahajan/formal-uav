@@ -63,15 +63,6 @@ Otherwise, it gives us counterexample bi,qi. We ask another question to dReal, s
 and other examples, find parameters for invariant and program which work. And this continues.
 -}
 
-{- Add constraintI, constraintG
-   add parameter p2,p3
-   run dreal, ask for counter example bc,qc from uav_dreal_template.smt2
-   update constraint using p0,p1,p2,p3
-   add constraint
-   using counterexample, build b (or currentbs (= bi bc))
-   using counterexample, build q (or currentqs (= qi qc))
-   run dreal, ask for p which work, and continue
--}
 cegisLoop :: Params -> IO (Maybe ([(String, Double)], Bool))
 cegisLoop p =
   if iterations p <= 0
@@ -86,14 +77,12 @@ cegisLoop p =
     output <- run (completeFile p) (solverPrecision p)
     resp <- Main.read output
     let cxs = getCX "bi" "qi" resp
-    --putStrLn $ "Original cx: " ++ show cxs
     case cxs of
       Nothing -> return $ Just (params p, True)
       Just (c1, c2) -> do
         let --(c1,c2) = findCXBall (previous_b p) (previous_q p) c1_naive c2_naive (synthesisPrecision p)
             bcxs' = c1 : bcxs p
             qcxs' = c2 : qcxs p
-            -- TODO: convert battery queue lists to (battery,queue) list
             constraintbq = "(assert (=> (and (and (>= bi p0) (<= qi p1)) constraintbq) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))"
             -- replace "constraintbq" with
             -- battery_constraint = printConstraint $ generateVarConstraints "bi" "qi" bcxs' qcxs'
@@ -120,15 +109,6 @@ cegisLoop p =
                       params = params'
                       }
 
-{-
-  addParameters p0 p1 p2 p3 --initial 100 0 20 4
-  bc qc = run uav_dreal_complete.smt2
-  updateConstraint p0 p1
-  addConstraints
-  updateBatteryAndQueue oldbs oldqs bc qc
-  addBatteryAndQueue
-  p0 p1 p2 p3 = run uav_dreal_parameter_complete.smt2
-  cegisLoop p' -}
 
 addAllPhis :: Params -> [(Double, Double)] -> IO ()
 addAllPhis p cxs = do
@@ -151,7 +131,6 @@ createPhi file (c1,c2) name = do
   let s_i = replace "batteryvalue" (printConstraint (generateAndTerm "bc" "qc" c1 c2)) s
       variables = ["x0", "x1", "x2", "x3", "bi", "b0", "b1", "b2", "b3", "qi", "q0", "q1", "q2", "q3", "t0", "t1", "t2", "t3", "bc", "qc"]
       s_i_g = foldl (\str v -> (replace v (v ++ "_" ++ name) str)) s_i variables
-  -- for each variable, replace variable in s_i with variable++_++id
   return s_i_g
 
 checkConstraint :: Params -> IO (Maybe (Double, Double))
@@ -166,7 +145,6 @@ checkConstraint p = do
 
 {- Adds the counterexample and its implied space to the constraints -}
 updateConstraint :: (Double, Double) -> Pred -> Pred
---updateConstraint (b,q) = Or (And (Expr $ EBin Geq (EVar "b") (ERealLit b)) (Expr $ EBin Leq (EVar "q") (ERealLit q)))
 updateConstraint (b,q) _ = And [Expr $ EBin Eq (EVar "b") (ERealLit b), Expr $ EBin Eq (EVar "q") (ERealLit q)]
 
 makeEqPred :: String -> Double -> Pred
@@ -185,11 +163,10 @@ generateAndTerm :: String -> String -> Double -> Double -> Pred
 generateAndTerm s1 s2 v1 v2 = And [makeEqPred s1 v1, makeEqPred s2 v2]
 
 
-{- Tries to find the safe invariant in given integral steps -}
+{- Tries to find the safe invariant in given number of steps -}
 genInvt :: Params -> IO (Maybe (Pred, Bool))
 genInvt p = do
     c <- checkConstraint p
-    --putStrLn tf
     let bs = bcxs p
         qs = qcxs p
         n = iterations p
@@ -230,7 +207,7 @@ findCXBall epsilon (x, y) = Expr $ EBin Geq (EBin Pow (ERealLit epsilon) (ERealL
 
 getTheta :: Double -> Double -> Double
 getTheta y x = if x == 0
-               then (pi / 2)
+               then pi / 2
                else atan (y/x)
 
 --phi :: Double -> Double -> String
@@ -239,7 +216,6 @@ getTheta y x = if x == 0
 -- Create SMT with new constraints. Also overwrites if it already exists --
 addConstraints :: String -> String -> String -> String -> IO ()
 addConstraints tmpf cmpf constraintI constraintG = do
-  --s <- readFile "uav_dreal.smt2"
   s <- readFile tmpf
   let s_i = replace "constraintI" constraintI s
   let s_i_g  = replace "constraintG" constraintG s_i
@@ -273,6 +249,7 @@ main = do
           paramtf = file ++ "_parameter_template.smt2"
           paramcf = file ++ "_parameter_complete.smt2"
           paramcons = file ++ "_parameter_constant_template.smt2"
+          -- Initial invariant predicate: not currently used
           initp = And [Expr (EBin Geq (EVar "b") (ERealLit 100)), Expr (EBin Leq (EVar "q") (ERealLit 20))]
           synthesisParams = Params {
             constraint = initp,
@@ -286,12 +263,12 @@ main = do
             solverPrecision = delta,
             bcxs = [],
             qcxs = [],
-            params = [("p0",90), ("p1",90), ("p2",100), ("p3",1)],
+            -- Initial param values for program
+            params = [("p0",50), ("p1",50), ("p2",10), ("p3",1)],
             previous_b = Nothing,
             previous_q = Nothing
           }
       p <- cegisLoop synthesisParams
-      --putStrLn $ show p
       case p of
         Nothing -> putStrLn "Synthesis error"
         Just pr -> putStrLn $ case pr of
