@@ -1,4 +1,3 @@
-(set-logic QF_NRA)
 (declare-fun x0 () Real)
 (declare-fun x1 () Real)
 (declare-fun x2 () Real)
@@ -21,28 +20,9 @@
 (declare-fun t2 () Real)
 (declare-fun t3 () Real)
 
-;parameters
-(declare-fun p0 () Real)
-(declare-fun p1 () Real)
-(declare-fun p2 () Real)
-(declare-fun p3 () Real)
-
 ;counterexample
 (declare-fun bc () Real)
 (declare-fun qc () Real)
-
-;constants
-(declare-fun battery_charging_rate () Real)
-(declare-fun battery_discharge_rate () Real)
-(declare-fun queue_data_rate () Real)
-(declare-fun queue_upload_rate () Real)
-(declare-fun drone_velocity () Real)
-
-(assert(= battery_charging_rate 50))
-(assert(= battery_discharge_rate 1))
-(assert(= queue_data_rate 1))
-(assert(= queue_upload_rate 1))
-(assert(= drone_velocity 10))
 
 (assert(>= t0 0))
 (assert(>= t1 0))
@@ -66,14 +46,6 @@
 (assert (>= x1 0))
 (assert (>= x2 0))
 (assert (>= x3 0))
-(assert (<= p0 100))
-(assert (>= p0 0))
-(assert (<= p1 100))
-(assert (>= p1 0))
-(assert (<= p2 100))
-(assert (>= p2 0))
-(assert (<= p3 100))
-(assert (>= p3 0))
 
 ;charging
 (assert(= x0 0))
@@ -105,7 +77,5 @@
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
-()
+(assert (and (= bi bc) (= qi qc)))
 (assert (=> (and (>= bi p0) (<= qi p1)) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))
-(check-sat)
-(exit)
