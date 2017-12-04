@@ -29,91 +29,6 @@
 (assert (>= p3 0))
 
 ; Add all phi(counterexample) here
-(declare-fun x0_4 () Real)
-(declare-fun x1_4 () Real)
-(declare-fun x2_4 () Real)
-(declare-fun x3_4 () Real)
-
-(declare-fun bi_4 () Real)
-(declare-fun b0_4 () Real)
-(declare-fun b1_4 () Real)
-(declare-fun b2_4 () Real)
-(declare-fun b3_4 () Real)
-
-(declare-fun qi_4 () Real)
-(declare-fun q0_4 () Real)
-(declare-fun q1_4 () Real)
-(declare-fun q2_4 () Real)
-(declare-fun q3_4 () Real)
-
-(declare-fun t0_4 () Real)
-(declare-fun t1_4 () Real)
-(declare-fun t2_4 () Real)
-(declare-fun t3_4 () Real)
-
-;counterexample
-(declare-fun bc_4 () Real)
-(declare-fun qc_4 () Real)
-
-(assert(>= t0_4 0))
-(assert(>= t1_4 0))
-(assert(>= t2_4 0))
-(assert(>= t3_4 0))
-(assert (<= bi_4 100))
-(assert (<= b0_4 100))
-(assert (<= b1_4 100))
-(assert (<= b2_4 100))
-(assert (<= b3_4 100))
-(assert (>= qi_4 0))
-(assert (>= q0_4 0))
-(assert (>= q1_4 0))
-(assert (>= q2_4 0))
-(assert (>= q3_4 0))
-(assert (<= x0_4 10))
-(assert (<= x1_4 10))
-(assert (<= x2_4 10))
-(assert (<= x3_4 10))
-(assert (>= x0_4 0))
-(assert (>= x1_4 0))
-(assert (>= x2_4 0))
-(assert (>= x3_4 0))
-
-;charging
-(assert(= x0_4 0))
-(assert(= b0_4 (+ bi_4 (* battery_charging_rate t0_4))))
-(assert(= q0_4 (+ qi_4 (* queue_data_rate t0_4))))
-;program: charge till battery >= 20
-(assert (=> (>= bi_4 p2) (= b0_4 bi_4)))
-(assert (or (=> (< bi_4 p2) (= b0_4 p2)) (= q0_4 100)))
-
-;flying to D
-(assert(= x1_4 10))
-(assert(= x1_4 (+ x0_4 (* drone_velocity t1_4))))
-(assert(= b1_4 (- b0_4 (* battery_discharge_rate t1_4))))
-(assert(= q1_4 (+ q0_4 (* queue_data_rate t1_4))))
-
-;emptying queue
-(assert(= x2_4 10))
-(assert(= q2_4 (- q1_4 (* queue_upload_rate t2_4))))
-(assert(= b2_4 (- b1_4 (* battery_discharge_rate t2_4))))
-;program: empty queue till battery <= 4
-(assert (or (=> (> b1_4 p3) (= b2_4 p3)) (= q2_4 0)))
-(assert (=> (<= b1_4 p3) (= b2_4 b1_4)))
-
-;flying back
-(assert(= x3_4 0))
-(assert(= x3_4 (- x2_4 (* drone_velocity t3_4))))
-(assert(= q3_4 (+ q2_4 (* queue_data_rate t3_4))))
-(assert(= b3_4 (- b2_4 (* battery_discharge_rate t3_4))))
-
-;goal
-;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
-; Add (assert (and (= bc_4 11.0) (= qc_4 9.439334531947226))) here
-(assert (and (= bc_4 11.0) (= qc_4 9.439334531947226)))
-
-(assert (and (= bi_4 bc_4) (= qi_4 qc_4)))
-(assert (=> (and (>= bi_4 p0) (<= qi_4 p1)) (and (> b0_4 0) (> b1_4 0) (> b2_4 0) (> b3_4 0) (< q0_4 100) (< q1_4 100) (< q2_4 100) (< q3_4 100) (and (>= b3_4 p0) (<= q3_4 p1)))))
-
 (declare-fun x0_3 () Real)
 (declare-fun x1_3 () Real)
 (declare-fun x2_3 () Real)
@@ -193,8 +108,8 @@
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
-; Add (assert (and (= bc_3 11.0) (= qc_3 8.0))) here
-(assert (and (= bc_3 11.0) (= qc_3 8.0)))
+; Add (assert (and (= bc_3 10.70742845664116) (= qc_3 7.707417150389244))) here
+(assert (and (= bc_3 10.70742845664116) (= qc_3 7.707417150389244)))
 
 (assert (and (= bi_3 bc_3) (= qi_3 qc_3)))
 (assert (=> (and (>= bi_3 p0) (<= qi_3 p1)) (and (> b0_3 0) (> b1_3 0) (> b2_3 0) (> b3_3 0) (< q0_3 100) (< q1_3 100) (< q2_3 100) (< q3_3 100) (and (>= b3_3 p0) (<= q3_3 p1)))))
@@ -278,8 +193,8 @@
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
-; Add (assert (and (= bc_2 11.0) (= qc_2 9.258669481836826))) here
-(assert (and (= bc_2 11.0) (= qc_2 9.258669481836826)))
+; Add (assert (and (= bc_2 10.00064705600962) (= qc_2 6.999998790530904))) here
+(assert (and (= bc_2 10.00064705600962) (= qc_2 6.999998790530904)))
 
 (assert (and (= bi_2 bc_2) (= qi_2 qc_2)))
 (assert (=> (and (>= bi_2 p0) (<= qi_2 p1)) (and (> b0_2 0) (> b1_2 0) (> b2_2 0) (> b3_2 0) (< q0_2 100) (< q1_2 100) (< q2_2 100) (< q3_2 100) (and (>= b3_2 p0) (<= q3_2 p1)))))
@@ -363,8 +278,8 @@
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
-; Add (assert (and (= bc_1 11.0) (= qc_1 8.999999987775999))) here
-(assert (and (= bc_1 11.0) (= qc_1 8.999999987775999)))
+; Add (assert (and (= bc_1 10.0) (= qc_1 8.5))) here
+(assert (and (= bc_1 10.0) (= qc_1 8.5)))
 
 (assert (and (= bi_1 bc_1) (= qi_1 qc_1)))
 (assert (=> (and (>= bi_1 p0) (<= qi_1 p1)) (and (> b0_1 0) (> b1_1 0) (> b2_1 0) (> b3_1 0) (< q0_1 100) (< q1_1 100) (< q2_1 100) (< q3_1 100) (and (>= b3_1 p0) (<= q3_1 p1)))))

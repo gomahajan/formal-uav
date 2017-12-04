@@ -97,8 +97,8 @@ cegisLoop p =
             -- replace "constraintbq" with
             -- battery_constraint = printConstraint $ generateVarConstraints "bi" "qi" bcxs' qcxs'
             --battery_constraint = unlines $ fmap (((flip (replace "constraintbq")) constraintbq) . printConstraint') (zipWith (findCXBall (synthesisPrecision p)) bcxs' qcxs')
-        putStrLn $ "bcxs: " ++ show bcxs'
-        putStrLn $ "qcxs: " ++ show qcxs'
+        --putStrLn $ "bcxs: " ++ show bcxs'
+        --putStrLn $ "qcxs: " ++ show qcxs'
         putStrLn $ "cx: " ++ show (c1, c2)
         addAllPhis $ zip bcxs' qcxs'
         new_params_output <- run (paramCompleteFile p) (solverPrecision p)
@@ -109,7 +109,7 @@ cegisLoop p =
             p3 = getValue "p3" new_params_output_string
             currentIter = iterations p
             params' = [("p0", p0), ("p1", p1), ("p2", p2), ("p3", p3)]
-        putStrLn $ "Solved Params: " ++ show params'
+        --putStrLn $ "Solved Params: " ++ show params'
         --putStrLn $ "Previous params: " ++ show (params p)
         cegisLoop p { previous_b = Just c1,
                       previous_q = Just c2,
@@ -283,7 +283,7 @@ main = do
             solverPrecision = delta,
             bcxs = [],
             qcxs = [],
-            params = [("p0",9), ("p1",9), ("p2",10), ("p3",10)],
+            params = [("p0",9), ("p1",9), ("p2",10), ("p3",1)],
             previous_b = Nothing,
             previous_q = Nothing
           }
