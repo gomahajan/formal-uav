@@ -286,7 +286,7 @@ main = do
             solverPrecision = delta,
             bcxs = [],
             qcxs = [],
-            params = [("p0",9), ("p1",9), ("p2",10), ("p3",1)],
+            params = [("p0",90), ("p1",90), ("p2",100), ("p3",1)],
             previous_b = Nothing,
             previous_q = Nothing
           }
@@ -296,4 +296,4 @@ main = do
         Nothing -> putStrLn "Synthesis error"
         Just pr -> putStrLn $ case pr of
           (_, False) -> "The given system is unverifiable in " ++ show iters ++ " iterations"
-          (p, True)  -> "Synthesized the following system: "
+          (ps, True)  -> "Synthesized the following parameters: \n" ++ (unlines (fmap show ps))
