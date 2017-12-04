@@ -77,5 +77,8 @@
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
+; Add batteryvalue here
+batteryvalue
+
 (assert (and (= bi bc) (= qi qc)))
 (assert (=> (and (>= bi p0) (<= qi p1)) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))
