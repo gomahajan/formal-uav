@@ -77,7 +77,11 @@ cegisLoop p =
   then return $ Just (params p, False)
   else do
     let paramStr = unlines (fmap (printConstraint . Expr) (zipWith (EBin Eq) (fmap (EStrLit . fst) (params p)) (fmap (ERealLit . snd) (params p))))
-    addParams paramStr (templateFile p) (completeFile p)
+        balls = findAllCXBalls (synthesisPrecision p) (zip (bcxs p) (qcxs p))
+        ballStr = case balls of
+          [] -> ""
+          bs -> printConstraint (And (fmap Not bs))
+    addParams (paramStr ++ "\n" ++ ballStr) (templateFile p) (completeFile p)
     output <- run (completeFile p) (solverPrecision p)
     resp <- Main.read output
     let cxs = getCX "bi" "qi" resp
@@ -92,7 +96,7 @@ cegisLoop p =
             constraintbq = "(assert (=> (and (and (>= bi p0) (<= qi p1)) constraintbq) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))"
             -- replace "constraintbq" with
             -- battery_constraint = printConstraint $ generateVarConstraints "bi" "qi" bcxs' qcxs'
-            battery_constraint = unlines $ fmap (((flip (replace "constraintbq")) constraintbq) . printConstraint') (zipWith (findCXBall (synthesisPrecision p)) bcxs' qcxs')
+            --battery_constraint = unlines $ fmap (((flip (replace "constraintbq")) constraintbq) . printConstraint') (zipWith (findCXBall (synthesisPrecision p)) bcxs' qcxs')
         putStrLn $ "bcxs: " ++ show bcxs'
         putStrLn $ "qcxs: " ++ show qcxs'
         putStrLn $ "cx: " ++ show (c1, c2)
@@ -216,9 +220,12 @@ getValue s (Response r vs) = (fromList vs) ! s
 --findCXBalls [] [] x y _ = (x,y)
 --findCXBalls []
 
-findCXBall :: Double -> Double -> Double -> Pred
+findAllCXBalls :: Double -> [(Double, Double)] -> [Pred]
+findAllCXBalls epsilon = fmap (findCXBall epsilon)
+
+findCXBall :: Double -> (Double, Double) -> Pred
 --findCXBall x y epsilon = (bi - x)^2 + (qi - y)^2 <= epsilon^2
-findCXBall epsilon x y = Expr $ EBin Geq (EBin Pow (ERealLit epsilon) (ERealLit 2)) (EBin Plus (EBin Pow (EBin Minus (EVar "bi") (ERealLit x)) (ERealLit 2)) (EBin Pow (EBin Minus (EVar "qi") (ERealLit y)) (ERealLit 2)))
+findCXBall epsilon (x, y) = Expr $ EBin Geq (EBin Pow (ERealLit epsilon) (ERealLit 2)) (EBin Plus (EBin Pow (EBin Minus (EVar "bi") (ERealLit x)) (ERealLit 2)) (EBin Pow (EBin Minus (EVar "qi") (ERealLit y)) (ERealLit 2)))
 
 getTheta :: Double -> Double -> Double
 getTheta y x = if x == 0
@@ -276,7 +283,7 @@ main = do
             solverPrecision = delta,
             bcxs = [],
             qcxs = [],
-            params = [("p0",90), ("p1",99), ("p2",100), ("p3",1)],
+            params = [("p0",9), ("p1",9), ("p2",10), ("p3",10)],
             previous_b = Nothing,
             previous_q = Nothing
           }
