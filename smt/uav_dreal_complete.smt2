@@ -66,10 +66,10 @@
 (assert (>= x3 0))
 
 ;template
-(assert (= p0 6.311194001380471e-4))
-(assert (= p1 96.27568600825767))
-(assert (= p2 99.27987365982503))
-(assert (= p3 1.0033141885162))
+(assert (= p0 0.0))
+(assert (= p1 3.000717163085938))
+(assert (= p2 100.0))
+(assert (= p3 1.0))
 
 ;sample (assert (= p0 1))
 ;sample (assert (= p1 1))

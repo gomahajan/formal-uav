@@ -96,7 +96,7 @@ cegisLoop p =
         putStrLn $ "bcxs: " ++ show bcxs'
         putStrLn $ "qcxs: " ++ show qcxs'
         putStrLn $ "cx: " ++ show (c1, c2)
-        addAllPhis (bcxs',qcxs') --zipwith
+        addAllPhis $ zip bcxs' qcxs'
         new_params_output <- run (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read new_params_output
         let p0 = getValue "p0" new_params_output_string
@@ -127,19 +127,27 @@ cegisLoop p =
 
 addAllPhis :: [(Double, Double)] -> IO ()
 addAllPhis cxs = do
-  let phis = unlines(createPhi (c1,c2) id) --fmap
-  s <- readFile "uav_dreal_parameter_constant_template.smt2" 
+  str <- addAllPhis' (length cxs) cxs
+  let phis = unlines str --fmap
+  s <- readFile "smt/uav_dreal_parameter_constant_template.smt2"
   let s_i = replace "counterexamples" phis s
-  writeFile "uav_dreal_parameter_complete.smt2" s_i
+  writeFile "smt/uav_dreal_parameter_complete.smt2" s_i
 
-createPhi :: (Double, Double) -> String -> String
-createPhi (c1,c2) id = do
-  s <- readFile "uav_dreal_parameter_template.smt2"
+addAllPhis' :: Int -> [(Double, Double)] -> IO [String]
+addAllPhis' k [x] = do s <- createPhi x (show k)
+                       return [s]
+addAllPhis' n (x:xs) = do s <- createPhi x (show n)
+                          s' <- addAllPhis' (n - 1) xs
+                          return $ s : s'
+
+createPhi :: (Double, Double) -> String -> IO String
+createPhi (c1,c2) name = do
+  s <- readFile "smt/uav_dreal_parameter_template.smt2"
   let s_i = replace "batteryvalue" (printConstraint (generateAndTerm "bc" "qc" c1 c2)) s
-  let variables = ["x0", "x1", "x2", "x3", "bi", "b0", "b1", "b2", "b3", "qi", "q0", "q1", "q2", "q3", "t0", "t1", "t2", "t3", "bc", "qc"]
-  let s_i_g = replace "x0" "x0"++_++id s_i
+      variables = ["x0", "x1", "x2", "x3", "bi", "b0", "b1", "b2", "b3", "qi", "q0", "q1", "q2", "q3", "t0", "t1", "t2", "t3", "bc", "qc"]
+      s_i_g = foldl (\str v -> (replace v (v ++ "_" ++ name) str)) s_i variables
   -- for each variable, replace variable in s_i with variable++_++id
-  s_i_g
+  return s_i_g
 
 checkConstraint :: Params -> IO (Maybe (Double, Double))
 checkConstraint p = do
@@ -217,7 +225,7 @@ getTheta y x = if x == 0
                then (pi / 2)
                else atan (y/x)
 
-phi :: Double -> Double -> String
+--phi :: Double -> Double -> String
 
 
 -- Create SMT with new constraints. Also overwrites if it already exists --
