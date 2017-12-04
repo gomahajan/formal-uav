@@ -43,6 +43,7 @@ data Params = Params {
   templateFile :: String,
   paramTempFile :: String,
   paramCompleteFile :: String,
+  paramConstantFile :: String,
   iterations :: Int,
   synthesisPrecision :: Double,
   solverPrecision :: Double,
@@ -99,8 +100,8 @@ cegisLoop p =
             --battery_constraint = unlines $ fmap (((flip (replace "constraintbq")) constraintbq) . printConstraint') (zipWith (findCXBall (synthesisPrecision p)) bcxs' qcxs')
         --putStrLn $ "bcxs: " ++ show bcxs'
         --putStrLn $ "qcxs: " ++ show qcxs'
-        putStrLn $ "cx: " ++ show (c1, c2)
-        addAllPhis $ zip bcxs' qcxs'
+        putStrLn $ "Adding Counterexample: " ++ show (c1, c2)
+        addAllPhis p $ zip bcxs' qcxs'
         new_params_output <- run (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read new_params_output
         let p0 = getValue "p0" new_params_output_string
@@ -129,24 +130,24 @@ cegisLoop p =
   p0 p1 p2 p3 = run uav_dreal_parameter_complete.smt2
   cegisLoop p' -}
 
-addAllPhis :: [(Double, Double)] -> IO ()
-addAllPhis cxs = do
-  str <- addAllPhis' (length cxs) cxs
+addAllPhis :: Params -> [(Double, Double)] -> IO ()
+addAllPhis p cxs = do
+  str <- addAllPhis' (paramTempFile p) (length cxs) cxs
   let phis = unlines str --fmap
-  s <- readFile "smt/uav_dreal_parameter_constant_template.smt2"
+  s <- readFile (paramConstantFile p)
   let s_i = replace "counterexamples" phis s
-  writeFile "smt/uav_dreal_parameter_complete.smt2" s_i
+  writeFile (paramCompleteFile p) s_i
 
-addAllPhis' :: Int -> [(Double, Double)] -> IO [String]
-addAllPhis' k [x] = do s <- createPhi x (show k)
-                       return [s]
-addAllPhis' n (x:xs) = do s <- createPhi x (show n)
-                          s' <- addAllPhis' (n - 1) xs
-                          return $ s : s'
+addAllPhis' :: String -> Int -> [(Double, Double)] -> IO [String]
+addAllPhis' file k [x] = do s <- createPhi file x (show k)
+                            return [s]
+addAllPhis' file n (x:xs) = do s <- createPhi file x (show n)
+                               s' <- addAllPhis' file (n - 1) xs
+                               return $ s : s'
 
-createPhi :: (Double, Double) -> String -> IO String
-createPhi (c1,c2) name = do
-  s <- readFile "smt/uav_dreal_parameter_template.smt2"
+createPhi :: String -> (Double, Double) -> String -> IO String
+createPhi file (c1,c2) name = do
+  s <- readFile file
   let s_i = replace "batteryvalue" (printConstraint (generateAndTerm "bc" "qc" c1 c2)) s
       variables = ["x0", "x1", "x2", "x3", "bi", "b0", "b1", "b2", "b3", "qi", "q0", "q1", "q2", "q3", "t0", "t1", "t2", "t3", "bc", "qc"]
       s_i_g = foldl (\str v -> (replace v (v ++ "_" ++ name) str)) s_i variables
@@ -271,6 +272,7 @@ main = do
           cmpf = file ++ "_complete.smt2"
           paramtf = file ++ "_parameter_template.smt2"
           paramcf = file ++ "_parameter_complete.smt2"
+          paramcons = file ++ "_parameter_constant_template.smt2"
           initp = And [Expr (EBin Geq (EVar "b") (ERealLit 100)), Expr (EBin Leq (EVar "q") (ERealLit 20))]
           synthesisParams = Params {
             constraint = initp,
@@ -278,6 +280,7 @@ main = do
             templateFile = tmpf,
             paramTempFile = paramtf,
             paramCompleteFile = paramcf,
+            paramConstantFile = paramcons,
             iterations = iters,
             synthesisPrecision = precision,
             solverPrecision = delta,
@@ -288,9 +291,9 @@ main = do
             previous_q = Nothing
           }
       p <- cegisLoop synthesisParams
-      putStrLn $ show p
-      {-case p of
-        Nothing -> putStrLn "Nothing"
+      --putStrLn $ show p
+      case p of
+        Nothing -> putStrLn "Synthesis error"
         Just pr -> putStrLn $ case pr of
           (_, False) -> "The given system is unverifiable in " ++ show iters ++ " iterations"
-          (p, True)  -> "The given system is provably safe with the following loop invariant: " ++ printConstraint' p -}
+          (p, True)  -> "Synthesized the following system: "
