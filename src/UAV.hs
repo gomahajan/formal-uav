@@ -238,6 +238,9 @@ mode = cmdArgsMode $ cargs &=
   program programName &=
   summary (programName ++ " v" ++ versionName)
 
+-- utility function
+printParam :: (String, Double) -> String
+printParam (p,x) = p ++ " = " ++ show x
 
 main :: IO ()
 main = do
@@ -272,5 +275,6 @@ main = do
       case p of
         Nothing -> putStrLn "Synthesis error"
         Just pr -> putStrLn $ case pr of
-          (_, False) -> "The given system is unverifiable in " ++ show iters ++ " iterations"
-          (ps, True)  -> "Synthesized the following parameters: \n" ++ (unlines (fmap show ps))
+          (_, False) -> "\n\nThe given system is unverifiable in " ++ show iters ++ " iterations"
+          (ps, True)  -> "\n\nSynthesized a program with the following parameters: \n" ++ (unlines (fmap printParam ps)) ++
+            "\nAnd the following invariant:\n" ++ "b >= " ++ (show (snd (head ps))) ++ "\nq <= " ++ (show (snd (head (tail ps))))
