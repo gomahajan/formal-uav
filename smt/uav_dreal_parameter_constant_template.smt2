@@ -8,16 +8,18 @@
 
 ;constants
 (declare-fun battery_charging_rate () Real)
-(declare-fun battery_discharge_rate () Real)
+(declare-fun battery_discharge_rate_fly () Real)
+(declare-fun battery_discharge_rate_hover () Real)
 (declare-fun queue_data_rate () Real)
 (declare-fun queue_upload_rate () Real)
 (declare-fun drone_velocity () Real)
 
+(assert(= drone_velocity 10))
 (assert(= battery_charging_rate 50))
-(assert(= battery_discharge_rate 1))
+(assert(= battery_discharge_rate_fly 1))
+(assert(= battery_discharge_rate_hover 1))
 (assert(= queue_data_rate 1))
 (assert(= queue_upload_rate 1))
-(assert(= drone_velocity 10))
 
 (assert (<= p0 100))
 (assert (>= p0 0))

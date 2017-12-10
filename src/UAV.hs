@@ -8,6 +8,7 @@ import System.Environment
 import Debug.Trace
 import System.Console.CmdArgs
 import Data.Map (fromList, (!))
+import Control.Monad
 
 import Logic
 import Parser
@@ -26,14 +27,16 @@ data CommandLineArgs = Args {
   smt_file :: String, -- file prefix
   depth :: Int,
   precision :: Double,
-  smt_precision :: Double
+  smt_precision :: Double,
+  verbose :: Bool
 } deriving (Data, Typeable, Show, Eq)
 
 cargs = Args {
   smt_file      = ""    &= argPos 0,
   depth    = 10    &= help "Maximum number of iterations when running synthesis algorithm.",
   precision     = 0.01  &= help "Precision for hybrid system synthesis.",
-  smt_precision = 0.001 &= help "Delta-precision for SMT solver."
+  smt_precision = 0.001 &= help "Delta-precision for SMT solver.",
+  verbose       = False &= help "Verbose mode."
 }
 
 
@@ -44,6 +47,7 @@ data Params = Params {
   paramTempFile :: String,
   paramCompleteFile :: String,
   paramConstantFile :: String,
+  originalIters :: Int,
   iterations :: Int,
   synthesisPrecision :: Double,
   solverPrecision :: Double,
@@ -51,7 +55,8 @@ data Params = Params {
   qcxs :: [Double],
   params :: [(String, Double)],
   previous_b :: Maybe Double, -- could rename to previous counter-example
-  previous_q :: Maybe Double
+  previous_q :: Maybe Double,
+  verboseMode :: Bool
 } deriving (Show, Eq)
 
 
@@ -78,7 +83,9 @@ cegisLoop p =
     resp <- Main.read output
     let cxs = getCX "bi" "qi" resp
     case cxs of
-      Nothing -> return $ Just (params p, True)
+      Nothing -> do
+        putStrLn $ "\n\nIn " ++ show (originalIters p - iterations p) ++ " iterations:"
+        return $ Just (params p, True)
       Just (c1, c2) -> do
         let --(c1,c2) = findCXBall (previous_b p) (previous_q p) c1_naive c2_naive (synthesisPrecision p)
             bcxs' = c1 : bcxs p
@@ -89,25 +96,32 @@ cegisLoop p =
             --battery_constraint = unlines $ fmap (((flip (replace "constraintbq")) constraintbq) . printConstraint') (zipWith (findCXBall (synthesisPrecision p)) bcxs' qcxs')
         --putStrLn $ "bcxs: " ++ show bcxs'
         --putStrLn $ "qcxs: " ++ show qcxs'
-        putStrLn $ "Adding Counterexample: " ++ show (c1, c2)
+        when (verboseMode p) $ putStrLn $ "Adding Counterexample: " ++ show (c1, c2)
         addAllPhis p $ zip bcxs' qcxs'
         new_params_output <- run (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read new_params_output
-        let p0 = getValue "p0" new_params_output_string
-            p1 = getValue "p1" new_params_output_string
-            p2 = getValue "p2" new_params_output_string
-            p3 = getValue "p3" new_params_output_string
-            currentIter = iterations p
-            params' = [("p0", p0), ("p1", p1), ("p2", p2), ("p3", p3)]
+        if unsatResp new_params_output_string
+        then return $ Just (params p, False)
+        else do
+          let p0 = getValue "p0" new_params_output_string
+              p1 = getValue "p1" new_params_output_string
+              p2 = getValue "p2" new_params_output_string
+              p3 = getValue "p3" new_params_output_string
+              currentIter = iterations p
+              params' = [("p0", p0), ("p1", p1), ("p2", p2), ("p3", p3)]
         --putStrLn $ "Solved Params: " ++ show params'
         --putStrLn $ "Previous params: " ++ show (params p)
-        cegisLoop p { previous_b = Just c1,
-                      previous_q = Just c2,
-                      iterations = currentIter - 1,
-                      bcxs = bcxs',
-                      qcxs = qcxs',
-                      params = params'
-                      }
+          cegisLoop p { previous_b = Just c1,
+                       previous_q = Just c2,
+                       iterations = currentIter - 1,
+                       bcxs = bcxs',
+                       qcxs = qcxs',
+                       params = params'
+                       }
+
+unsatResp :: Response -> Bool
+unsatResp (Response _ []) = True
+unsatResp _               = False
 
 
 addAllPhis :: Params -> [(Double, Double)] -> IO ()
@@ -246,7 +260,7 @@ main :: IO ()
 main = do
   args <- cmdArgsRun mode
   case args of
-    (Args file iters precision delta) -> do
+    (Args file iters precision delta v) -> do
       let tmpf = file ++ "_template.smt2"
           cmpf = file ++ "_complete.smt2"
           paramtf = file ++ "_parameter_template.smt2"
@@ -261,6 +275,7 @@ main = do
             paramTempFile = paramtf,
             paramCompleteFile = paramcf,
             paramConstantFile = paramcons,
+            originalIters = iters,
             iterations = iters,
             synthesisPrecision = precision,
             solverPrecision = delta,
@@ -269,12 +284,13 @@ main = do
             -- Initial param values for program
             params = [("p0",50), ("p1",50), ("p2",10), ("p3",1)],
             previous_b = Nothing,
-            previous_q = Nothing
+            previous_q = Nothing,
+            verboseMode = v
           }
       p <- cegisLoop synthesisParams
       case p of
         Nothing -> putStrLn "Synthesis error"
         Just pr -> putStrLn $ case pr of
-          (_, False) -> "\n\nThe given system is unverifiable in " ++ show iters ++ " iterations"
-          (ps, True)  -> "\n\nSynthesized a program with the following parameters: \n" ++ (unlines (fmap printParam ps)) ++
-            "\nAnd the following invariant:\n" ++ "b >= " ++ (show (snd (head ps))) ++ "\nq <= " ++ (show (snd (head (tail ps))))
+          (_, False) -> "\nThe given system is unverifiable in " ++ show iters ++ " iterations"
+          (ps, True)  -> "\nSynthesized a program with the following parameters: \n" ++ unlines (fmap printParam ps) ++
+            "\nAnd the following invariant:\n" ++ "b >= " ++ show (snd (head ps)) ++ "\nq <= " ++ show (snd (head (tail ps)))

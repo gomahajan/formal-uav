@@ -8,16 +8,18 @@
 
 ;constants
 (declare-fun battery_charging_rate () Real)
-(declare-fun battery_discharge_rate () Real)
+(declare-fun battery_discharge_rate_fly () Real)
+(declare-fun battery_discharge_rate_hover () Real)
 (declare-fun queue_data_rate () Real)
 (declare-fun queue_upload_rate () Real)
 (declare-fun drone_velocity () Real)
 
+(assert(= drone_velocity 10))
 (assert(= battery_charging_rate 50))
-(assert(= battery_discharge_rate 1))
+(assert(= battery_discharge_rate_fly 1))
+(assert(= battery_discharge_rate_hover 1))
 (assert(= queue_data_rate 1))
 (assert(= queue_upload_rate 1))
-(assert(= drone_velocity 10))
 
 (assert (<= p0 100))
 (assert (>= p0 0))
@@ -89,13 +91,13 @@
 ;flying to D
 (assert(= x1_3 10))
 (assert(= x1_3 (+ x0_3 (* drone_velocity t1_3))))
-(assert(= b1_3 (- b0_3 (* battery_discharge_rate t1_3))))
+(assert(= b1_3 (- b0_3 (* battery_discharge_rate_fly t1_3))))
 (assert(= q1_3 (+ q0_3 (* queue_data_rate t1_3))))
 
 ;emptying queue
 (assert(= x2_3 10))
 (assert(= q2_3 (- q1_3 (* queue_upload_rate t2_3))))
-(assert(= b2_3 (- b1_3 (* battery_discharge_rate t2_3))))
+(assert(= b2_3 (- b1_3 (* battery_discharge_rate_hover t2_3))))
 ;program: empty queue till battery <= 4
 (assert (or (=> (> b1_3 p3) (= b2_3 p3)) (= q2_3 0)))
 (assert (=> (<= b1_3 p3) (= b2_3 b1_3)))
@@ -104,7 +106,7 @@
 (assert(= x3_3 0))
 (assert(= x3_3 (- x2_3 (* drone_velocity t3_3))))
 (assert(= q3_3 (+ q2_3 (* queue_data_rate t3_3))))
-(assert(= b3_3 (- b2_3 (* battery_discharge_rate t3_3))))
+(assert(= b3_3 (- b2_3 (* battery_discharge_rate_fly t3_3))))
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
@@ -174,13 +176,13 @@
 ;flying to D
 (assert(= x1_2 10))
 (assert(= x1_2 (+ x0_2 (* drone_velocity t1_2))))
-(assert(= b1_2 (- b0_2 (* battery_discharge_rate t1_2))))
+(assert(= b1_2 (- b0_2 (* battery_discharge_rate_fly t1_2))))
 (assert(= q1_2 (+ q0_2 (* queue_data_rate t1_2))))
 
 ;emptying queue
 (assert(= x2_2 10))
 (assert(= q2_2 (- q1_2 (* queue_upload_rate t2_2))))
-(assert(= b2_2 (- b1_2 (* battery_discharge_rate t2_2))))
+(assert(= b2_2 (- b1_2 (* battery_discharge_rate_hover t2_2))))
 ;program: empty queue till battery <= 4
 (assert (or (=> (> b1_2 p3) (= b2_2 p3)) (= q2_2 0)))
 (assert (=> (<= b1_2 p3) (= b2_2 b1_2)))
@@ -189,7 +191,7 @@
 (assert(= x3_2 0))
 (assert(= x3_2 (- x2_2 (* drone_velocity t3_2))))
 (assert(= q3_2 (+ q2_2 (* queue_data_rate t3_2))))
-(assert(= b3_2 (- b2_2 (* battery_discharge_rate t3_2))))
+(assert(= b3_2 (- b2_2 (* battery_discharge_rate_fly t3_2))))
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
@@ -259,13 +261,13 @@
 ;flying to D
 (assert(= x1_1 10))
 (assert(= x1_1 (+ x0_1 (* drone_velocity t1_1))))
-(assert(= b1_1 (- b0_1 (* battery_discharge_rate t1_1))))
+(assert(= b1_1 (- b0_1 (* battery_discharge_rate_fly t1_1))))
 (assert(= q1_1 (+ q0_1 (* queue_data_rate t1_1))))
 
 ;emptying queue
 (assert(= x2_1 10))
 (assert(= q2_1 (- q1_1 (* queue_upload_rate t2_1))))
-(assert(= b2_1 (- b1_1 (* battery_discharge_rate t2_1))))
+(assert(= b2_1 (- b1_1 (* battery_discharge_rate_hover t2_1))))
 ;program: empty queue till battery <= 4
 (assert (or (=> (> b1_1 p3) (= b2_1 p3)) (= q2_1 0)))
 (assert (=> (<= b1_1 p3) (= b2_1 b1_1)))
@@ -274,7 +276,7 @@
 (assert(= x3_1 0))
 (assert(= x3_1 (- x2_1 (* drone_velocity t3_1))))
 (assert(= q3_1 (+ q2_1 (* queue_data_rate t3_1))))
-(assert(= b3_1 (- b2_1 (* battery_discharge_rate t3_1))))
+(assert(= b3_1 (- b2_1 (* battery_discharge_rate_fly t3_1))))
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
