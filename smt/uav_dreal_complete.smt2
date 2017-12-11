@@ -35,12 +35,12 @@
 (declare-fun queue_upload_rate () Real)
 (declare-fun drone_velocity () Real)
 
-(assert(= drone_velocity 10))
-(assert(= battery_charging_rate 50))
-(assert(= battery_discharge_rate_fly 1))
-(assert(= battery_discharge_rate_hover 1))
-(assert(= queue_data_rate 1))
-(assert(= queue_upload_rate 1))
+(assert (= drone_velocity 10))
+(assert (= battery_charging_rate 50))
+(assert (= battery_discharge_rate_fly 1))
+(assert (= battery_discharge_rate_hover 0.1))
+(assert (= queue_data_rate 0.1))
+(assert (= queue_upload_rate 1))
 
 (assert(>= t0 0))
 (assert(>= t1 0))
@@ -68,12 +68,12 @@
 (assert (>= x3 0))
 
 ;template
-(assert (= p0 7.011508941650391e-4))
-(assert (= p1 6.370371093749995))
-(assert (= p2 50.0))
-(assert (= p3 5.307871093749995))
+(assert (= p0 50.0))
+(assert (= p1 50.0))
+(assert (= p2 10.0))
+(assert (= p3 1.0))
 
-(assert (and (not (>= (^ 1.0e-2 2.0) (+ (^ (- bi 50.0) 2.0) (^ (- qi 48.013125) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (^ (- bi 50.0) 2.0) (^ (- qi 48.45048336105687) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (^ (- bi 50.0) 2.0) (^ (- qi 48.0625) 2.0))))))
+
 ;sample (assert (= p0 1))
 ;sample (assert (= p1 1))
 ;sample (assert (= p2 1))
@@ -81,31 +81,31 @@
 
 ;charging
 (assert(= x0 0))
-(assert(= b0 (+ bi (* battery_charging_rate t0))))
-(assert(= q0 (+ qi (* queue_data_rate t0))))
+(assert(= b0 (+ bi (* battery_charging_rate t0 t0))))
+(assert(= q0 (+ qi (* queue_data_rate t0 t0))))
 ;program: charge till battery >= 20
 (assert (=> (>= bi p2) (= b0 bi)))
 (assert (or (=> (< bi p2) (= b0 p2)) (= q0 100)))
 
 ;flying to D
 (assert(= x1 10))
-(assert(= x1 (+ x0 (* drone_velocity t1))))
-(assert(= b1 (- b0 (* battery_discharge_rate_fly t1))))
-(assert(= q1 (+ q0 (* queue_data_rate t1))))
+(assert(= x1 (+ x0 (* drone_velocity t1 t1))))
+(assert(= b1 (- b0 (* battery_discharge_rate_fly t1 t1))))
+(assert(= q1 (+ q0 (* queue_data_rate t1 t1))))
 
 ;emptying queue
 (assert(= x2 10))
-(assert(= q2 (- q1 (* queue_upload_rate t2))))
-(assert(= b2 (- b1 (* battery_discharge_rate_hover t2))))
+(assert(= q2 (- q1 (* queue_upload_rate t2 t2))))
+(assert(= b2 (- b1 (* battery_discharge_rate_hover t2 t2))))
 ;program: empty queue till battery <= 4
 (assert (or (=> (> b1 p3) (= b2 p3)) (= q2 0)))
 (assert (=> (<= b1 p3) (= b2 b1)))
 
 ;flying back
 (assert(= x3 0))
-(assert(= x3 (- x2 (* drone_velocity t3))))
-(assert(= q3 (+ q2 (* queue_data_rate t3))))
-(assert(= b3 (- b2 (* battery_discharge_rate_fly t3))))
+(assert(= x3 (- x2 (* drone_velocity t3 t3))))
+(assert(= q3 (+ q2 (* queue_data_rate t3 t3))))
+(assert(= b3 (- b2 (* battery_discharge_rate_fly t3 t3))))
 
 ;goal
 ;Question: Does there exist starting battery,queue values such that safety is not maintained

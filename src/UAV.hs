@@ -84,7 +84,7 @@ cegisLoop p =
     let cxs = getCX "bi" "qi" resp
     case cxs of
       Nothing -> do
-        putStrLn $ "\n\nIn " ++ show (originalIters p - iterations p) ++ " iterations:"
+        putStrLn $ "\n\nIn " ++ show (originalIters p - iterations p) ++ " iterations"
         return $ Just (params p, True)
       Just (c1, c2) -> do
         let --(c1,c2) = findCXBall (previous_b p) (previous_q p) c1_naive c2_naive (synthesisPrecision p)
