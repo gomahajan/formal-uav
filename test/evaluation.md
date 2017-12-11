@@ -1,3 +1,31 @@
+# Size of state space
+Tested w simple linear dynamics, start @ (5,50)
+Delta-balls:
+0.001 : unverifiable in 10 iterations, avg 17.656s
+0.01: unverifiable in 10 iterations, avg 29.324s
+0.1: unverifiable, avg 83.975s
+1.0: unverifiable (b-init 5.0), avg 37.075s
+
+# Environment dimension
+Averaged over 10 runs. Starting (90,10)
+10: 3 iterations, 0.483s
+20: 3 iterations, 0.467s
+30: 2 iterations, 0.274s
+40: 4 iterations, 0.742s
+50: 3 iterations, 0.446s
+60: 4 iterations, 0.756s
+70: 3 iterations, 0.506s
+80: 4 iterations, 0.782s
+90: unverifiable, 12.781s
+100: unverifiable, 24.325s
+1000: timeout
+
+
+# Initial points
+It's like impossible to get any useful metrics here.
+
+# Complexity of dynamics
+
 ### Linear dynamics
 Stats: 10 reps, avg: 0.472s, verified in 3 iterations
 

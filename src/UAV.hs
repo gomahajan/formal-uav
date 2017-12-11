@@ -28,7 +28,10 @@ data CommandLineArgs = Args {
   depth :: Int,
   precision :: Double,
   smt_precision :: Double,
-  verbose :: Bool
+  verbose :: Bool,
+  b_init :: Double,
+  q_init :: Double,
+  solver_args :: String
 } deriving (Data, Typeable, Show, Eq)
 
 cargs = Args {
@@ -36,7 +39,10 @@ cargs = Args {
   depth    = 10    &= help "Maximum number of iterations when running synthesis algorithm.",
   precision     = 0.01  &= help "Precision for hybrid system synthesis.",
   smt_precision = 0.001 &= help "Delta-precision for SMT solver.",
-  verbose       = False &= help "Verbose mode."
+  verbose       = False &= help "Verbose mode.",
+  b_init        = 50 &= help "Initial battery level",
+  q_init        = 50 &= help "Initial queue level",
+  solver_args   = "" &= help "Arguments to pass to solver"
 }
 
 
@@ -56,7 +62,8 @@ data Params = Params {
   params :: [(String, Double)],
   previous_b :: Maybe Double, -- could rename to previous counter-example
   previous_q :: Maybe Double,
-  verboseMode :: Bool
+  verboseMode :: Bool,
+  solverArgs :: String
 } deriving (Show, Eq)
 
 
@@ -79,7 +86,7 @@ cegisLoop p =
           [] -> ""
           bs -> printConstraint (And (fmap Not bs))
     addParams (paramStr ++ "\n" ++ ballStr) (templateFile p) (completeFile p)
-    output <- run (completeFile p) (solverPrecision p)
+    output <- run (solverArgs p) (completeFile p) (solverPrecision p)
     resp <- Main.read output
     let cxs = getCX "bi" "qi" resp
     case cxs of
@@ -98,7 +105,7 @@ cegisLoop p =
         --putStrLn $ "qcxs: " ++ show qcxs'
         when (verboseMode p) $ putStrLn $ "Adding Counterexample: " ++ show (c1, c2)
         addAllPhis p $ zip bcxs' qcxs'
-        new_params_output <- run (paramCompleteFile p) (solverPrecision p)
+        new_params_output <- run (solverArgs p) (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read new_params_output
         if unsatResp new_params_output_string
         then return $ Just (params p, False)
@@ -153,7 +160,7 @@ checkConstraint p = do
       constraint_i = replace "q" "qi" (replace "b" "bi" constr)
       constraint_g = replace "q" "q3" (replace "b" "b3" constr)
   addConstraints (templateFile p) (completeFile p) constraint_i constraint_g
-  output <- run (completeFile p) (solverPrecision p)
+  output <- run (solverArgs p) (completeFile p) (solverPrecision p)
   resp <- Main.read output
   return $ getCX "b3" "q3" resp
 
@@ -260,7 +267,7 @@ main :: IO ()
 main = do
   args <- cmdArgsRun mode
   case args of
-    (Args file iters precision delta v) -> do
+    (Args file iters precision delta v b q sargs) -> do
       let tmpf = file ++ "_template.smt2"
           cmpf = file ++ "_complete.smt2"
           paramtf = file ++ "_parameter_template.smt2"
@@ -282,11 +289,13 @@ main = do
             bcxs = [],
             qcxs = [],
             -- Initial param values for program
-            params = [("p0",5), ("p1",50), ("p2",10), ("p3",1)],
+            params = [("p0",b), ("p1",q), ("p2",10), ("p3",1)],
             previous_b = Nothing,
             previous_q = Nothing,
-            verboseMode = v
+            verboseMode = v,
+            solverArgs = sargs
           }
+      when v $ putStrLn $ "Intial point: " ++ "(" ++ show b ++"," ++ show q ++ ")"
       p <- cegisLoop synthesisParams
       case p of
         Nothing -> putStrLn "Synthesis error"
