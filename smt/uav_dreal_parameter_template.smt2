@@ -49,7 +49,7 @@
 
 ;charging
 (assert(= x0 0))
-(assert(= b0 (+ bi (* battery_charging_rate t0))))
+(assert(= b0 (+ bi (* battery_charging_rate t0 t0))))
 (assert(= q0 (+ qi (* queue_data_rate t0))))
 ;program: charge till battery >= 20
 (assert (=> (>= bi p2) (= b0 bi)))
@@ -58,7 +58,7 @@
 ;flying to D
 (assert(= x1 10))
 (assert(= x1 (+ x0 (* drone_velocity t1))))
-(assert(= b1 (- b0 (* battery_discharge_rate_fly t1))))
+(assert(= b1 (- b0 (* battery_discharge_rate_fly t1 t1))))
 (assert(= q1 (+ q0 (* queue_data_rate t1))))
 
 ;emptying queue
@@ -74,6 +74,8 @@
 (assert(= x3 (- x2 (* drone_velocity t3))))
 (assert(= q3 (+ q2 (* queue_data_rate t3))))
 (assert(= b3 (- b2 (* battery_discharge_rate_fly t3))))
+
+
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained

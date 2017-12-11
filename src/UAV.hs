@@ -282,7 +282,7 @@ main = do
             bcxs = [],
             qcxs = [],
             -- Initial param values for program
-            params = [("p0",50), ("p1",50), ("p2",10), ("p3",1)],
+            params = [("p0",5), ("p1",50), ("p2",10), ("p3",1)],
             previous_b = Nothing,
             previous_q = Nothing,
             verboseMode = v

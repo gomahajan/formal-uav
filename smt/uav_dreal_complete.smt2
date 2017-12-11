@@ -68,12 +68,12 @@
 (assert (>= x3 0))
 
 ;template
-(assert (= p0 7.011508941650391e-4))
-(assert (= p1 6.370371093749995))
-(assert (= p2 50.0))
-(assert (= p3 5.307871093749995))
+(assert (= p0 6.103515625e-4))
+(assert (= p1 1.0))
+(assert (= p2 10.01365074621014))
+(assert (= p3 0.0))
 
-(assert (and (not (>= (^ 1.0e-2 2.0) (+ (^ (- bi 50.0) 2.0) (^ (- qi 48.013125) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (^ (- bi 50.0) 2.0) (^ (- qi 48.45048336105687) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (^ (- bi 50.0) 2.0) (^ (- qi 48.0625) 2.0))))))
+(assert (and (not (>= (^ 1.0e-2 2.0) (+ (^ (- bi 10.01365074621014) 2.0) (^ (- qi 8.013508838076842) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (^ (- bi 10.00739066547913) 2.0) (^ (- qi 8.006362246337238) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (^ (- bi 10.00008321645748) 2.0) (^ (- qi 7.999960892417094) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (^ (- bi 10.00008321645748) 2.0) (^ (- qi 6.998058193654288) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (^ (- bi 10.0) 2.0) (^ (- qi 12.21802139282227) 2.0))))))
 ;sample (assert (= p0 1))
 ;sample (assert (= p1 1))
 ;sample (assert (= p2 1))
@@ -81,7 +81,7 @@
 
 ;charging
 (assert(= x0 0))
-(assert(= b0 (+ bi (* battery_charging_rate t0))))
+(assert(= b0 (+ bi (* battery_charging_rate t0 t0))))
 (assert(= q0 (+ qi (* queue_data_rate t0))))
 ;program: charge till battery >= 20
 (assert (=> (>= bi p2) (= b0 bi)))
@@ -90,7 +90,7 @@
 ;flying to D
 (assert(= x1 10))
 (assert(= x1 (+ x0 (* drone_velocity t1))))
-(assert(= b1 (- b0 (* battery_discharge_rate_fly t1))))
+(assert(= b1 (- b0 (* battery_discharge_rate_fly t1 t1))))
 (assert(= q1 (+ q0 (* queue_data_rate t1))))
 
 ;emptying queue
