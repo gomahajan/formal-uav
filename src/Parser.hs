@@ -24,8 +24,24 @@ nonWhitespace = many $ noneOf " \t\n"
 -- Various number formats
 parseNum = try parseSci <|> try parseDouble <|> parseInt
 
-parseDRealVar :: Parser Assignment
-parseDRealVar = do
+
+parseDReal4Var :: Parser Assignment
+parseDReal4Var = do
+  s <- nonWhitespace
+  whitespace
+  char ':'
+  whitespace
+  char '['
+  x <- parseNum
+  char ','
+  whitespace
+  y <- parseNum
+  char ']'
+  whitespace
+  return (s,x)
+
+parseDReal3Var :: Parser Assignment
+parseDReal3Var = do
   s <- nonWhitespace
   whitespace
   string ": [ ENTIRE ] = ["
@@ -88,7 +104,7 @@ parseDRealResponse = do
   s <- many1 letter
   char ':'
   whitespace
-  vs <- many parseDRealVar
+  vs <- many (try parseDReal4Var <|> parseDReal3Var)
   return $ Response s vs
 
 parseResponse :: Parser Response

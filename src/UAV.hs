@@ -9,6 +9,7 @@ import Debug.Trace
 import System.Console.CmdArgs
 import Data.Map (fromList, (!))
 import Control.Monad
+import Data.ConfigFile
 
 import Logic
 import Parser
@@ -86,6 +87,7 @@ cegisLoop p =
           [] -> ""
           bs -> printConstraint (And (fmap Not bs))
     addParams (paramStr ++ "\n" ++ ballStr) (templateFile p) (completeFile p)
+    when (verboseMode p) $ putStrLn "Finding counterexample..."
     output <- run (solverArgs p) (completeFile p) (solverPrecision p)
     resp <- Main.read output
     let cxs = getCX "bi" "qi" resp
@@ -105,6 +107,7 @@ cegisLoop p =
         --putStrLn $ "qcxs: " ++ show qcxs'
         when (verboseMode p) $ putStrLn $ "Adding Counterexample: " ++ show (c1, c2)
         addAllPhis p $ zip bcxs' qcxs'
+        when (verboseMode p) $ putStrLn "Finding parameters..."
         new_params_output <- run (solverArgs p) (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read new_params_output
         if unsatResp new_params_output_string

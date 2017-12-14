@@ -30,6 +30,7 @@ UAV
 *.sql
 *.sqlite
 testresponse
+smt/drealBenchmarks/*
 
 # OS generated files #
 ######################
