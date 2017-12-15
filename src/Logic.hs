@@ -35,7 +35,6 @@ data Exp where
   ERealLit :: Double -> Exp
   EUOp :: UnOp -> Exp -> Exp
   EBin :: BinOp -> Exp -> Exp -> Exp
-  EIf :: Exp -> Exp -> Exp -> Exp
   EVar :: String -> Exp
   deriving (Eq, Show)
 
@@ -53,10 +52,6 @@ eval env (EBin Minus e1 e2) = evalNumeric (-) (eval env e1) (eval env e2)
 eval env (EBin Times e1 e2) = evalNumeric (*) (eval env e1) (eval env e2)
 eval env (EBin Pow e1 e2) = evalNumeric (**) (eval env e1) (eval env e2)
 eval env (EBin Div e1 e2) = evalNumeric (/) (eval env e1) (eval env e2)
-eval env (EIf g e1 e2) = case eval env g of
-  (Just (VBool True)) -> eval env e1
-  (Just (VBool False)) -> eval env e2
-  _             -> Nothing
 eval env (EVar s) = case Data.Map.lookup s env of
   Just e  -> eval env e
   Nothing -> Nothing

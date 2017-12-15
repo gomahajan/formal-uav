@@ -17,6 +17,7 @@ import Logic
 import Parser
 import SMTSolver
 import Pretty
+import CodeGen
 
 programName = "TBD"
 versionName = "0.0"
