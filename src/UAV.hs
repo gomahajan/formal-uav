@@ -10,6 +10,8 @@ import System.Console.CmdArgs
 import Data.Map (fromList, (!))
 import Control.Monad
 import Data.ConfigFile
+import Data.Either.Utils
+import Control.Monad.Except
 
 import Logic
 import Parser
@@ -31,19 +33,17 @@ data CommandLineArgs = Args {
   smt_precision :: Double,
   verbose :: Bool,
   b_init :: Double,
-  q_init :: Double,
-  solver_args :: String
+  q_init :: Double
 } deriving (Data, Typeable, Show, Eq)
 
 cargs = Args {
   smt_file      = ""    &= argPos 0,
-  depth    = 10    &= help "Maximum number of iterations when running synthesis algorithm.",
+  depth         = 10    &= help "Maximum number of iterations when running synthesis algorithm.",
   precision     = 0.01  &= help "Precision for hybrid system synthesis.",
   smt_precision = 0.001 &= help "Delta-precision for SMT solver.",
   verbose       = False &= help "Verbose mode.",
-  b_init        = 50 &= help "Initial battery level",
-  q_init        = 50 &= help "Initial queue level",
-  solver_args   = "" &= help "Arguments to pass to solver"
+  b_init        = 50    &= help "Initial battery level",
+  q_init        = 50    &= help "Initial queue level"
 }
 
 
@@ -64,8 +64,24 @@ data Params = Params {
   previous_b :: Maybe Double, -- could rename to previous counter-example
   previous_q :: Maybe Double,
   verboseMode :: Bool,
-  solverArgs :: String
+  solverConfig :: SolverConfig
 } deriving (Show, Eq)
+
+
+readConfig :: String -> IO SolverConfig
+readConfig f = do
+  rv <- runExceptT $ do
+    cp <- Control.Monad.join $ liftIO $ readfile emptyCP f
+    let x = cp
+    dpath <- get x "DEFAULT" "path"
+    dv    <- get x "DEFAULT" "version"
+    dargs <- get x "DEFAULT" "args"
+    return SolverConfig {
+      solverArgs = dargs,
+      dRealVersion = dv,
+      dRealPath = dpath
+    }
+  either (error . snd) return rv
 
 
 {- Algorithm: We ask dReal the following question: Starting from region specified by constraints,
@@ -88,8 +104,8 @@ cegisLoop p =
           bs -> printConstraint (And (fmap Not bs))
     addParams (paramStr ++ "\n" ++ ballStr) (templateFile p) (completeFile p)
     when (verboseMode p) $ putStrLn "Finding counterexample..."
-    output <- run (solverArgs p) (completeFile p) (solverPrecision p)
-    resp <- Main.read output
+    output <- run (solverConfig p) (completeFile p) (solverPrecision p)
+    resp <- Main.read (solverConfig p) output
     let cxs = getCX "bi" "qi" resp
     case cxs of
       Nothing -> do
@@ -108,8 +124,8 @@ cegisLoop p =
         when (verboseMode p) $ putStrLn $ "Adding Counterexample: " ++ show (c1, c2)
         addAllPhis p $ zip bcxs' qcxs'
         when (verboseMode p) $ putStrLn "Finding parameters..."
-        new_params_output <- run (solverArgs p) (paramCompleteFile p) (solverPrecision p)
-        new_params_output_string <- Main.read new_params_output
+        new_params_output <- run (solverConfig p) (paramCompleteFile p) (solverPrecision p)
+        new_params_output_string <- Main.read (solverConfig p) new_params_output
         if unsatResp new_params_output_string
         then return $ Just (params p, False)
         else do
@@ -163,8 +179,8 @@ checkConstraint p = do
       constraint_i = replace "q" "qi" (replace "b" "bi" constr)
       constraint_g = replace "q" "q3" (replace "b" "b3" constr)
   addConstraints (templateFile p) (completeFile p) constraint_i constraint_g
-  output <- run (solverArgs p) (completeFile p) (solverPrecision p)
-  resp <- Main.read output
+  output <- run (solverConfig p) (completeFile p) (solverPrecision p)
+  resp <- Main.read (solverConfig p) output
   return $ getCX "b3" "q3" resp
 
 {- Adds the counterexample and its implied space to the constraints -}
@@ -202,8 +218,8 @@ genInvt p = do
     pr
 
 -- Read solver response
-read :: String -> IO Response
-read src = return $ parseDRealSat src
+read :: SolverConfig -> String -> IO Response
+read sconf src = return $ parseDRealSat (dRealVersion sconf) src
 
 
 -- Extract Counterexample from solver response
@@ -268,9 +284,10 @@ printParam (p,x) = p ++ " = " ++ show x
 
 main :: IO ()
 main = do
+  conf <- readConfig "config/solver.cfg"
   args <- cmdArgsRun mode
   case args of
-    (Args file iters precision delta v b q sargs) -> do
+    (Args file iters precision delta v b q) -> do
       let tmpf = file ++ "_template.smt2"
           cmpf = file ++ "_complete.smt2"
           paramtf = file ++ "_parameter_template.smt2"
@@ -296,7 +313,7 @@ main = do
             previous_b = Nothing,
             previous_q = Nothing,
             verboseMode = v,
-            solverArgs = sargs
+            solverConfig = conf
           }
       when v $ putStrLn $ "Intial point: " ++ "(" ++ show b ++"," ++ show q ++ ")"
       p <- cegisLoop synthesisParams

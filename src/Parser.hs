@@ -30,21 +30,21 @@ parseDReal4Var = do
   s <- nonWhitespace
   whitespace
   char ':'
-  whitespace
-  char '['
-  x <- parseNum
-  char ','
-  whitespace
-  y <- parseNum
-  char ']'
-  whitespace
+  (x,y) <- parseDRealRange
   return (s,x)
 
 parseDReal3Var :: Parser Assignment
 parseDReal3Var = do
   s <- nonWhitespace
   whitespace
-  string ": [ ENTIRE ] = ["
+  string ": [ ENTIRE ] ="
+  (x,y) <- parseDRealRange
+  return (s, x) -- TODO: be smarter about which val to return
+
+parseDRealRange :: Parser (Double, Double)
+parseDRealRange = do
+  whitespace
+  char '['
   whitespace
   x <- parseNum
   char ','
@@ -52,7 +52,7 @@ parseDReal3Var = do
   y <- parseNum
   char ']'
   whitespace
-  return (s, x) -- TODO: be smarter about which val to return
+  return (x,y)
 
 -- Parse a variable assignment from z3
 parseVar :: Parser Assignment
@@ -99,13 +99,13 @@ parseSci = do
     [] -> base * (10 ^ pwr)
     _ -> base / (10 ^ pwr)
 
-parseDRealResponse :: Parser Response
-parseDRealResponse = do
-  s <- many1 letter
-  char ':'
-  whitespace
-  vs <- many (try parseDReal4Var <|> parseDReal3Var)
-  return $ Response s vs
+parseDRealResponse :: Int -> Parser Response
+parseDRealResponse v = do
+  let p = case v of
+        3 -> parseDReal3Var
+        4 -> parseDReal4Var
+  vs <- many p
+  return $ Response "sat" vs -- This got weird with the addition of dreal4...
 
 parseResponse :: Parser Response
 parseResponse = do
@@ -115,15 +115,20 @@ parseResponse = do
   return $ Response s vs
 
 -- For Z3
+-- TODO: remove z3
 parseSat :: String -> Response
 parseSat s = case parse (parseResponse <* eof) "" s of
   Left err -> error $ show $ Parser err
   Right v -> v
 
-parseDRealSat :: String -> Response
-parseDRealSat s = case splitOn "\n" s of
+parseDRealSat :: Int -> String -> Response
+parseDRealSat v s = case splitOn "\n" s of
   ("unsat"):_ -> Response "unsat" []
-  strs -> case parse (parseDRealResponse <* eof) "" (join (rmLast (rmLast strs))) of
+  strs ->
+    let strs' = case v of
+         3 -> tail $ rmLast (rmLast strs)
+         4 -> tail (rmLast strs)
+    in case parse (parseDRealResponse v <* eof) "" (join strs') of
       Left err -> error $ show $ Parser err
       Right v -> v
 

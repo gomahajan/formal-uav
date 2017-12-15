@@ -1,12 +1,19 @@
 module SMTSolver where
 
+
 import System.IO
 import System.Exit
 import System.Process
 
-run :: String -> String -> Double -> IO String
-run args f delta = do
-    let p = (shell ("./dReal/bin/dReal " ++ f ++ " --model --precision " ++ show delta ++ " " ++ args))
+data SolverConfig = SolverConfig {
+  solverArgs :: String,
+  dRealVersion :: Int,
+  dRealPath :: String
+} deriving (Show, Eq)
+
+run :: SolverConfig -> String -> Double -> IO String
+run sconf f delta = do
+    let p = (shell (dRealPath sconf ++ " " ++ f ++ " --model --precision " ++ show delta ++ " " ++ solverArgs sconf))
             { std_in  = Inherit
             , std_out = CreatePipe
             , std_err = Inherit
