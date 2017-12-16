@@ -5,3 +5,23 @@
 #define battery_discharge_rate_hover 1
 #define queue_data_rate 1
 #define queue_upload_rate 1
+
+// Variable domains
+#domain x [0,10]
+#domain b [0,100]
+#domain q [0,100]
+
+// Relational dynamics
+#complete_dynamics
+mode 0:
+  uav: charge
+  sensor: collect
+mode 1:
+  uav: fly_to
+  sensor: collect
+mode 2:
+  uav: download
+  sensor: upload
+mode 3:
+  uav: fly_back
+  sensor: collect

@@ -90,13 +90,13 @@ parseInt = read <$> many1 digit
 parseSpec :: Parser Spec
 parseSpec = do
   ignore
-  defs <- many parseDef
+  defs <- many $ try parseDef
   ignore
-  doms <- many parseDomain
+  doms <- many $ try parseDomain
   ignore
   string "#complete_dynamics" -- relational dynamics
   ignore
-  modes <- many1 parseMode
+  modes <- many1 $ try parseMode
   ignore
   string "#uav" -- uav dynamics
   uavms <- many1 parseUAV
@@ -195,13 +195,13 @@ parseMode = do
   whitespace
   char ':'
   whitespace
-  uavm <- many1 letter
+  uavm <- nonWhitespace
   ignore
   string "sensor"
   whitespace
   char ':'
   whitespace
-  sm <- many1 letter
+  sm <- nonWhitespace
   ignore
   return Mode { modeId = x, uavMode = uavm, sensorMode = sm }
 
