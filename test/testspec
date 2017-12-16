@@ -25,3 +25,26 @@ mode 2:
 mode 3:
   uav: fly_back
   sensor: collect
+
+// UAV Dynamics
+#uav
+charge:
+  d/dt[x] = 0
+  d/dt[b] = battery_charging_rate * t
+fly_to:
+  d/dt[x] = drone_velocity * t
+  d/dt[b] = battery_discharge_rate_fly * t
+download:
+  d/dt[x] = 0
+  d/dt[b] = battery_discharge_rate_hover * t
+fly_back:
+  d/dt[x] = -(drone_velocity * t)
+  d/dt[b] = battery_discharge_rate_fly * t
+
+// Sensor dynamics
+#sensor 0
+x = 10
+collect:
+  d/dt[q] = queue_data_rate * t
+upload:
+  d/dt[q] = queue_upload_rate * t

@@ -36,6 +36,8 @@ genSolverCall sconf f delta = dRealPath sconf ++ " " ++ f ++ " --model --precisi
 
 -- Parsing utilities for solver response
 
+nonWhitespace = many $ noneOf " \t\n"
+
 -- Placeholders until specification language parser is done
 parseDReal4Var :: Parser Assignment
 parseDReal4Var = do

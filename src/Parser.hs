@@ -35,7 +35,7 @@ ignore = do
   skipMany comment
   whitespace
 
-nonWhitespace = many $ noneOf " \t\n"
+name = many1 $ noneOf " \t\n:#"
 
 comment :: Parser String
 comment = do
@@ -99,9 +99,10 @@ parseSpec = do
   modes <- many1 $ try parseMode
   ignore
   string "#uav" -- uav dynamics
-  uavms <- many1 parseUAV
   ignore
-  s <- many1 parseSensor
+  uavms <- many1 $ try parseUAV
+  ignore
+  s <- many1 $ try parseSensor
   ignore
   return Spec {
     defns = Map.fromList defs,
@@ -112,7 +113,7 @@ parseSpec = do
   }
 
 opNames :: [String]
-opNames = Map.elems unOpTokens ++ Map.elems binOpTokens
+opNames = Map.elems unOpTokens ++ Map.elems binOpTokens ++ ["//"]
 
 opStart :: String
 opStart = nub (fmap head opNames)
@@ -158,7 +159,7 @@ parseDef :: Parser (String, Double)
 parseDef = do
   string "#define"
   whitespace
-  s <- nonWhitespace
+  s <- name
   whitespace
   v <- parseNum
   ignore
@@ -169,7 +170,7 @@ parseDomain :: Parser (String, Domain)
 parseDomain = do
   string "#domain"
   whitespace
-  v <- nonWhitespace
+  v <- name
   whitespace
   char '['
   x <- parseNum
@@ -195,13 +196,13 @@ parseMode = do
   whitespace
   char ':'
   whitespace
-  uavm <- nonWhitespace
+  uavm <- name
   ignore
   string "sensor"
   whitespace
   char ':'
   whitespace
-  sm <- nonWhitespace
+  sm <- name
   ignore
   return Mode { modeId = x, uavMode = uavm, sensorMode = sm }
 
@@ -216,7 +217,7 @@ parseDynamic v = do
 
 parseUAV :: Parser UAVMode
 parseUAV = do
-  name <- many1 letter
+  n <- name
   whitespace
   char ':'
   ignore
@@ -224,7 +225,7 @@ parseUAV = do
   ignore
   db <- parseDynamic "b"
   ignore
-  return UAVMode { modeName = name, xde = dx, bde = db }
+  return UAVMode { modeName = n, xde = dx, bde = db }
 
 
 parseSensor :: Parser Sensor
@@ -245,7 +246,7 @@ parseSensor = do
 
 parseSMode :: Parser (String, ODE)
 parseSMode = do
-  name <- many1 letter
+  n <- name
   whitespace
   char ':'
   ignore
@@ -254,7 +255,7 @@ parseSMode = do
   char '='
   whitespace
   form <- parseODE
-  return (name, form)
+  return (n, form)
 
 parseODE :: Parser ODE
 parseODE = buildExpressionParser (exprTable EUOp EBin) parseLit <?> "ode"
@@ -266,7 +267,8 @@ parseLit = try (parens parseODE) <|> try pNum <|> pStr
       v <- parseNum
       return $ ERealLit v
     pStr = do
-      s <- nonWhitespace
+      s <- name
+      whitespace
       return $ EStrLit s
 
 -- Expression table
