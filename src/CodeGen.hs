@@ -45,6 +45,7 @@ data Mode = Mode {
 -- Overall specification
 data Spec = Spec {
   defns :: Defs,
+  allModes :: [String],
   varDomains :: Map String Domain,
   modeDefs :: Map String Mode,
   uavModes :: [UAVMode],
