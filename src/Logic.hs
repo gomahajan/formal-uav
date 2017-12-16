@@ -22,12 +22,12 @@ data Val where
 -- Binary Operations
 data BinOp =
   Lt | Gt | Leq | Geq | Plus | Minus | Times | Div | Eq | Pow
-  deriving (Eq, Show)
+  deriving (Ord, Eq, Show)
 
 -- Unary operations
 data UnOp =
-  Neg
-  deriving (Eq, Show)
+  Neg | Sin | Cos | Tan
+  deriving (Ord, Eq, Show)
 
 -- Expressions: real-valued
 data Exp where
@@ -38,6 +38,7 @@ data Exp where
   EVar :: String -> Exp
   deriving (Eq, Show)
 
+{- Currently unused!!
 eval :: Env -> Exp -> Maybe Val
 eval env (EStrLit s) = Just $ VLit s
 eval env (ERealLit x) = Just $ VReal x
@@ -69,9 +70,9 @@ evalNumeric op v1 v2 = case (v1, v2) of
 evalArithBool :: (Double -> Double -> Bool) -> Maybe Val -> Maybe Val -> Maybe Val
 evalArithBool op x y = case (x, y) of
   (Just (VReal x), Just (VReal y)) -> Just $ VBool $ op x y
-  _                  -> Nothing
+  _                                -> Nothing
 
-
+-}
 data Pred = Lit Bool
   | Expr Exp
   | And [Pred]
@@ -79,6 +80,7 @@ data Pred = Lit Bool
   | Not Pred
   deriving (Eq, Show)
 
+{- Currently unused!
 -- Checks that predicate is well formed (ie all terms are booleans)
 checkPred :: Env -> Pred -> Bool
 checkPred _ (Lit b) = True
@@ -98,3 +100,4 @@ data Exception = NumArgs Integer [Val]
                deriving (Eq, Show)
 
 type ThrowsError = Either Exception
+-}

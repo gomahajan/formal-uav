@@ -18,6 +18,11 @@ type ODE = Exp
 -- Position of sensor or UAV
 type Position = Double
 
+data Domain = Domain {
+  vmin :: Double,
+  vmax :: Double
+} deriving (Show, Eq)
+
 data UAVMode = UAVMode {
   uavName :: String,
   xde :: ODE, -- position dynamics
@@ -37,8 +42,10 @@ data Mode = Mode {
   sensorMode :: String
 } deriving (Show, Eq)
 
+-- Overall specification
 data Spec = Spec {
   defns :: Defs,
+  varDomains :: Map String Domain,
   modeDefs :: Map String Mode,
   uavModes :: [UAVMode],
   sensors :: Sensors,

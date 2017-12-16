@@ -3,13 +3,16 @@ module Parser where
 import Control.Monad
 import Text.Parsec hiding (crlf)
 import Text.Parsec.String
+import Text.Parsec.Token as Token
 import Control.Applicative ((<*))
 import Debug.Trace
 import Control.Monad.Except
 import System.IO
 import Numeric
+import Data.Map
 
 import Logic
+import CodeGen
 
 type Assignment = (String, Double)
 
@@ -23,7 +26,6 @@ nonWhitespace = many $ noneOf " \t\n"
 -- Various number formats
 parseNum = try parseSci <|> try parseDouble <|> parseDInt
 
--- parser for ints from dreal response (represented as doubles for convenience)
 parseDInt :: Parser Double
 parseDInt = do
   sign <- many $ char '-'
@@ -57,35 +59,67 @@ parseSci = do
     [] -> base * (10 ^ pwr)
     _ -> base / (10 ^ pwr)
 
--- Placeholders until specification language parser is done
-parseDReal4Var :: Parser Assignment
-parseDReal4Var = do
+--Specification language parsers
+
+parseDynamics :: Char -> Parser ODE
+parseDynamics c = do
+  string "d/dt["
+  whitespace
+  char c
+  whitespace
+  char ']'
+  whitespace
+  char '='
+  whitespace
+  --de <- parseODE
+  --return de
+  return $ EVar "temp"
+
+-- Parse constant definitions
+parseDef :: Parser (String, Double)
+parseDef = do
+  string "#define"
+  whitespace
   s <- nonWhitespace
   whitespace
-  char ':'
-  (x,y) <- parseDRealRange
-  return (s,x)
-
-parseDReal3Var :: Parser Assignment
-parseDReal3Var = do
-  s <- nonWhitespace
+  v <- parseNum
   whitespace
-  string ": [ ENTIRE ] ="
-  (x,y) <- parseDRealRange
-  return (s, x) -- TODO: be smarter about which val to return
+  return (s, v)
 
-parseDRealRange :: Parser (Double, Double)
-parseDRealRange = do
+parseDomain :: Parser (String, Domain)
+parseDomain = do
+  string "#domain"
+  whitespace
+  v <- nonWhitespace
   whitespace
   char '['
-  whitespace
   x <- parseNum
+  whitespace
   char ','
   whitespace
   y <- parseNum
+  whitespace
   char ']'
   whitespace
-  return (x,y)
+  return (v, Domain { vmin = x, vmax = y } )
 
+-- Tokens
+unOpTokens :: Map UnOp String
+unOpTokens = fromList [ (Neg, "-")
+                      , (Sin, "sin")
+                      , (Cos, "cos")
+                      , (Tan, "tan")
+                      ]
 
---Specification language parsers
+binOpTokens :: Map BinOp String
+binOpTokens = fromList [ (Times,     "*")
+                       , (Plus,      "+")
+                       , (Minus,     "-")
+                       , (Div,       "/")
+                       , (Pow,       "^")
+                       , (Eq,        "==")
+                       , (Lt,        "<")
+                       , (Leq,        "<=")
+                       , (Gt,        ">")
+                       , (Geq,        ">=")
+                       ]
