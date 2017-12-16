@@ -21,15 +21,32 @@ type Assignment = (String, Double)
 
 data Response = Response String [Assignment] deriving (Show)
 
+parseFromFile :: Parser a -> String -> IO (Either ParseError a)
+parseFromFile parser fname = do
+  input <- readFile fname
+  putStrLn input
+  return $ parse parser fname input
+
 --Clears whitespace
 whitespace = void . many $ oneOf " \t\n"
 
+ignore = do
+  whitespace
+  skipMany comment
+  whitespace
+
 nonWhitespace = many $ noneOf " \t\n"
+
+comment :: Parser String
+comment = do
+  string "//"
+  s <- manyTill anyChar newline
+  return s
 
 -- Various number formats
 parseNum = do
   x <- try parseSci <|> try parseDouble <|> parseDInt
-  whitespace
+  ignore
   return x
 
 parseDInt :: Parser Double
@@ -65,7 +82,34 @@ parseSci = do
     [] -> base * (10 ^ pwr)
     _ -> base / (10 ^ pwr)
 
---Specification language parsers
+parseInt = read <$> many1 digit
+
+-- Specification language parsers
+
+-- Parses complete specification
+parseSpec :: Parser Spec
+parseSpec = do
+  ignore
+  defs <- many parseDef
+  ignore
+  doms <- many parseDomain
+  ignore
+  string "#complete_dynamics" -- relational dynamics
+  ignore
+  modes <- many1 parseMode
+  ignore
+  string "#uav" -- uav dynamics
+  uavms <- many1 parseUAV
+  ignore
+  s <- many1 parseSensor
+  ignore
+  return Spec {
+    defns = Map.fromList defs,
+    varDomains = Map.fromList doms,
+    modeDefs = modes,
+    uavModes = uavms,
+    sensors = s
+  }
 
 opNames :: [String]
 opNames = Map.elems unOpTokens ++ Map.elems binOpTokens
@@ -117,7 +161,8 @@ parseDef = do
   s <- nonWhitespace
   whitespace
   v <- parseNum
-  whitespace
+  ignore
+  --whitespace
   return (s, v)
 
 parseDomain :: Parser (String, Domain)
@@ -134,8 +179,82 @@ parseDomain = do
   y <- parseNum
   whitespace
   char ']'
-  whitespace
+  ignore
   return (v, Domain { vmin = x, vmax = y } )
+
+parseMode :: Parser Mode
+parseMode = do
+  ignore
+  string "mode"
+  whitespace
+  x <- parseInt
+  whitespace
+  char ':'
+  ignore
+  string "uav"
+  whitespace
+  char ':'
+  whitespace
+  uavm <- many1 letter
+  ignore
+  string "sensor"
+  whitespace
+  char ':'
+  whitespace
+  sm <- many1 letter
+  ignore
+  return Mode { modeId = x, uavMode = uavm, sensorMode = sm }
+
+parseDynamic :: String -> Parser ODE
+parseDynamic v = do
+  string $ "d/dt[" ++ v ++ "]"
+  whitespace
+  char '='
+  whitespace
+  diff <- parseODE
+  return diff
+
+parseUAV :: Parser UAVMode
+parseUAV = do
+  name <- many1 letter
+  whitespace
+  char ':'
+  ignore
+  dx <- parseDynamic "x"
+  ignore
+  db <- parseDynamic "b"
+  ignore
+  return UAVMode { modeName = name, xde = dx, bde = db }
+
+
+parseSensor :: Parser Sensor
+parseSensor = do
+  ignore
+  string "#sensor"
+  whitespace
+  i <- parseInt
+  ignore
+  char 'x'
+  whitespace
+  char '='
+  whitespace
+  x <- parseNum
+  ignore
+  ms <- many1 parseSMode
+  return Sensor { sId = i, position = x, modes = Map.fromList ms }
+
+parseSMode :: Parser (String, ODE)
+parseSMode = do
+  name <- many1 letter
+  whitespace
+  char ':'
+  ignore
+  string "d/dt[q]"
+  whitespace
+  char '='
+  whitespace
+  form <- parseODE
+  return (name, form)
 
 parseODE :: Parser ODE
 parseODE = buildExpressionParser (exprTable EUOp EBin) parseLit <?> "ode"

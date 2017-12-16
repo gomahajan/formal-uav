@@ -24,20 +24,21 @@ data Domain = Domain {
 } deriving (Show, Eq)
 
 data UAVMode = UAVMode {
-  uavName :: String,
+  modeName :: String,
   xde :: ODE, -- position dynamics
   bde :: ODE -- battery dynamics
 } deriving (Show, Eq)
 
-data SensorDynamics = SensorDynamics {
-  sensorName :: String,
-  qde :: ODE -- queue dynamics
+data Sensor = Sensor {
+  sId :: Int,
+  position :: Double,
+  modes :: SensorMode
 } deriving (Show, Eq)
 
-type Sensors = Map String SensorDynamics
+type SensorMode = Map String ODE -- only has queue dynamics
 
 data Mode = Mode {
-  modeName :: String,
+  modeId :: Int,
   uavMode :: String,
   sensorMode :: String
 } deriving (Show, Eq)
@@ -45,10 +46,11 @@ data Mode = Mode {
 -- Overall specification
 data Spec = Spec {
   defns :: Defs,
-  allModes :: [String],
   varDomains :: Map String Domain,
-  modeDefs :: Map String Mode,
+  modeDefs :: [Mode],
   uavModes :: [UAVMode],
-  sensors :: Sensors,
-  sensorModes :: [String]
+  sensors :: [Sensor]
 } deriving (Show, Eq)
+
+
+-- TODO: check well-formedness of specification

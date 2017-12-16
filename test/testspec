@@ -1,0 +1,7 @@
+// Constants
+#define drone_velocity 10
+#define battery_charging_rate 50
+#define battery_discharge_rate_fly 1
+#define battery_discharge_rate_hover 1
+#define queue_data_rate 1
+#define queue_upload_rate 1
