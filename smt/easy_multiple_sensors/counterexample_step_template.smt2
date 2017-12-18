@@ -27,7 +27,7 @@
 (declare-fun t2 () Real)
 (declare-fun t3 () Real)
 
-;parameters invariant 3*numSensors
+;parameters invariant (numSensors+1)*numSensors
 (declare-fun p0 () Real)
 (declare-fun p1 () Real)
 (declare-fun p2 () Real)
@@ -35,7 +35,7 @@
 (declare-fun p4 () Real)
 (declare-fun p5 () Real)
 
-;parameters program 2*numSensors
+;parameters program numSensors + 2
 (declare-fun p6 () Real)
 (declare-fun p7 () Real)
 (declare-fun p8 () Real)
@@ -104,7 +104,7 @@ parametervalues
 ;program: charge till battery >= 20
 ;decide when to leave, that is b0 and choice of sensor
 (assert (and (=> (>= bi p6) (= b0 bi)) (=> (< bi p6) (= b0 p6))))
-(assert (or (=> (s0_q0 > p7) (= choice 0)) (=> (s1_q0 > p8)(= choice 1))))
+(assert (or (=> (s0_q0 > p7) (= choice 0)) (=> (s1_q0 > p8)(= choice 1)) (= choice 0)))
 
 ;flying to D
 (assert (=> (= choice 0) (= x1 s0_loc)))

@@ -1,6 +1,6 @@
 (set-logic QF_NRA)
 
-;parameters invariant 3*numSensors
+;parameters invariant (numSensors+1)*numSensors
 (declare-fun p0 () Real)
 (declare-fun p1 () Real)
 (declare-fun p2 () Real)
@@ -8,7 +8,7 @@
 (declare-fun p4 () Real)
 (declare-fun p5 () Real)
 
-;parameters program 2*numSensors
+;parameters program numSensors + 2
 (declare-fun p6 () Real)
 (declare-fun p7 () Real)
 (declare-fun p8 () Real)
