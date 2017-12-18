@@ -1,0 +1,32 @@
+How to convert to SMT:
+
+declare everything:
+  x,b for each mode and xi, bi
+  q for each mode and qi
+    ^^^for each sensor
+
+time vars for each mode
+
+parameters (???????)
+
+sensor locations
+assert the sensor locations
+
+constants
+assert constants
+
+bound all variables:
+t >= 0
+assert domains
+
+declare choice function
+
+##Modes:
+
+(forall modes)
+x value
+dynamics
+choices have implications
+
+goal:
+safety (for each queue!)

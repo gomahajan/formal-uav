@@ -24,7 +24,6 @@ data Response = Response String [Assignment] deriving (Show)
 parseFromFile :: Parser a -> String -> IO (Either ParseError a)
 parseFromFile parser fname = do
   input <- readFile fname
-  putStrLn input
   return $ parse parser fname input
 
 --Clears whitespace
@@ -94,6 +93,10 @@ parseDecls = do
   ignore
   doms <- many $ try parseDomain
   ignore
+  string "#initial_params"
+  ignore
+  ps <- many $ try parseAss
+  ignore
   string "#complete_dynamics" -- relational dynamics
   ignore
   modes <- many1 $ try parseMode
@@ -109,7 +112,8 @@ parseDecls = do
     _varDomains = Map.fromList doms,
     _modeDefs = modes,
     _uavModes = uavms,
-    _sensors = s
+    _sensors = s,
+    _initialParams = ps
   }
 
 opNames :: [String]
@@ -165,6 +169,17 @@ parseDef = do
   ignore
   --whitespace
   return (s, v)
+
+parseAss :: Parser (String, Double)
+parseAss = do
+  whitespace
+  s <- name
+  whitespace
+  char '='
+  whitespace
+  v <- parseNum
+  ignore
+  return (s,v)
 
 parseDomain :: Parser (String, Domain)
 parseDomain = do

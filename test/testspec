@@ -11,6 +11,12 @@
 #domain b [0,100]
 #domain q [0,100]
 
+#initial_params
+p0 = 50
+p1 = 50
+p2 = 10
+p3 = 1
+
 // Relational dynamics
 #complete_dynamics
 mode 0:

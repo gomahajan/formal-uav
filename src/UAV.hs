@@ -324,3 +324,14 @@ main = do
           (_, False) -> "\nThe given system is unverifiable in " ++ show iters ++ " iterations"
           (ps, True)  -> "\nSynthesized a program with the following parameters: \n" ++ unlines (fmap printParam ps) ++
             "\nAnd the following invariant:\n" ++ "b >= " ++ show (snd (head ps)) ++ "\nq <= " ++ show (snd (head (tail ps)))
+
+-- Test function
+writeSMT :: String -> String -> IO ()
+writeSMT infile outfile = do
+  x <- parseFromFile parseDecls infile
+  case x of
+    Left e -> error $ show e
+    Right decls -> do
+      let spec = finishSpec decls
+          smt = initializeSMT spec
+      writeFile outfile (unlines smt)
