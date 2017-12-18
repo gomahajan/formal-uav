@@ -91,27 +91,12 @@ data CompleteSpec = CompleteSpec {
     init for all queues:location
 
   dynamics:
-    mode_charging:
-      x = charging_station
-      bdynamics2 b0 bi
-      forallsensors qdynamics q0 q1
-      program bi q0
-
-    mode_flying:
-      forallsensor if choice = i, x1 = si_loc
-      xdynamics x1 x0
-      bdynamics b1 b0
-      forallsensors qdynamics q1 q0
-
+    print_charge
+    printFlyTo
     mode_emptying:
       forallsensors if choice = i, qdynamics2 si_q2 si_q1 forallothersensors qdynamics sk_q2 sk_q1
       bdynamics b2 b1
-
-    mode_flyback
-      x3 = charging_station
-      xdynamics2 x3 x2
-      forallsensors qdynamics q3 q2
-      bdynamics b3 b2
+    printFlyFrom
 
   counterexampleStep
     decl all parameters
@@ -225,12 +210,24 @@ printDynamics name spec curr prev = [printConstraint newx] ++ [printConstraint n
     sens = printSensors name qc qp ((_sensors . _declarations) spec)
 
 -- TODO: is it still ok to have x dynamics?
+{-
+x = charging_station
+bdynamics2 b0 bi
+forallsensors qdynamics q0 q1
+program bi q0
+-}
 printCharge :: String -> CompleteSpec -> [String]
 printCharge name spec = fmap (replace " t" " t3") (pos : dyn)
   where
     pos = initConstant "x0" 0.0
     dyn = printDynamics name spec (show 1) "i"
 
+{-
+x3 = charging_station
+xdynamics2 x3 x2
+forallsensors qdynamics q3 q2
+bdynamics b3 b2
+-}
 printFlyFrom :: String -> CompleteSpec -> [String]
 printFlyFrom name spec = fmap (replace " t" " t3") (pos : dyn)
   where
@@ -240,7 +237,12 @@ printFlyFrom name spec = fmap (replace " t" " t3") (pos : dyn)
 -- decision when to stop charging/collecting
 --printDecision :: CompleteSpec -> [String]
 --printDecision spec
-
+{-
+forallsensor if choice = i, x1 = si_loc
+xdynamics x1 x0
+bdynamics b1 b0
+forallsensors qdynamics q1 q0
+-}
 printFlyTo :: String -> CompleteSpec -> [String]
 printFlyTo name spec = fmap (replace " t" " t0") (fmap printConstraint impls ++ dyn)
   where
