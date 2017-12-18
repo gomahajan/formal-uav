@@ -1,4 +1,3 @@
-(set-logic QF_NRA)
 (declare-fun x0 () Real)
 (declare-fun x1 () Real)
 (declare-fun x2 () Real)
@@ -22,53 +21,23 @@
 (declare-fun s2_q2 () Real)
 (declare-fun s2_q3 () Real)
 
+(declare-fun choice () Real)
+
 (declare-fun t0 () Real)
 (declare-fun t1 () Real)
 (declare-fun t2 () Real)
 (declare-fun t3 () Real)
 
-;parameters invariant 3*numSensors
-(declare-fun p0 () Real)
-(declare-fun p1 () Real)
-(declare-fun p2 () Real)
-(declare-fun p3 () Real)
-(declare-fun p4 () Real)
-(declare-fun p5 () Real)
-
-;parameters program 2*numSensors
-(declare-fun p6 () Real)
-(declare-fun p7 () Real)
-(declare-fun p8 () Real)
-(declare-fun p9 () Real)
-
-;constants
-(declare-fun battery_charging_rate () Real)
-(declare-fun battery_discharge_rate_fly () Real)
-(declare-fun battery_discharge_rate_hover () Real)
-(declare-fun queue_data_rate () Real)
-(declare-fun queue_upload_rate () Real)
-(declare-fun drone_velocity () Real)
-
-(declare-fun s1_loc () Real)
-(declare-fun s2_loc () Real)
-(declare-fun choice () Real)
-
-(assert(= drone_velocity 10))
-(assert(= battery_charging_rate 50))
-(assert(= battery_discharge_rate_fly 1))
-(assert(= battery_discharge_rate_hover 1))
-(assert(= queue_data_rate 1))
-(assert(= queue_upload_rate 1))
-
-(assert(= s0_loc 10))
-(assert(= s1_loc 20))
+;counterexample
+(declare-fun bc () Real)
+(declare-fun s1_qc () Real)
+(declare-fun s2_qc () Real)
 
 (assert(>= t0 0))
 (assert(>= t1 0))
 (assert(>= t2 0))
 (assert(>= t3 0))
 (assert (<= bi 100))
-(assert (>= bi 0))
 (assert (<= b0 100))
 (assert (<= b1 100))
 (assert (<= b2 100))
@@ -85,13 +54,6 @@
 (assert (>= s1_q1 0))
 (assert (>= s1_q2 0))
 (assert (>= s1_q3 0))
-
-;template
-parametervalues
-;sample (assert (= p0 1))
-;sample (assert (= p1 1))
-;sample (assert (= p2 1))
-;sample (assert (= p3 1))
 
 (assert (or (= choice 0) (= choice 1)))
 
@@ -130,10 +92,12 @@ parametervalues
 (assert(= s2_q3 (+ s2_q2 (* queue_data_rate t3))))
 (assert(= b3 (- b2 (* battery_discharge_rate_fly t3))))
 
+
+
 ;goal
-;Question: Does there exist starting battery,queue values such that safety is not maintained
-; that is not (invariant => safety)
-(assert (or (and (>= bi p0) (<= s1_qi p1) (<= s2_qi p2)) (and (>= bi p3) (<= s1_qi p4) (<= s2_qi p5))))
-(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= s1_q0 100) (>= s1_q1 100) (>= s1_q2 100) (>= s1_q3 100) (>= s2_q0 100) (>= s2_q1 100) (>= s2_q2 100) (>= s2_q3 100) (not (or (and (>= b3 p0) (<= s1_q3 p1) (<= s2_q3 p2)) (and (>= b3 p3) (<= s1_q3 p4) (<= s2_q3 p5))))))
-(check-sat)
-(exit)
+;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
+; Add batteryvalue here
+batteryvalue
+
+(assert (and (= bi bc) (= s1_qi s1_qc) (= s2_qi s2_qc)))
+(assert (=> (or (and (>= bi p0) (<= s1_qi p1) (<= s2_qi p2)) (and (>= bi p3) (<= s1_qi p4) (<= s2_qi p5))) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< s1_q0 100) (< s1_q1 100) (< s1_q2 100) (< s1_q3 100) (< s2_q0 100) (< s2_q1 100) (< s2_q2 100) (< s2_q3 100) (or (and (>= b3 p0) (<= s1_q3 p1) (<= s2_q3 p2)) (and (>= b3 p3) (<= s1_q3 p4) (<= s2_q3 p5))))))
