@@ -93,10 +93,6 @@ parseDecls = do
   ignore
   doms <- many $ try parseDomain
   ignore
-  string "#initial_params"
-  ignore
-  ps <- many $ try parseAss
-  ignore
   string "#complete_dynamics" -- relational dynamics
   ignore
   modes <- many1 $ try parseMode
@@ -112,8 +108,7 @@ parseDecls = do
     _varDomains = Map.fromList doms,
     _modeDefs = modes,
     _uavModes = uavms,
-    _sensors = s,
-    _initialParams = ps
+    _sensors = s
   }
 
 opNames :: [String]
@@ -169,17 +164,6 @@ parseDef = do
   ignore
   --whitespace
   return (s, v)
-
-parseAss :: Parser (String, Double)
-parseAss = do
-  whitespace
-  s <- name
-  whitespace
-  char '='
-  whitespace
-  v <- parseNum
-  ignore
-  return (s,v)
 
 parseDomain :: Parser (String, Domain)
 parseDomain = do

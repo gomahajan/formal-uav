@@ -116,7 +116,7 @@ cegisLoop p =
         let --(c1,c2) = findCXBall (previous_b p) (previous_q p) c1_naive c2_naive (synthesisPrecision p)
             bcxs' = c1 : bcxs p
             qcxs' = c2 : qcxs p
-            constraintbq = "(assert (=> (and (and (>= bi p0) (<= qi p1)) constraintbq) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))"
+            --constraintbq = "(assert (=> (and (and (>= bi p0) (<= qi p1)) constraintbq) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))"
             -- replace "constraintbq" with
             -- battery_constraint = printConstraint $ generateVarConstraints "bi" "qi" bcxs' qcxs'
             --battery_constraint = unlines $ fmap (((flip (replace "constraintbq")) constraintbq) . printConstraint') (zipWith (findCXBall (synthesisPrecision p)) bcxs' qcxs')
@@ -333,8 +333,14 @@ writeSMT infile outfile = do
     Left e -> error $ show e
     Right decls -> do
       let spec = finishSpec decls
-          smt = initializeSMT spec
+          smt = initializeSMT uavParams spec
           charge = printCharge "charge" spec
           flyto = printFlyTo "fly_to" spec
           flyfrom = printFlyFrom "fly_back" spec
-      writeFile outfile (unlines (smt ++ charge ++ flyto ++ flyfrom ++ [initGoal]))
+      writeFile outfile (unlines (smt ++ charge ++ flyto ++ flyfrom ++ initGoal))
+
+-- Initialize program and values
+uavParams :: UAVParams
+uavParams = UAVParams {
+  varNames = ["p0"]
+}

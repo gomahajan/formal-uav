@@ -54,8 +54,7 @@ data Decls = Decls {
   _varDomains :: Map String Domain,
   _modeDefs :: [Mode],
   _uavModes :: [UAVMode],
-  _sensors :: [Sensor],
-  _initialParams :: [(String, Double)]
+  _sensors :: [Sensor]
 } deriving (Show, Eq)
 
 makeLenses ''Decls
@@ -74,7 +73,6 @@ makeLenses ''Vars
 data CompleteSpec = CompleteSpec {
   _declarations :: Decls,
   _numModes :: Int,
-  _programParams :: [(String, Double)],
   _numSensors :: Int,
   _vars :: Vars
 } deriving (Show, Eq)
@@ -86,21 +84,9 @@ finishSpec d = CompleteSpec {
   _declarations = d,
   _numModes = length (_uavModes d),
   _vars = generateVars d,
-  _programParams = expandParams (_initialParams d),
-  _numSensors = nums
-} where
-  nums = length (_sensors d)
-  expandParams [] = []
-  expandParams (p:ps) = case fst p of
-    "p0" -> p : expandParams ps
-    "p1" -> p : expandParams ps
-    "p2" -> allParams p nums ++ expandParams ps
-    "p3" -> allParams p nums ++ expandParams ps
-    _    -> error "Invalid parameter declaration"
+  _numSensors = length (_sensors d)
+}
 
--- Expand each parameter
-allParams :: (String, Double) -> Int -> [(String, Double)]
-allParams p numS = zip (fmap ((((fst p) ++ "_s") ++) . show) [0..(numS - 1)]) (replicate numS (snd p))
 
 -- TODO: check well-formedness of specification?
 -- TODO: reconstruct spec: adjust indices, anything else?
@@ -133,15 +119,20 @@ generateVars ds = Vars {
     bdoms = zip bs (replicate (numModes + 1) (_varDomains ds ! "b" ))
     qdoms = zip sqs (replicate (numSensors * (numModes + 1)) (_varDomains ds ! "q" ))
 
-initializeSMT :: CompleteSpec -> [String]
-initializeSMT spec = logic : (vdecls ++ defs ++ initps ++ slocs ++ tmin ++ doms ++ choice)
+-- Type encapsulating program and parameter values
+data UAVParams = UAVParams {
+  varNames :: [String]
+} deriving (Show, Eq)
+
+initializeSMT :: UAVParams -> CompleteSpec -> [String]
+initializeSMT params spec = logic : (vdecls ++ defs ++ slocs ++ tmin ++ doms ++ choice)
   where
     choice = initChoice (_numSensors spec)
     vdecls = fmap declFun ((_allVars . _vars) spec)
     defList = assocs $ (_defns . _declarations) spec
     defs = zipWith initConstant (fmap fst defList) (fmap snd defList)
-    plist = _programParams spec
-    initps = zipWith initConstant (fmap fst plist) (fmap snd plist)
+    --plist = _programParams spec
+    --initps = zipWith initConstant (fmap fst plist) (fmap snd plist)
     tmin = fmap (`decMin` 0) ((_tvars . _vars) spec)
     doms = fmap declBound ((_allDomains . _vars) spec)
     sensors = (_sensors . _declarations) spec
@@ -167,15 +158,18 @@ printDynamics name spec curr prev = [printConstraint newx] ++ [printConstraint n
     newb = Expr $ EBin Eq (EStrLit bc) (EBin Plus (EStrLit bp) bcon)
     sens = printSensors name qc qp ((_sensors . _declarations) spec)
 
+preamble :: String -> [String]
+preamble title = "\n" : [(";" ++ title)]
+
 -- TODO: is it still ok to have x dynamics?
 printCharge :: String -> CompleteSpec -> [String]
-printCharge name spec = fmap (replace " t" " t3") (pos : dyn)
+printCharge name spec = preamble "charging" ++ fmap (replace " t" " t3") (pos : dyn)
   where
     pos = initConstant "x0" 0.0
     dyn = printDynamics name spec (show 1) "i"
 
 printFlyFrom :: String -> CompleteSpec -> [String]
-printFlyFrom name spec = fmap (replace " t" " t3") (pos : dyn)
+printFlyFrom name spec = preamble "flying back" ++ fmap (replace " t" " t3") (pos : dyn)
   where
     pos = initConstant "x3" 0.0
     dyn = printDynamics name spec (show 3) (show 2)
@@ -185,7 +179,7 @@ printFlyFrom name spec = fmap (replace " t" " t3") (pos : dyn)
 --printDecision spec
 
 printFlyTo :: String -> CompleteSpec -> [String]
-printFlyTo name spec = fmap (replace " t" " t0") (fmap printConstraint impls ++ dyn)
+printFlyTo name spec = preamble "flying to sensors" ++ fmap (replace " t" " t0") (fmap printConstraint impls ++ dyn)
   where
     numm = _numModes spec
     nums = _numSensors spec
@@ -205,8 +199,8 @@ printSensors mode modeNum prevModeNum sensors = fmap (printConstraint . Expr) s
 --printStaticMode :: CompleteSpec -> String
 
 --TODO: automate this!
-initGoal :: String
-initGoal = "(assert (and (>= bi p0) (<= qi p1)))\n(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (and (>= b3 p0) (<= q3 p1)))))"
+initGoal :: [String]
+initGoal = preamble "Goal" ++ ["(assert (and (>= bi p0) (<= qi p1)))\n(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (and (>= b3 p0) (<= q3 p1)))))"]
 
 initChoice :: Int -> [String]
 initChoice n = top : [ors]
