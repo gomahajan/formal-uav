@@ -27,16 +27,19 @@
 (declare-fun t2 () Real)
 (declare-fun t3 () Real)
 
-;parameters
+;parameters invariant 3*numSensors
 (declare-fun p0 () Real)
 (declare-fun p1 () Real)
 (declare-fun p2 () Real)
 (declare-fun p3 () Real)
-
-;sensor parameters
 (declare-fun p4 () Real)
 (declare-fun p5 () Real)
 
+;parameters program 2*numSensors
+(declare-fun p6 () Real)
+(declare-fun p7 () Real)
+(declare-fun p8 () Real)
+(declare-fun p9 () Real)
 
 ;constants
 (declare-fun battery_charging_rate () Real)
@@ -48,6 +51,7 @@
 
 (declare-fun s1_loc () Real)
 (declare-fun s2_loc () Real)
+(declare-fun choice () Real)
 
 (assert(= drone_velocity 10))
 (assert(= battery_charging_rate 50))
@@ -81,14 +85,6 @@
 (assert (>= s1_q1 0))
 (assert (>= s1_q2 0))
 (assert (>= s1_q3 0))
-(assert (<= x0 10))
-(assert (<= x1 10))
-(assert (<= x2 10))
-(assert (<= x3 10))
-(assert (>= x0 0))
-(assert (>= x1 0))
-(assert (>= x2 0))
-(assert (>= x3 0))
 
 ;template
 parametervalues
@@ -97,7 +93,7 @@ parametervalues
 ;sample (assert (= p2 1))
 ;sample (assert (= p3 1))
 
-(declare-fun choice () Real)
+(assert (or (= choice 0) (= choice 1)))
 
 ;charging
 (assert(= x0 0))
@@ -107,8 +103,8 @@ parametervalues
 ; TODO: allow to stay when battery = 100
 ;program: charge till battery >= 20
 ;decide when to leave, that is b0 and choice of sensor
-(assert (and (=> (>= bi p2) (= b0 bi)) (=> (< bi p2) (= b0 p2))))
-(assert (or (=> (s0_q0 > p4) (= choice 0)) (=> (s1_q0 > p5)(= choice 1))))
+(assert (and (=> (>= bi p6) (= b0 bi)) (=> (< bi p6) (= b0 p6))))
+(assert (or (=> (s0_q0 > p7) (= choice 0)) (=> (s1_q0 > p8)(= choice 1))))
 
 ;flying to D
 (assert (=> (= choice 0) (= x1 s0_loc)))
@@ -124,19 +120,20 @@ parametervalues
 (assert (=> (= choice 1) (and (= s1_q2 (- s1_q1 (* queue_upload_rate t2))) (= s0_q2 (+ s0_q1 (* queue_data_rate t2))))))
 (assert(= b2 (- b1 (* battery_discharge_rate_hover t2))))
 ;program: empty queue till battery <= 4
-(assert (or (=> (> b1 p3) (= b2 p3)) (= q2 0)))
-(assert (=> (<= b1 p3) (= b2 b1)))
+(assert (or (=> (> b1 p9) (= b2 p9)) (or (= s1_q2 0) (= s2_q2 0))))
+(assert (=> (<= b1 p9) (= b2 b1)))
 
 ;flying back
 (assert(= x3 0))
 (assert(= x3 (- x2 (* drone_velocity t3))))
-(assert(= q3 (+ q2 (* queue_data_rate t3))))
+(assert(= s1_q3 (+ s1_q2 (* queue_data_rate t3))))
+(assert(= s2_q3 (+ s2_q2 (* queue_data_rate t3))))
 (assert(= b3 (- b2 (* battery_discharge_rate_fly t3))))
 
 ;goal
 ;Question: Does there exist starting battery,queue values such that safety is not maintained
 ; that is not (invariant => safety)
-(assert (and (>= bi p0) (<= qi p1)))
-(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (and (>= b3 p0) (<= q3 p1)))))
+(assert (or (and (>= bi p0) (<= s1_qi p1) (<= s2_q1 p2)) (and (>= bi p3) (<= s1_qi p4) (<= s2_q1 p5))))
+(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= s1_q0 100) (>= s1_q1 100) (>= s1_q2 100) (>= s1_q3 100) (>= s2_q0 100) (>= s2_q1 100) (>= s2_q2 100) (>= s2_q3 100) (not (or (and (>= bi p0) (<= s1_qi p1) (<= s2_q1 p2)) (and (>= bi p3) (<= s1_qi p4) (<= s2_q1 p5))))))
 (check-sat)
 (exit)
