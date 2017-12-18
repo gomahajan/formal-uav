@@ -87,8 +87,8 @@ parseInt = read <$> many1 digit
 -- Specification language parsers
 
 -- Parses complete specification
-parseSpec :: Parser Spec
-parseSpec = do
+parseDecls :: Parser Decls
+parseDecls = do
   ignore
   defs <- many $ try parseDef
   ignore
@@ -104,12 +104,12 @@ parseSpec = do
   ignore
   s <- many1 $ try parseSensor
   ignore
-  return Spec {
-    defns = Map.fromList defs,
-    varDomains = Map.fromList doms,
-    modeDefs = modes,
-    uavModes = uavms,
-    sensors = s
+  return Decls {
+    _defns = Map.fromList defs,
+    _varDomains = Map.fromList doms,
+    _modeDefs = modes,
+    _uavModes = uavms,
+    _sensors = s
   }
 
 opNames :: [String]
