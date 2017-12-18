@@ -78,6 +78,7 @@ data Pred = Lit Bool
   | And [Pred]
   | Or [Pred]
   | Not Pred
+  | Impl Pred Pred
   deriving (Eq, Show)
 
 {- Currently unused!

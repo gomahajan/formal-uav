@@ -334,4 +334,7 @@ writeSMT infile outfile = do
     Right decls -> do
       let spec = finishSpec decls
           smt = initializeSMT spec
-      writeFile outfile (unlines smt)
+          charge = printCharge "charge" spec
+          flyto = printFlyTo "fly_to" spec
+          flyfrom = printFlyFrom "fly_back" spec
+      writeFile outfile (unlines (smt ++ charge ++ flyto ++ flyfrom ++ [initGoal]))

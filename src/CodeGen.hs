@@ -9,6 +9,7 @@ import Data.Map
 import Control.Monad
 import Control.Monad.Except
 import Control.Lens
+import Data.List
 
 import Logic
 import Pretty
@@ -141,21 +142,85 @@ initializeSMT spec = logic : (vdecls ++ defs ++ initps ++ slocs ++ tmin ++ doms 
     defs = zipWith initConstant (fmap fst defList) (fmap snd defList)
     plist = _programParams spec
     initps = zipWith initConstant (fmap fst plist) (fmap snd plist)
-    tmin = fmap (\t -> decMin t 0) ((_tvars . _vars) spec)
+    tmin = fmap (`decMin` 0) ((_tvars . _vars) spec)
     doms = fmap declBound ((_allDomains . _vars) spec)
     sensors = (_sensors . _declarations) spec
     slocs = zipWith initConstant (fmap (\x -> "s" ++ (show (sId x) ++ "_loc")) sensors) (fmap position sensors)
+
+printDynamics :: String -> CompleteSpec -> String -> String -> [String]
+printDynamics name spec curr prev = [printConstraint newx] ++ [printConstraint newb] ++ sens
+  where
+    xc = "x" ++ curr
+    bc = "b" ++ curr
+    qc = "q" ++ curr
+    xp = "x" ++ prev
+    bp = "b" ++ prev
+    qp = "q" ++ prev
+    uavm = find (\m -> modeName m == name) ((_uavModes . _declarations) spec)
+    xcon = case uavm of
+      Nothing -> error "Invalid mode"
+      Just m -> xde m
+    newx = Expr $ EBin Eq (EStrLit xc) (EBin Plus (EStrLit xp) xcon)
+    bcon = case uavm of
+      Nothing -> error "Invalid mode"
+      Just m -> bde m
+    newb = Expr $ EBin Eq (EStrLit bc) (EBin Plus (EStrLit bp) bcon)
+    sens = printSensors name qc qp ((_sensors . _declarations) spec)
+
+-- TODO: is it still ok to have x dynamics?
+printCharge :: String -> CompleteSpec -> [String]
+printCharge name spec = fmap (replace " t" " t3") (pos : dyn)
+  where
+    pos = initConstant "x0" 0.0
+    dyn = printDynamics name spec (show 1) "i"
+
+printFlyFrom :: String -> CompleteSpec -> [String]
+printFlyFrom name spec = fmap (replace " t" " t3") (pos : dyn)
+  where
+    pos = initConstant "x3" 0.0
+    dyn = printDynamics name spec (show 3) (show 2)
+
+-- decision when to stop charging/collecting
+--printDecision :: CompleteSpec -> [String]
+--printDecision spec
+
+printFlyTo :: String -> CompleteSpec -> [String]
+printFlyTo name spec = fmap (replace " t" " t0") (fmap printConstraint impls ++ dyn)
+  where
+    numm = _numModes spec
+    nums = _numSensors spec
+    mkSensor x = "s" ++ show x ++ "_loc"
+    impls = fmap ((\x -> Impl (Expr (EBin Eq (EStrLit "choice") (ERealLit x))) (Expr (EBin Eq (EStrLit "x1") (EStrLit (mkSensor x))))) . fromIntegral) [0..(nums - 1)]
+    dyn = printDynamics name spec (show 1) (show 0)
+
+printSensors :: String -> String -> String -> [Sensor] -> [String]
+printSensors mode modeNum prevModeNum sensors = fmap (printConstraint . Expr) s
+  where ids = fmap ((++ ("_" ++ modeNum)) . ("s" ++) . show . sId) sensors
+        prevIds = fmap ((++ ("_" ++ prevModeNum)) . ("s" ++) . show . sId) sensors
+        dyn = concat $ fmap (elems . modes) sensors
+        s = zipWith3 (\p c d -> (EBin Eq (EStrLit c) (EBin Plus (EStrLit p) d))) prevIds ids dyn
+--printChoiceMode :: CompleteSpec -> String
+
+-- For constant modes (ie flying from hard-coded location to another)
+--printStaticMode :: CompleteSpec -> String
+
+--TODO: automate this!
+initGoal :: String
+initGoal = "(assert (and (>= bi p0) (<= qi p1)))\n(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (and (>= b3 p0) (<= q3 p1)))))"
 
 initChoice :: Int -> [String]
 initChoice n = top : [ors]
   where
     top = declFun "choice"
-    con = Or (fmap (\y -> (Expr (EBin Eq (EStrLit "choice") (ERealLit y)))) (fmap fromIntegral [0..(n-1)]))
+    con = Or (fmap ((\y -> (Expr (EBin Eq (EStrLit "choice") (ERealLit y)))) . fromIntegral) [0..(n-1)])
     ors = printConstraint con
 
 -- Top-level
 logic :: String
 logic = "(set-logic QF_NRA)"
+
+endSMT :: String
+endSMT = "(check-sat)\n(exit)"
 
 -- introducing vars / functions for smt
 declFun :: String -> String

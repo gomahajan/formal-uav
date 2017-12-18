@@ -108,11 +108,11 @@ parametervalues
 ;program: charge till battery >= 20
 ;decide when to leave, that is b0 and choice of sensor
 (assert (and (=> (>= bi p2) (= b0 bi)) (=> (< bi p2) (= b0 p2))))
-(assert (or (=> (s0_q0 > p4) (= choice 1)) (=> (s1_q0 > p5)(= choice 2))))
+(assert (or (=> (s0_q0 > p4) (= choice 0)) (=> (s1_q0 > p5)(= choice 1))))
 
 ;flying to D
-(assert (=> (= choice 1) (= x1 s0_loc)))
-(assert (=> (= choice 2) (= x1 s1_loc)))
+(assert (=> (= choice 0) (= x1 s0_loc)))
+(assert (=> (= choice 1) (= x1 s1_loc)))
 (assert(= x1 (+ x0 (* drone_velocity t1))))
 (assert(= b1 (- b0 (* battery_discharge_rate_fly t1))))
 (assert(= s0_q1 (+ s0_q0 (* queue_data_rate t1))))
@@ -120,8 +120,8 @@ parametervalues
 
 ;emptying queue
 (assert(= x2 x1))
-(assert (=> (= choice 1) (and (= s0_q2 (- s0_q1 (* queue_upload_rate t2))) (= s1_q2 (+ s1_q1 (* queue_data_rate t2))))))
-(assert (=> (= choice 2) (and (= s1_q2 (- s1_q1 (* queue_upload_rate t2))) (= s0_q2 (+ s0_q1 (* queue_data_rate t2))))))
+(assert (=> (= choice 0) (and (= s0_q2 (- s0_q1 (* queue_upload_rate t2))) (= s1_q2 (+ s1_q1 (* queue_data_rate t2))))))
+(assert (=> (= choice 1) (and (= s1_q2 (- s1_q1 (* queue_upload_rate t2))) (= s0_q2 (+ s0_q1 (* queue_data_rate t2))))))
 (assert(= b2 (- b1 (* battery_discharge_rate_hover t2))))
 ;program: empty queue till battery <= 4
 (assert (or (=> (> b1 p3) (= b2 p3)) (= q2 0)))

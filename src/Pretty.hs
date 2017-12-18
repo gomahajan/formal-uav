@@ -14,6 +14,7 @@ printConstraint' (Expr e)    = printE e
 printConstraint' (And ps) = "(and " ++ unwords (map printConstraint' ps) ++ ")"
 printConstraint' (Or ps)  = "(or " ++ unwords (map printConstraint' ps) ++ ")"
 printConstraint' (Not p)     = "(not " ++ printConstraint' p ++ ")"
+printConstraint' (Impl p1 p2) = "(=> " ++ printConstraint' p1 ++ " " ++ printConstraint' p2 ++ ")"
 
 
 printE :: Exp -> String
