@@ -79,6 +79,40 @@ data CompleteSpec = CompleteSpec {
   _vars :: Vars
 } deriving (Show, Eq)
 
+{- DSL to CEGIS
+  declarations:
+    decl for all uavs: battery, position
+    decl for all sensors: queue, location
+    decl for all times
+    decl choice
+
+  initializations:
+    wellformed battery <= 100, time >=0, queue >= 0, choice
+    init for all queues:location
+
+  counterexampleStep
+    decl all parameters
+    declarations
+
+    init all parameters
+    initializations
+
+    dynamics
+
+    not (invariant (bi, all sensor qi) => (safe and invariant (b3, all sensor q3)))
+
+  parameterStep
+    decl all parameters
+    init all parameters
+
+    for each counter-example
+      declarations
+      initializations
+      init battery, all sensor queues to counterexample
+      dynamics
+      invariant (bi, all sensor qi) => (safe and invariant (b3, all sensor q3))
+-}
+
 makeLenses ''CompleteSpec
 
 finishSpec :: Decls -> CompleteSpec
