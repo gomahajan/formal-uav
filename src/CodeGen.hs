@@ -90,6 +90,29 @@ data CompleteSpec = CompleteSpec {
     wellformed battery <= 100, time >=0, queue >= 0, choice
     init for all queues:location
 
+  dynamics:
+    mode_charging:
+      x = charging_station
+      bdynamics2 b0 bi
+      forallsensors qdynamics q0 q1
+      program bi q0
+
+    mode_flying:
+      forallsensor if choice = i, x1 = si_loc
+      xdynamics x1 x0
+      bdynamics b1 b0
+      forallsensors qdynamics q1 q0
+
+    mode_emptying:
+      forallsensors if choice = i, qdynamics2 si_q2 si_q1 forallothersensors qdynamics sk_q2 sk_q1
+      bdynamics b2 b1
+
+    mode_flyback
+      x3 = charging_station
+      xdynamics2 x3 x2
+      forallsensors qdynamics q3 q2
+      bdynamics b3 b2
+
   counterexampleStep
     decl all parameters
     declarations
