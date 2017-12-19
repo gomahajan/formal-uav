@@ -80,6 +80,8 @@ data CompleteSpec = CompleteSpec {
   _vars :: Vars
 } deriving (Show, Eq)
 
+makeLenses ''CompleteSpec
+
 {- DSL to CEGIS
   declarations:
     decl for all uavs: battery, position
@@ -121,8 +123,6 @@ data CompleteSpec = CompleteSpec {
       dynamics
       invariant (bi, all sensor qi) => (safe and invariant (b3, all sensor q3))
 -}
-
-makeLenses ''CompleteSpec
 
 finishSpec :: Decls -> CompleteSpec
 finishSpec d = CompleteSpec {
