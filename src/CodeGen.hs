@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings, TemplateHaskell #-}
 
 module CodeGen where
 
@@ -9,7 +9,9 @@ import Data.Map
 import Control.Monad
 import Control.Monad.Except
 import Control.Lens
+import Data.Text (splitOn)
 import Data.List
+import Data.String
 
 import Logic
 import Pretty
@@ -124,19 +126,25 @@ data UAVParams = UAVParams {
   varNames :: [String]
 } deriving (Show, Eq)
 
+uavModeToSensor :: String -> CompleteSpec -> Maybe String
+uavModeToSensor s spec = fmap sensorMode mode
+  where
+    ms = (_modeDefs . _declarations) spec
+    mode = find (\m -> uavMode m == s) ms
+
 initializeSMT :: UAVParams -> CompleteSpec -> [String]
 initializeSMT params spec = logic : (vdecls ++ defs ++ slocs ++ tmin ++ doms ++ choice)
   where
     choice = initChoice (_numSensors spec)
     vdecls = fmap declFun ((_allVars . _vars) spec)
     defList = assocs $ (_defns . _declarations) spec
-    defs = zipWith initConstant (fmap fst defList) (fmap snd defList)
+    defs = zipWith initConstant (fmap fst defList) (fmap (show . snd) defList)
     --plist = _programParams spec
     --initps = zipWith initConstant (fmap fst plist) (fmap snd plist)
     tmin = fmap (`decMin` 0) ((_tvars . _vars) spec)
     doms = fmap declBound ((_allDomains . _vars) spec)
     sensors = (_sensors . _declarations) spec
-    slocs = zipWith initConstant (fmap (\x -> "s" ++ (show (sId x) ++ "_loc")) sensors) (fmap position sensors)
+    slocs = zipWith initConstant (fmap (\x -> "s" ++ (show (sId x) ++ "_loc")) sensors) (fmap (show . position) sensors)
 
 printDynamics :: String -> CompleteSpec -> String -> String -> [String]
 printDynamics name spec curr prev = [printConstraint newx] ++ [printConstraint newb] ++ sens
@@ -156,30 +164,77 @@ printDynamics name spec curr prev = [printConstraint newx] ++ [printConstraint n
       Nothing -> error "Invalid mode"
       Just m -> bde m
     newb = Expr $ EBin Eq (EStrLit bc) (EBin Plus (EStrLit bp) bcon)
-    sens = printSensors name qc qp ((_sensors . _declarations) spec)
+    smode = uavModeToSensor name spec
+    sens = printSensors smode qc qp ((_sensors . _declarations) spec)
 
+-- Labelling smt sections for debugging
 preamble :: String -> [String]
 preamble title = "\n" : [(";" ++ title)]
 
 -- TODO: is it still ok to have x dynamics?
-printCharge :: String -> CompleteSpec -> [String]
-printCharge name spec = preamble "charging" ++ fmap (replace " t" " t3") (pos : dyn)
+printCharge :: String -> UAVParams -> CompleteSpec -> [String]
+printCharge name params spec = preamble "charging" ++ fmap (replace " t" " t3") (pos : dyn)
   where
-    pos = initConstant "x0" 0.0
+    pos = initConstant "x0" "0"
     dyn = printDynamics name spec (show 1) "i"
 
-printFlyFrom :: String -> CompleteSpec -> [String]
-printFlyFrom name spec = preamble "flying back" ++ fmap (replace " t" " t3") (pos : dyn)
+printFlyFrom :: String -> UAVParams -> CompleteSpec -> [String]
+printFlyFrom name params spec = preamble "flying back" ++ fmap (replace " t" " t3") (pos : dyn)
   where
-    pos = initConstant "x3" 0.0
+    pos = initConstant "x3" "0"
     dyn = printDynamics name spec (show 3) (show 2)
 
--- decision when to stop charging/collecting
---printDecision :: CompleteSpec -> [String]
---printDecision spec
+printCollect :: String -> UAVParams -> CompleteSpec -> [String]
+printCollect name params spec = preamble "Collecting data" ++ (fmap (replace " t" " t2") (pos : ([printConstraint newb] ++ fmap printConstraint uploadDyn ++ fmap printConstraint choices ++ fmap printConstraint allSensors ++ fmap printConstraint completePred)))
+  where
+    -- battery dynamics
+    uavm = find (\m -> modeName m == "download") ((_uavModes . _declarations) spec)
+    bcon = case uavm of
+      Nothing -> error "Invalid mode"
+      Just m -> bde m
+    newb = Expr $ EBin Eq (EStrLit "b2") (EBin Minus (EStrLit "b1") bcon)
+    pos = initConstant "x2" "x1"
+    -- sensors
+    nums = _numSensors spec
+    choices = fmap (Expr . EBin Eq (EStrLit "choice") . ERealLit . fromIntegral) [0..(nums - 1)]
+    qs = fmap ((++ "_q2") . ("s" ++) . show) [0..(nums - 1)]
+    prevqs = fmap ((++ "_q1") . ("s" ++) . show) [0..(nums - 1)]
+    otherQs = assembleSensors qs
+    otherPrevQs = assembleSensors prevqs
+    sds = fmap modes ((_sensors . _declarations) spec)
+    uploadDyn = fmap Expr $ zipWith3 (\q prevq ds -> EBin Eq (EStrLit q) (EBin Minus (EStrLit prevq) (ds ! "upload"))) qs prevqs sds
+    --unchosen = zipWith (\qs pqs -> fmap (\q pq -> Expr $ getDE (extractId q) ((_sensors . _declarations) spec))) otherQs otherPrevQs
+    allSensors = case unchosenSensors otherQs otherPrevQs ((_sensors . _declarations) spec) of
+      Nothing -> uploadDyn
+      Just ps -> uploadDyn ++ ps
+    completePred = fmap (\c -> Impl c (And allSensors)) choices
+    --collectDyn =
+    --setDyn =
+    --qcollect s = EBin Eq (EStrLit (s ++ "_q2") ())
 
-printFlyTo :: String -> CompleteSpec -> [String]
-printFlyTo name spec = preamble "flying to sensors" ++ fmap (replace " t" " t0") (fmap printConstraint impls ++ dyn)
+getDE :: Int -> [Sensor] -> ODE
+getDE s sensors = case (find (\x -> (sId x) == s) sensors) of
+  Nothing -> error $ "Can't find sensor"
+  Just sen -> (modes sen) ! "collect"
+
+unchosenSensors :: [[String]] -> [[String]] -> [Sensor] -> Maybe [Pred]
+unchosenSensors [[]] _ _ = Nothing
+unchosenSensors otherQs otherPrevQs sensors = Just $ zipWith (assemblePred sensors) otherQs otherPrevQs
+
+assemblePred :: [Sensor] -> [String] -> [String] -> Pred
+assemblePred s qs pqs = And $ zipWith (\q pq -> Expr (EBin Eq (EStrLit q) (getDE (extractId q) s))) qs pqs
+
+extractId :: String -> Int
+extractId ('s':s) = read $ show (head (splitOn "_" (fromString s)))
+extractId _       = error "Malformed sensor id"
+
+--convert a list of sensors into a corresponding list of lists of the OTHER sensors and their dynamics
+assembleSensors :: [String] -> [[String]]
+assembleSensors qs = (fmap others qs)
+  where others q = Data.List.filter (\x -> x /= q) qs
+
+printFlyTo :: String -> UAVParams -> CompleteSpec -> [String]
+printFlyTo name params spec = preamble "flying to sensors" ++ fmap (replace " t" " t0") (fmap printConstraint impls ++ dyn)
   where
     numm = _numModes spec
     nums = _numSensors spec
@@ -187,12 +242,15 @@ printFlyTo name spec = preamble "flying to sensors" ++ fmap (replace " t" " t0")
     impls = fmap ((\x -> Impl (Expr (EBin Eq (EStrLit "choice") (ERealLit x))) (Expr (EBin Eq (EStrLit "x1") (EStrLit (mkSensor x))))) . fromIntegral) [0..(nums - 1)]
     dyn = printDynamics name spec (show 1) (show 0)
 
-printSensors :: String -> String -> String -> [Sensor] -> [String]
-printSensors mode modeNum prevModeNum sensors = fmap (printConstraint . Expr) s
+printSensors :: Maybe String -> String -> String -> [Sensor] -> [String]
+printSensors Nothing _ _ _ = error $ "Invalid UAV mode"
+printSensors (Just mode) modeNum prevModeNum sensors = fmap (printConstraint . Expr) s
   where ids = fmap ((++ ("_" ++ modeNum)) . ("s" ++) . show . sId) sensors
         prevIds = fmap ((++ ("_" ++ prevModeNum)) . ("s" ++) . show . sId) sensors
-        dyn = concat $ fmap (elems . modes) sensors
-        s = zipWith3 (\p c d -> (EBin Eq (EStrLit c) (EBin Plus (EStrLit p) d))) prevIds ids dyn
+        --dyn = concat $ fmap (elems . modes) sensors
+        dyn = fmap ((! mode) . modes) sensors
+        s = trace (show dyn) $ zipWith3 (\p c d -> (EBin Eq (EStrLit c) (EBin Plus (EStrLit p) d))) prevIds ids dyn
+
 --printChoiceMode :: CompleteSpec -> String
 
 -- For constant modes (ie flying from hard-coded location to another)
@@ -220,8 +278,8 @@ endSMT = "(check-sat)\n(exit)"
 declFun :: String -> String
 declFun s = "(declare-fun " ++ s ++ " () Real)"
 
-initConstant :: String -> Double -> String
-initConstant c x = "(assert (= " ++ c ++ " " ++ show x ++ "))"
+initConstant :: String -> String -> String
+initConstant c x = "(assert (= " ++ c ++ " " ++ x ++ "))"
 
 decMin :: String -> Double -> String
 decMin s v = "(assert (>= " ++ s ++ " " ++ show v ++ "))"

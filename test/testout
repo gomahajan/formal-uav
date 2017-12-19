@@ -13,6 +13,11 @@
 (declare-fun s0_q1 () Real)
 (declare-fun s0_q2 () Real)
 (declare-fun s0_q3 () Real)
+(declare-fun s1_q_i () Real)
+(declare-fun s1_q0 () Real)
+(declare-fun s1_q1 () Real)
+(declare-fun s1_q2 () Real)
+(declare-fun s1_q3 () Real)
 (declare-fun t0 () Real)
 (declare-fun t1 () Real)
 (declare-fun t2 () Real)
@@ -20,7 +25,9 @@
 (declare-fun p0 () Real)
 (declare-fun p1 () Real)
 (declare-fun p2_s0 () Real)
+(declare-fun p2_s1 () Real)
 (declare-fun p3_s0 () Real)
+(declare-fun p3_s1 () Real)
 (assert (= battery_charging_rate 50.0))
 (assert (= battery_discharge_rate_fly 1.0))
 (assert (= battery_discharge_rate_hover 1.0))
@@ -28,6 +35,7 @@
 (assert (= queue_data_rate 1.0))
 (assert (= queue_upload_rate 1.0))
 (assert (= s0_loc 10.0))
+(assert (= s1_loc 15.0))
 (assert (>= t0 0.0))
 (assert (>= t1 0.0))
 (assert (>= t2 0.0))
@@ -60,29 +68,43 @@
 (assert (<= s0_q2 100.0))
 (assert (>= s0_q3 0.0))
 (assert (<= s0_q3 100.0))
+(assert (>= s1_q_i 0.0))
+(assert (<= s1_q_i 100.0))
+(assert (>= s1_q0 0.0))
+(assert (<= s1_q0 100.0))
+(assert (>= s1_q1 0.0))
+(assert (<= s1_q1 100.0))
+(assert (>= s1_q2 0.0))
+(assert (<= s1_q2 100.0))
+(assert (>= s1_q3 0.0))
+(assert (<= s1_q3 100.0))
 (declare-fun choice () Real)
-(assert (or (= choice 0.0)))
+(assert (or (= choice 0.0) (= choice 1.0)))
 
 
 ;charging
-(assert (= x0 0.0))
+(assert (= x0 0))
 (assert (= x1 (+ xi 0.0)))
 (assert (= b1 (+ bi (* battery_charging_rate t3))))
 (assert (= s0_q1 (+ s0_qi (* queue_data_rate t3))))
+(assert (= s1_q1 (+ s1_qi (* queue_data_rate t3))))
 
 
 ;flying to sensors
 (assert (=> (= choice 0.0) (= x1 s0.0_loc)))
+(assert (=> (= choice 1.0) (= x1 s1.0_loc)))
 (assert (= x1 (+ x0 (* drone_velocity t0))))
 (assert (= b1 (+ b0 (* battery_discharge_rate_fly t0))))
 (assert (= s0_q1 (+ s0_q0 (* queue_data_rate t0))))
+(assert (= s1_q1 (+ s1_q0 (* queue_data_rate t0))))
 
 
 ;flying back
-(assert (= x3 0.0))
+(assert (= x3 0))
 (assert (= x3 (+ x2 (* (- (drone_velocity) t3)))))
 (assert (= b3 (+ b2 (* battery_discharge_rate_fly t3))))
 (assert (= s0_q3 (+ s0_q2 (* queue_data_rate t3))))
+(assert (= s1_q3 (+ s1_q2 (* queue_data_rate t3))))
 
 
 ;Goal

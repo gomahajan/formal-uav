@@ -334,9 +334,10 @@ writeSMT infile outfile = do
     Right decls -> do
       let spec = finishSpec decls
           smt = initializeSMT uavParams spec
-          charge = printCharge "charge" spec
-          flyto = printFlyTo "fly_to" spec
-          flyfrom = printFlyFrom "fly_back" spec
+          charge = printCharge "charge" uavParams spec
+          flyto = printFlyTo "fly_to" uavParams spec
+          --collect = printCollect "collect" uavParams spec
+          flyfrom = printFlyFrom "fly_back" uavParams spec
       writeFile outfile (unlines (smt ++ charge ++ flyto ++ flyfrom ++ initGoal))
 
 -- Initialize program and values
