@@ -79,6 +79,48 @@ data CompleteSpec = CompleteSpec {
   _vars :: Vars
 } deriving (Show, Eq)
 
+{- DSL to CEGIS
+  declarations:
+    decl for all uavs: battery, position
+    decl for all sensors: queue, location
+    decl for all times
+    decl choice
+
+  initializations:
+    wellformed battery <= 100, time >=0, queue >= 0, choice
+    init for all queues:location
+
+  dynamics:
+    print_charge
+    printFlyTo
+    mode_emptying:
+      forallsensors if choice = i, qdynamics2 si_q2 si_q1 forallothersensors qdynamics sk_q2 sk_q1
+      bdynamics b2 b1
+    printFlyFrom
+
+  counterexampleStep
+    decl all parameters
+    declarations
+
+    init all parameters
+    initializations
+
+    dynamics
+
+    not (invariant (bi, all sensor qi) => (safe and invariant (b3, all sensor q3)))
+
+  parameterStep
+    decl all parameters
+    init all parameters
+
+    for each counter-example
+      declarations
+      initializations
+      init battery, all sensor queues to counterexample
+      dynamics
+      invariant (bi, all sensor qi) => (safe and invariant (b3, all sensor q3))
+-}
+
 makeLenses ''CompleteSpec
 
 finishSpec :: Decls -> CompleteSpec
@@ -249,7 +291,7 @@ printSensors (Just mode) modeNum prevModeNum sensors = fmap (printConstraint . E
         prevIds = fmap ((++ ("_" ++ prevModeNum)) . ("s" ++) . show . sId) sensors
         --dyn = concat $ fmap (elems . modes) sensors
         dyn = fmap ((! mode) . modes) sensors
-        s = trace (show dyn) $ zipWith3 (\p c d -> (EBin Eq (EStrLit c) (EBin Plus (EStrLit p) d))) prevIds ids dyn
+        s = zipWith3 (\p c d -> (EBin Eq (EStrLit c) (EBin Plus (EStrLit p) d))) prevIds ids dyn
 
 --printChoiceMode :: CompleteSpec -> String
 
