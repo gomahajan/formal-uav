@@ -240,7 +240,7 @@ parseSensor = do
   whitespace
   x <- parseNum
   ignore
-  ms <- many1 parseSMode
+  ms <- many1 (try parseSMode)
   return Sensor { sId = i, position = x, modes = Map.fromList ms }
 
 parseSMode :: Parser (String, ODE)
