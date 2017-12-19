@@ -12,6 +12,7 @@ import Control.Lens
 import Data.Text (splitOn)
 import Data.List
 import Data.String
+import Data.Typeable
 
 import Logic
 import Pretty
@@ -227,7 +228,7 @@ printFlyFrom name params spec = preamble "flying back" ++ fmap (replace " t" " t
     dyn = printDynamics name spec (show 3) (show 2)
 
 printCollect :: String -> UAVParams -> CompleteSpec -> [String]
-printCollect name params spec = preamble "Collecting data" ++ (fmap (replace " t" " t2") (pos : ([printConstraint newb] ++ fmap printConstraint uploadDyn ++ fmap printConstraint choices ++ fmap printConstraint allSensors ++ fmap printConstraint completePred)))
+printCollect name params spec = preamble "Collecting data" ++ (fmap (replace " t" " t2") (pos : ([printConstraint newb] ++ fmap printConstraint completePred)))
   where
     -- battery dynamics
     uavm = find (\m -> modeName m == "download") ((_uavModes . _declarations) spec)
@@ -247,27 +248,27 @@ printCollect name params spec = preamble "Collecting data" ++ (fmap (replace " t
     uploadDyn = fmap Expr $ zipWith3 (\q prevq ds -> EBin Eq (EStrLit q) (EBin Minus (EStrLit prevq) (ds ! "upload"))) qs prevqs sds
     --unchosen = zipWith (\qs pqs -> fmap (\q pq -> Expr $ getDE (extractId q) ((_sensors . _declarations) spec))) otherQs otherPrevQs
     allSensors = case unchosenSensors otherQs otherPrevQs ((_sensors . _declarations) spec) of
-      Nothing -> uploadDyn
-      Just ps -> uploadDyn ++ ps
-    completePred = fmap (\c -> Impl c (And allSensors)) choices
+      Nothing -> fmap (: []) uploadDyn
+      Just ps -> zipWith (:) uploadDyn ps
+    completePred = zipWith (\c s -> Impl c (And s)) choices allSensors
     --collectDyn =
     --setDyn =
     --qcollect s = EBin Eq (EStrLit (s ++ "_q2") ())
 
 getDE :: Int -> [Sensor] -> ODE
-getDE s sensors = case (find (\x -> (sId x) == s) sensors) of
-  Nothing -> error $ "Can't find sensor"
-  Just sen -> (modes sen) ! "collect"
+getDE s sensors = case find (\x -> sId x == s) sensors of
+  Nothing -> error "Can't find sensor"
+  Just sen -> modes sen ! "collect"
 
-unchosenSensors :: [[String]] -> [[String]] -> [Sensor] -> Maybe [Pred]
+unchosenSensors :: [[String]] -> [[String]] -> [Sensor] -> Maybe [[Pred]]
 unchosenSensors [[]] _ _ = Nothing
-unchosenSensors otherQs otherPrevQs sensors = Just $ zipWith (assemblePred sensors) otherQs otherPrevQs
+unchosenSensors otherQs otherPrevQs sensors = trace (show sensors) $ Just $ zipWith (assemblePred sensors) otherQs otherPrevQs
 
-assemblePred :: [Sensor] -> [String] -> [String] -> Pred
-assemblePred s qs pqs = And $ zipWith (\q pq -> Expr (EBin Eq (EStrLit q) (getDE (extractId q) s))) qs pqs
+assemblePred :: [Sensor] -> [String] -> [String] -> [Pred]
+assemblePred s qs pqs = trace (show (qs ++ pqs)) $ zipWith (\q pq -> Expr (EBin Plus (EStrLit pq) (EBin Eq (EStrLit q) (getDE (extractId pq) s)))) qs pqs
 
 extractId :: String -> Int
-extractId ('s':s) = read $ show (head (splitOn "_" (fromString s)))
+extractId ('s':s) = Prelude.read $ fst (splitAt 1 s)
 extractId _       = error "Malformed sensor id"
 
 --convert a list of sensors into a corresponding list of lists of the OTHER sensors and their dynamics

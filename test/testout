@@ -99,6 +99,13 @@
 (assert (= s1_q1 (+ s1_q0 (* queue_data_rate t0))))
 
 
+;Collecting data
+(assert (= x2 x1))
+(assert (= b2 (- b1 (* battery_discharge_rate_hover t2))))
+(assert (=> (= choice 0.0) (and (= s0_q2 (- s0_q1 (* queue_upload_rate t2))) (+ s1_q1 (= s1_q2 (* queue_data_rate t2))))))
+(assert (=> (= choice 1.0) (and (= s1_q2 (- s1_q1 (* queue_upload_rate t2))) (+ s0_q1 (= s0_q2 (* queue_data_rate t2))))))
+
+
 ;flying back
 (assert (= x3 0))
 (assert (= x3 (+ x2 (* (- (drone_velocity) t3)))))
