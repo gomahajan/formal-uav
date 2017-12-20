@@ -26,6 +26,7 @@ type ODE = Exp
 -- Position of sensor or UAV
 type Position = Double
 
+-- TODO: make vmin and vmax maybe
 data Domain = Domain {
   vmin :: Double,
   vmax :: Double
@@ -313,7 +314,13 @@ printSensors (Just mode) modeNum prevModeNum sensors = fmap (printConstraint . E
 
 --TODO: automate this! (especially once we actually add the program)
 initGoal :: [String]
-initGoal = preamble "Goal" ++ ["(assert (and (>= bi p0) (<= qi p1)))\n(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (and (>= b3 p0) (<= q3 p1)))))"]
+initGoal = preamble "Goal" ++ ["(assert (not (=>" ++ (initInvariant "i") ++ "(and "++(initSafety)++ (initInvariant "3") ++ "))))"]
+
+initSafety :: String
+initSafety = "(and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< s1_q0 100) (< s1_q1 100) (< s1_q2 100) (< s1_q3 100) (< s2_q0 100) (< s2_q1 100) (< s2_q2 100) (< s2_q3 100))"
+
+initInvariant :: String -> String
+initInvariant num = "(or (and (>= b"++num++" p0) (<= s1_q"++num++" p1) (<= s2_q"++num++" p2)) (and (>= b"++num++" p3) (<= s1_q"++num++" p4) (<= s2_q"++num++" p5)))"
 
 -- Initialize choice variable
 initChoice :: Int -> [String]
