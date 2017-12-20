@@ -87,11 +87,16 @@
 (assert (>= s1_q3 0))
 
 ;template
-parametervalues
-;sample (assert (= p0 1))
-;sample (assert (= p1 1))
-;sample (assert (= p2 1))
-;sample (assert (= p3 1))
+(assert (= p0 10))
+(assert (= p1 10))
+(assert (= p2 10))
+(assert (= p3 10))
+(assert (= p4 10))
+(assert (= p5 10))
+(assert (= p6 10))
+(assert (= p7 10))
+(assert (= p8 10))
+(assert (= p9 10))
 
 (assert (or (= choice 0) (= choice 1)))
 
