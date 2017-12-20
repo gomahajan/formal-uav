@@ -338,7 +338,7 @@ writeSMT infile outfile = do
           flyto = printFlyTo "fly_to" uavParams spec
           collect = printCollect "collect" uavParams spec
           flyfrom = printFlyFrom "fly_back" uavParams spec
-      writeFile outfile (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initGoal))
+      writeFile outfile (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initGoal ++ endSMT))
 
 -- Initialize program and values
 uavParams :: UAVParams

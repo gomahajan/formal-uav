@@ -151,7 +151,7 @@ generateVars ds = Vars {
     numModes = length (_modeDefs ds)
     numSensors = length (_sensors ds)
     ts = fmap (("t" ++) . show) [0..(numModes - 1)]
-    xs = fmap (("x" ++) . show) [0..(numModes - 1)]
+    xs = "xi" : fmap (("x" ++) . show) [0..(numModes - 1)]
     bs = "bi" : fmap (("b" ++) . show) [0..(numModes - 1)]
     sls = fmap (\s -> "s" ++ show s ++ "_loc") [0..(numSensors - 1)]
     qs = "q_i" : fmap (("q" ++) . show) [0..(numModes - 1)]
@@ -229,8 +229,8 @@ preamble title = "\n" : [(";" ++ title)]
 printCharge :: String -> UAVParams -> CompleteSpec -> [String]
 printCharge name params spec = preamble "charging" ++ fmap (replace " t" " t3") (pos : dyn)
   where
-    pos = initConstant "x0" "0"
-    dyn = printDynamics name spec (show 1) "i"
+    pos = initConstant "xi" "0"
+    dyn = printDynamics name spec (show 0) "i"
 
 -- Print mode flying from sensor to charge
 printFlyFrom :: String -> UAVParams -> CompleteSpec -> [String]
