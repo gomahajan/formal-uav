@@ -26,10 +26,9 @@ type ODE = Exp
 -- Position of sensor or UAV
 type Position = Double
 
--- TODO: make vmin and vmax maybe
 data Domain = Domain {
-  vmin :: Double,
-  vmax :: Double
+  vmin :: Maybe Double,
+  vmax :: Maybe Double
 } deriving (Show, Eq)
 
 data UAVMode = UAVMode {
@@ -350,7 +349,8 @@ decMin :: String -> Double -> String
 decMin s v = "(assert (>= " ++ s ++ " " ++ show v ++ "))"
 
 declBound :: (String, Domain) -> String
-declBound (v, d) = m1 ++ "\n" ++ m2
-  where
-    m1 = "(assert (>= " ++ v ++ " " ++ show (vmin d) ++ "))"
-    m2 = "(assert (<= " ++ v ++ " " ++ show (vmax d) ++ "))"
+declBound (v, d) = case ((vmin d), (vmax d)) of
+  (Nothing, Nothing) -> ""
+  (Just low, Nothing) -> "(assert (>= " ++ v ++ " " ++ show low ++ "))"
+  (Nothing, Just high) -> "(assert (<= " ++ v ++ " " ++ show high ++ "))"
+  (Just low, Just high) -> "(assert (>= " ++ v ++ " " ++ show low ++ "))" ++ "\n" ++ "(assert (<= " ++ v ++ " " ++ show high ++ "))"
