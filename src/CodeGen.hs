@@ -12,7 +12,7 @@ import Control.Lens
 import Data.Text (splitOn)
 import Data.List
 import Data.String
-import Data.Typeable
+import Data.Maybe
 
 import Logic
 import Pretty
@@ -214,7 +214,7 @@ printDEs mode spec var curr prev dynamics = [printConstraint new]
   where
     vc = var ++ curr
     vp = var ++ prev
-    uavm = find (\m -> modeName m == mode) ((_uavModes . _declarations) spec)
+    uavm = trace mode $ find (\m -> modeName m == mode) ((_uavModes . _declarations) spec)
     vcon = case uavm of
       Nothing -> error "Invalid mode"
       Just m -> dynamics m
@@ -248,7 +248,8 @@ printCollect :: String -> UAVParams -> CompleteSpec -> [String]
 printCollect name params spec = preamble "Collecting data" ++ fmap (replace " t" " t2") (pos : battery ++ fmap printConstraint completePred)
   where
     -- battery dynamics
-    battery = printDEs name spec "b" "2" "1" bde
+    uavm = sensorModeToUAV name spec
+    battery = printDEs (fromMaybe name uavm) spec "b" "2" "1" bde
     -- Current position constraint
     pos = initConstant "x2" "x1"
     -- sensor stuff - this is a shitshow
@@ -335,8 +336,8 @@ initChoice n = top : [ors]
 logic :: String
 logic = "(set-logic QF_NRA)"
 
-endSMT :: String
-endSMT = "(check-sat)\n(exit)"
+endSMT :: [String]
+endSMT = ["(check-sat)\n(exit)"]
 
 -- introducing vars / functions for smt
 declFun :: String -> String

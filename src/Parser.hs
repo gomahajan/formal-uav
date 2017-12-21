@@ -180,7 +180,7 @@ parseDomain = do
   whitespace
   char ']'
   ignore
-  return (v, Domain { vmin = x, vmax = y } )
+  return (v, Domain { vmin = Just x, vmax = Just y } )
 
 parseMode :: Parser Mode
 parseMode = do
