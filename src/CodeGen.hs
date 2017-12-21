@@ -141,7 +141,7 @@ finishSpec d = CompleteSpec {
 generateVars :: Decls -> Vars
 generateVars ds = Vars {
   _allDomains = xdoms ++ bdoms ++ qdoms,
-  _allVars = xs ++ bs ++ sqs ++ ts,
+  _allVars = xs ++ bs ++ sqs ++ ts ++ ks ++ sls,
   _tvars = ts,
   _xvars = xs,
   _bvars = bs,
@@ -150,11 +150,12 @@ generateVars ds = Vars {
   where
     numModes = length (_modeDefs ds)
     numSensors = length (_sensors ds)
+    ks = keys (_defns ds)
     ts = fmap (("t" ++) . show) [0..(numModes - 1)]
     xs = "xi" : fmap (("x" ++) . show) [0..(numModes - 1)]
     bs = "bi" : fmap (("b" ++) . show) [0..(numModes - 1)]
     sls = fmap (\s -> "s" ++ show s ++ "_loc") [0..(numSensors - 1)]
-    qs = "q_i" : fmap (("q" ++) . show) [0..(numModes - 1)]
+    qs = "qi" : fmap (("q" ++) . show) [0..(numModes - 1)]
     s = fmap (("s" ++) . show) [0..(numSensors - 1)]
     sqs = concatMap (\v -> fmap ((v ++ "_") ++) qs) s
     xdoms = zip xs (replicate numModes (_varDomains ds ! "x" ))
@@ -214,7 +215,7 @@ printDEs mode spec var curr prev dynamics = [printConstraint new]
   where
     vc = var ++ curr
     vp = var ++ prev
-    uavm = trace mode $ find (\m -> modeName m == mode) ((_uavModes . _declarations) spec)
+    uavm = find (\m -> modeName m == mode) ((_uavModes . _declarations) spec)
     vcon = case uavm of
       Nothing -> error "Invalid mode"
       Just m -> dynamics m
@@ -227,7 +228,7 @@ preamble title = "\n" : [";" ++ title]
 
 -- TODO: is it still ok to have x dynamics?
 printCharge :: String -> UAVParams -> CompleteSpec -> [String]
-printCharge name params spec = preamble "charging" ++ fmap (replace " t" " t3") (pos : dyn)
+printCharge name params spec = preamble "charging" ++ fmap (replace " t" " t0") (pos : dyn)
   where
     pos = initConstant "xi" "0"
     dyn = printDynamics name spec (show 0) "i"
@@ -276,11 +277,11 @@ getDE mode s sensors = case find (\x -> sId x == s) sensors of
 --    not chosen
 unchosenSensors :: String -> [[String]] -> [[String]] -> [Sensor] -> Maybe [[Pred]]
 unchosenSensors _ [[]] _ _ = Nothing
-unchosenSensors mode otherQs otherPrevQs sensors = trace (show sensors) $ Just $ zipWith (assemblePred mode sensors) otherQs otherPrevQs
+unchosenSensors mode otherQs otherPrevQs sensors = Just $ zipWith (assemblePred mode sensors) otherQs otherPrevQs
 
 -- Assemble differential equation dynamics into usable form via integration essentially
 assemblePred :: String -> [Sensor] -> [String] -> [String] -> [Pred]
-assemblePred mode s qs pqs = trace (show (qs ++ pqs)) $ zipWith (\q pq -> Expr (EBin Plus (EStrLit pq) (EBin Eq (EStrLit q) (getDE mode (extractId pq) s)))) qs pqs
+assemblePred mode s qs pqs = zipWith (\q pq -> Expr (EBin Plus (EStrLit pq) (EBin Eq (EStrLit q) (getDE mode (extractId pq) s)))) qs pqs
 
 -- Get ID number out of a string describing a sensor
 extractId :: String -> Int
@@ -294,7 +295,7 @@ assembleSensors qs = fmap others qs
 
 -- Print constraints for uav flying to sensor
 printFlyTo :: String -> UAVParams -> CompleteSpec -> [String]
-printFlyTo name params spec = preamble "flying to sensors" ++ fmap (replace " t" " t0") (fmap printConstraint impls ++ dyn)
+printFlyTo name params spec = preamble "flying to sensors" ++ fmap (replace " t" " t1") (fmap printConstraint impls ++ dyn)
   where
     numm = _numModes spec
     nums = _numSensors spec
