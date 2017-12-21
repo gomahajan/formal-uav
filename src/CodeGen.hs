@@ -140,7 +140,7 @@ finishSpec d = CompleteSpec {
 -- Generate variable names for all modes alongside domains for relevant variables.
 generateVars :: Decls -> Vars
 generateVars ds = Vars {
-  _allDomains = xdoms ++ bdoms ++ qdoms,
+  _allDomains = bdoms ++ qdoms,
   _allVars = xs ++ bs ++ sqs ++ ts ++ ks ++ sls,
   _tvars = ts,
   _xvars = xs,
@@ -315,13 +315,14 @@ printSensors (Just mode) modeNum prevModeNum sensors = fmap (printConstraint . E
 
 --TODO: automate this! (especially once we actually add the program)
 initGoal :: [String]
-initGoal = preamble "Goal" ++ ["(assert (not (=>" ++ (initInvariant "i") ++ "(and "++(initSafety)++ (initInvariant "3") ++ "))))"]
+initGoal = preamble "Goal" ++ ["(assert (not (=>" ++ initInvariant "i" ++ "(and "++ initSafety ++ initInvariant "3" ++ "))))"]
 
 initSafety :: String
 initSafety = "(and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< s1_q0 100) (< s1_q1 100) (< s1_q2 100) (< s1_q3 100) (< s2_q0 100) (< s2_q1 100) (< s2_q2 100) (< s2_q3 100))"
 
 initInvariant :: String -> String
 initInvariant num = "(or (and (>= b"++num++" p0) (<= s1_q"++num++" p1) (<= s2_q"++num++" p2)) (and (>= b"++num++" p3) (<= s1_q"++num++" p4) (<= s2_q"++num++" p5)))"
+
 
 -- Initialize choice variable
 initChoice :: Int -> [String]
