@@ -1,3 +1,60 @@
+(set-logic QF_NRA)
+
+;parameters invariant (numSensors+1)*numSensors
+(declare-fun p0 () Real)
+(declare-fun p1 () Real)
+(declare-fun p2 () Real)
+(declare-fun p3 () Real)
+(declare-fun p4 () Real)
+(declare-fun p5 () Real)
+
+;parameters program numSensors + 2
+(declare-fun p6 () Real)
+(declare-fun p7 () Real)
+(declare-fun p8 () Real)
+(declare-fun p9 () Real)
+
+;constants
+(declare-fun battery_charging_rate () Real)
+(declare-fun battery_discharge_rate_fly () Real)
+(declare-fun battery_discharge_rate_hover () Real)
+(declare-fun queue_data_rate () Real)
+(declare-fun queue_upload_rate () Real)
+(declare-fun drone_velocity () Real)
+(declare-fun s1_loc () Real)
+(declare-fun s2_loc () Real)
+
+(assert(= drone_velocity 10))
+(assert(= battery_charging_rate 50))
+(assert(= battery_discharge_rate_fly 1))
+(assert(= battery_discharge_rate_hover 1))
+(assert(= queue_data_rate 1))
+(assert(= queue_upload_rate 1))
+(assert(= s1_loc 10))
+(assert(= s2_loc 20))
+
+
+(assert (<= p0 100))
+(assert (>= p0 0))
+(assert (<= p1 100))
+(assert (>= p1 0))
+(assert (<= p2 100))
+(assert (>= p2 0))
+(assert (<= p3 100))
+(assert (>= p3 0))
+(assert (<= p4 100))
+(assert (>= p4 0))
+(assert (<= p5 100))
+(assert (>= p5 0))
+(assert (<= p6 100))
+(assert (>= p6 0))
+(assert (<= p7 100))
+(assert (>= p7 0))
+(assert (<= p8 100))
+(assert (>= p8 0))
+(assert (<= p9 100))
+(assert (>= p9 0))
+
 (declare-fun x0 () Real)
 (declare-fun x1 () Real)
 (declare-fun x2 () Real)
@@ -93,11 +150,14 @@
 (assert(= b3 (- b2 (* battery_discharge_rate_fly t3))))
 
 
-
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
 ; Add batteryvalue here
-batteryvalue
+(assert (= bc 13))
+(assert (= s1_qc 0.0008))
+(assert (= s2_qc 0.0008))
 
 (assert (and (= bi bc) (= s1_qi s1_qc) (= s2_qi s2_qc)))
 (assert (=> (or (and (>= bi p0) (<= s1_qi p1) (<= s2_qi p2)) (and (>= bi p3) (<= s1_qi p4) (<= s2_qi p5))) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< s1_q0 100) (< s1_q1 100) (< s1_q2 100) (< s1_q3 100) (< s2_q0 100) (< s2_q1 100) (< s2_q2 100) (< s2_q3 100) (or (and (>= b3 p0) (<= s1_q3 p1) (<= s2_q3 p2)) (and (>= b3 p3) (<= s1_q3 p4) (<= s2_q3 p5))))))
+(check-sat)
+(exit)

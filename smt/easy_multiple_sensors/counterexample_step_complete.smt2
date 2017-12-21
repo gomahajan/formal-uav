@@ -60,8 +60,8 @@
 (assert(= queue_data_rate 1))
 (assert(= queue_upload_rate 1))
 
-(assert(= s1_loc 10))
-(assert(= s2_loc 20))
+(assert(= s0_loc 10))
+(assert(= s1_loc 20))
 
 (assert(>= t0 0))
 (assert(>= t1 0))
@@ -73,12 +73,12 @@
 (assert (<= b1 100))
 (assert (<= b2 100))
 (assert (<= b3 100))
-(assert (>= s2_qi 0))
-(assert (<= s2_qi 100))
-(assert (>= s2_q0 0))
-(assert (>= s2_q1 0))
-(assert (>= s2_q2 0))
-(assert (>= s2_q3 0))
+(assert (>= s0_qi 0))
+(assert (<= s0_qi 100))
+(assert (>= s0_q0 0))
+(assert (>= s0_q1 0))
+(assert (>= s0_q2 0))
+(assert (>= s0_q3 0))
 (assert (>= s1_qi 0))
 (assert (<= s1_qi 100))
 (assert (>= s1_q0 0))
@@ -87,37 +87,42 @@
 (assert (>= s1_q3 0))
 
 ;template
-parametervalues
-;sample (assert (= p0 1))
-;sample (assert (= p1 1))
-;sample (assert (= p2 1))
-;sample (assert (= p3 1))
+(assert (= p0 10))
+(assert (= p1 10))
+(assert (= p2 10))
+(assert (= p3 10))
+(assert (= p4 10))
+(assert (= p5 10))
+(assert (= p6 10))
+(assert (= p7 10))
+(assert (= p8 10))
+(assert (= p9 10))
 
 (assert (or (= choice 0) (= choice 1)))
 
 ;charging
 (assert(= x0 0))
 (assert(= b0 (+ bi (* battery_charging_rate t0))))
+(assert(= s0_q0 (+ s0_qi (* queue_data_rate t0))))
 (assert(= s1_q0 (+ s1_qi (* queue_data_rate t0))))
-(assert(= s2_q0 (+ s2_qi (* queue_data_rate t0))))
 ; TODO: allow to stay when battery = 100
 ;program: charge till battery >= 20
 ;decide when to leave, that is b0 and choice of sensor
 (assert (and (=> (>= bi p6) (= b0 bi)) (=> (< bi p6) (= b0 p6))))
-(assert (or (=> (> s1_q0 p7) (= choice 0)) (=> (> s2_q0 p8)(= choice 1)) (= choice 0)))
+(assert (or (=> (s0_q0 > p7) (= choice 0)) (=> (s1_q0 > p8)(= choice 1)) (= choice 0)))
 
 ;flying to D
-(assert (=> (= choice 0) (= x1 s1_loc)))
-(assert (=> (= choice 1) (= x1 s2_loc)))
+(assert (=> (= choice 0) (= x1 s0_loc)))
+(assert (=> (= choice 1) (= x1 s1_loc)))
 (assert(= x1 (+ x0 (* drone_velocity t1))))
 (assert(= b1 (- b0 (* battery_discharge_rate_fly t1))))
+(assert(= s0_q1 (+ s0_q0 (* queue_data_rate t1))))
 (assert(= s1_q1 (+ s1_q0 (* queue_data_rate t1))))
-(assert(= s2_q1 (+ s2_q0 (* queue_data_rate t1))))
 
 ;emptying queue
 (assert(= x2 x1))
-(assert (=> (= choice 0) (and (= s1_q2 (- s1_q1 (* queue_upload_rate t2))) (= s2_q2 (+ s2_q1 (* queue_data_rate t2))))))
-(assert (=> (= choice 1) (and (= s2_q2 (- s2_q1 (* queue_upload_rate t2))) (= s1_q2 (+ s1_q1 (* queue_data_rate t2))))))
+(assert (=> (= choice 0) (and (= s0_q2 (- s0_q1 (* queue_upload_rate t2))) (= s1_q2 (+ s1_q1 (* queue_data_rate t2))))))
+(assert (=> (= choice 1) (and (= s1_q2 (- s1_q1 (* queue_upload_rate t2))) (= s0_q2 (+ s0_q1 (* queue_data_rate t2))))))
 (assert(= b2 (- b1 (* battery_discharge_rate_hover t2))))
 ;program: empty queue till battery <= 4
 (assert (or (=> (> b1 p9) (= b2 p9)) (or (= s1_q2 0) (= s2_q2 0))))

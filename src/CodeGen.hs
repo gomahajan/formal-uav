@@ -27,8 +27,8 @@ type ODE = Exp
 type Position = Double
 
 data Domain = Domain {
-  vmin :: Double,
-  vmax :: Double
+  vmin :: Maybe Double,
+  vmax :: Maybe Double
 } deriving (Show, Eq)
 
 data UAVMode = UAVMode {
@@ -151,7 +151,7 @@ generateVars ds = Vars {
     numModes = length (_modeDefs ds)
     numSensors = length (_sensors ds)
     ts = fmap (("t" ++) . show) [0..(numModes - 1)]
-    xs = fmap (("x" ++) . show) [0..(numModes - 1)]
+    xs = "xi" : fmap (("x" ++) . show) [0..(numModes - 1)]
     bs = "bi" : fmap (("b" ++) . show) [0..(numModes - 1)]
     sls = fmap (\s -> "s" ++ show s ++ "_loc") [0..(numSensors - 1)]
     qs = "q_i" : fmap (("q" ++) . show) [0..(numModes - 1)]
@@ -229,8 +229,8 @@ preamble title = "\n" : [";" ++ title]
 printCharge :: String -> UAVParams -> CompleteSpec -> [String]
 printCharge name params spec = preamble "charging" ++ fmap (replace " t" " t3") (pos : dyn)
   where
-    pos = initConstant "x0" "0"
-    dyn = printDynamics name spec (show 1) "i"
+    pos = initConstant "xi" "0"
+    dyn = printDynamics name spec (show 0) "i"
 
 -- Print mode flying from sensor to charge
 printFlyFrom :: String -> UAVParams -> CompleteSpec -> [String]
@@ -313,7 +313,13 @@ printSensors (Just mode) modeNum prevModeNum sensors = fmap (printConstraint . E
 
 --TODO: automate this! (especially once we actually add the program)
 initGoal :: [String]
-initGoal = preamble "Goal" ++ ["(assert (and (>= bi p0) (<= qi p1)))\n(assert (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= q0 100) (>= q1 100) (>= q2 100) (>= q3 100) (not (and (>= b3 p0) (<= q3 p1)))))"]
+initGoal = preamble "Goal" ++ ["(assert (not (=>" ++ (initInvariant "i") ++ "(and "++(initSafety)++ (initInvariant "3") ++ "))))"]
+
+initSafety :: String
+initSafety = "(and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< s1_q0 100) (< s1_q1 100) (< s1_q2 100) (< s1_q3 100) (< s2_q0 100) (< s2_q1 100) (< s2_q2 100) (< s2_q3 100))"
+
+initInvariant :: String -> String
+initInvariant num = "(or (and (>= b"++num++" p0) (<= s1_q"++num++" p1) (<= s2_q"++num++" p2)) (and (>= b"++num++" p3) (<= s1_q"++num++" p4) (<= s2_q"++num++" p5)))"
 
 -- Initialize choice variable
 initChoice :: Int -> [String]
@@ -343,7 +349,8 @@ decMin :: String -> Double -> String
 decMin s v = "(assert (>= " ++ s ++ " " ++ show v ++ "))"
 
 declBound :: (String, Domain) -> String
-declBound (v, d) = m1 ++ "\n" ++ m2
-  where
-    m1 = "(assert (>= " ++ v ++ " " ++ show (vmin d) ++ "))"
-    m2 = "(assert (<= " ++ v ++ " " ++ show (vmax d) ++ "))"
+declBound (v, d) = case ((vmin d), (vmax d)) of
+  (Nothing, Nothing) -> ""
+  (Just low, Nothing) -> "(assert (>= " ++ v ++ " " ++ show low ++ "))"
+  (Nothing, Just high) -> "(assert (<= " ++ v ++ " " ++ show high ++ "))"
+  (Just low, Just high) -> "(assert (>= " ++ v ++ " " ++ show low ++ "))" ++ "\n" ++ "(assert (<= " ++ v ++ " " ++ show high ++ "))"
