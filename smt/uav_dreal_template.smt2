@@ -104,7 +104,9 @@ parametervalues
 ;program: charge till battery >= 20
 ;decide when to leave, that is b0 and choice of sensor
 (assert (and (=> (>= bi p6) (= b0 bi)) (=> (< bi p6) (= b0 p6))))
-(assert (or (=> (> s1_q0 (+ p7 s2_q0)) (= choice 0))))
+(assert (=> (and (>= bi p0) (<= s1_qi p1) (<= (+ s2_qi p2) s1_qi)) (= choice 0)))
+(assert (=> (not (and (>= bi p0) (<= s1_qi p1) (<= (+ s2_qi p2) s1_qi))) (= choice 1)))
+
 
 ;flying to D
 (assert (=> (= choice 0) (= x1 s1_loc)))
