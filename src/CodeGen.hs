@@ -223,7 +223,7 @@ printDEs mode spec var curr prev dynamics = [printConstraint new]
 
 -- Labelling smt sections for readability/debugging
 preamble :: String -> [String]
-preamble title = "\n" : [(";" ++ title)]
+preamble title = "\n" : [";" ++ title]
 
 -- TODO: is it still ok to have x dynamics?
 printCharge :: String -> UAVParams -> CompleteSpec -> [String]

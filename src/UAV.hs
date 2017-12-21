@@ -343,5 +343,5 @@ writeSMT infile outfile = do
 -- Initialize program and values
 uavParams :: UAVParams
 uavParams = UAVParams {
-  varNames = ["p0"]
+  varNames = ["p0"] --this obviously does nothing
 }
