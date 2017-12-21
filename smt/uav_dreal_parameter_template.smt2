@@ -84,8 +84,8 @@
 (assert (=> (= choice 1) (and (= s2_q2 (- s2_q1 (* queue_upload_rate t2))) (= s1_q2 (+ s1_q1 (* queue_data_rate t2))))))
 (assert(= b2 (- b1 (* battery_discharge_rate_hover t2))))
 ;program: empty queue till battery <= 4
-(assert (or (=> (> b1 p9) (= b2 p9)) (or (= s1_q2 0) (= s2_q2 0))))
-(assert (=> (<= b1 p9) (= b2 b1)))
+(assert (=> (= choice 0) (and (< (+ s1_q2 p9) s2_q2))))
+(assert (=> (= choice 1) (and (< (+ s2_q2 p9) s1_q2))))
 
 ;flying back
 (assert(= x3 0))

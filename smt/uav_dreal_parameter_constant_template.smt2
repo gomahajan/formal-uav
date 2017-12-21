@@ -20,11 +20,11 @@
 (assert (> p5 p4))
 (assert (> p5 p2))
 (assert (> p1 p4))
-(assert (> p2 1))
-(assert (> p4 1))
-(assert (= p9 2))
-(assert (= p7 20))
-(assert (= p8 20))
+(assert (= p2 0))
+(assert (= p4 0))
+;(assert (= p9 2))
+;(assert (= p7 20))
+;(assert (= p8 20))
 
 ;constants
 (declare-fun battery_charging_rate () Real)
