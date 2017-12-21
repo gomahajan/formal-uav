@@ -14,6 +14,18 @@
 (declare-fun p8 () Real)
 (declare-fun p9 () Real)
 
+(assert (> p0 1))
+(assert (> p3 1))
+(assert (> p1 p2))
+(assert (> p5 p4))
+(assert (> p5 p2))
+(assert (> p1 p4))
+(assert (> p2 1))
+(assert (> p4 1))
+(assert (= p9 2))
+(assert (= p7 20))
+(assert (= p8 20))
+
 ;constants
 (declare-fun battery_charging_rate () Real)
 (declare-fun battery_discharge_rate_fly () Real)
@@ -29,9 +41,9 @@
 (assert(= battery_discharge_rate_fly 1))
 (assert(= battery_discharge_rate_hover 1))
 (assert(= queue_data_rate 1))
-(assert(= queue_upload_rate 1))
-(assert(= s0_loc 10))
-(assert(= s1_loc 20))
+(assert(= queue_upload_rate 10))
+(assert(= s1_loc 10))
+(assert(= s2_loc 10))
 
 
 (assert (<= p0 100))

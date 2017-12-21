@@ -58,10 +58,10 @@
 (assert(= battery_discharge_rate_fly 1))
 (assert(= battery_discharge_rate_hover 1))
 (assert(= queue_data_rate 1))
-(assert(= queue_upload_rate 1))
+(assert(= queue_upload_rate 10))
 
 (assert(= s1_loc 10))
-(assert(= s2_loc 20))
+(assert(= s2_loc 10))
 
 (assert(>= t0 0))
 (assert(>= t1 0))
@@ -104,7 +104,7 @@ parametervalues
 ;program: charge till battery >= 20
 ;decide when to leave, that is b0 and choice of sensor
 (assert (and (=> (>= bi p6) (= b0 bi)) (=> (< bi p6) (= b0 p6))))
-(assert (or (=> (> s1_q0 p7) (= choice 0)) (=> (> s2_q0 p8)(= choice 1)) (= choice 0)))
+(assert (or (=> (> s1_q0 (+ p7 s2_q0)) (= choice 0))))
 
 ;flying to D
 (assert (=> (= choice 0) (= x1 s1_loc)))
@@ -133,6 +133,6 @@ parametervalues
 ;goal
 ;Question: Does there exist starting battery,queue values such that safety is not maintained
 ; that is not (invariant => safety)
-(assert (not (=> (or (and (>= bi p0) (<= s1_qi p1) (<= s2_qi p2)) (and (>= bi p3) (<= s1_qi p4) (<= s2_qi p5))) (or (<= b0 0) (<= b1 0) (<= b2 0) (<= b3 0) (>= s1_q0 100) (>= s1_q1 100) (>= s1_q2 100) (>= s1_q3 100) (>= s2_q0 100) (>= s2_q1 100) (>= s2_q2 100) (>= s2_q3 100) (not (or (and (>= b3 p0) (<= s1_q3 p1) (<= s2_q3 p2)) (and (>= b3 p3) (<= s1_q3 p4) (<= s2_q3 p5))))))))
+(assert (not (=> (or (and (>= bi p0) (<= s1_qi p1) (<= (+ s2_qi p2) s1_qi)) (and (>= bi p3) (<= (+ s1_qi p4) s2_qi) (<= s2_qi p5))) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< s1_q0 100) (< s1_q1 100) (< s1_q2 100) (< s1_q3 100) (< s2_q0 100) (< s2_q1 100) (< s2_q2 100) (< s2_q3 100) (or (and (>= b3 p0) (<= s1_q3 p1) (<= (+ s2_q3 p2) s1_q3)) (and (>= b3 p3) (<= (+ s1_q3 p4) s2_q3) (<= s2_q3 p5)))))))
 (check-sat)
 (exit)

@@ -118,7 +118,7 @@ cegisLoop p =
             currentIter = iterations p
             params' = [("p0", p0), ("p1", p1), ("p2", p2), ("p3", p3), ("p4", p4), ("p5", p5), ("p6", p6), ("p7", p7), ("p8", p8), ("p9", p9)]
         --putStrLn $ "Solved Params: " ++ show params'
-        --putStrLn $ "Previous params: " ++ show (params p)
+        putStrLn $ "Previous params: " ++ show (params p)
         cegisLoop p { previous_b = Just c1,
                       previous_q = Just c2,
                       iterations = currentIter - 1,
@@ -273,7 +273,7 @@ main = do
             bcxs = [],
             qcxs = [],
             qcxs2 = [],
-            params = [("p0",9), ("p1",9), ("p2",10), ("p3",1), ("p4",9), ("p5",9), ("p6",10), ("p7",1), ("p8",9), ("p9",9)],
+            params = [("p0",9), ("p1",30), ("p2",10), ("p3",9), ("p4",10), ("p5",30), ("p6",30), ("p7",10), ("p8",10), ("p9",2)],
             previous_b = Nothing,
             previous_q = Nothing
           }
