@@ -43,14 +43,6 @@
 (assert (>= t1 0.0))
 (assert (>= t2 0.0))
 (assert (>= t3 0.0))
-(assert (>= xi 0.0))
-(assert (<= xi 10.0))
-(assert (>= x0 0.0))
-(assert (<= x0 10.0))
-(assert (>= x1 0.0))
-(assert (<= x1 10.0))
-(assert (>= x2 0.0))
-(assert (<= x2 10.0))
 (assert (>= bi 0.0))
 (assert (<= bi 100.0))
 (assert (>= b0 0.0))
@@ -118,6 +110,6 @@
 
 
 ;Goal
-(assert (not (=>(or (and (>= bi p0) (<= s1_qi p1) (<= s2_qi p2)) (and (>= bi p3) (<= s1_qi p4) (<= s2_qi p5)))(and (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< s1_q0 100) (< s1_q1 100) (< s1_q2 100) (< s1_q3 100) (< s2_q0 100) (< s2_q1 100) (< s2_q2 100) (< s2_q3 100))(or (and (>= b3 p0) (<= s1_q3 p1) (<= s2_q3 p2)) (and (>= b3 p3) (<= s1_q3 p4) (<= s2_q3 p5)))))))
+(assert (not (=>(or (and (>= bi p0) (<= s1_qi p1) (<= s2_qi p2)) (and (>= bi p3) (<= s1_qi p4) (<= s2_qi p5)))(and (and (> b0 0.0) (> b1 0.0) (> b2 0.0) (> b3 0.0) (< s1_q0 100.0) (< s1_q1 100.0) (< s1_q2 100.0) (< s1_q3 100.0) (< s2_q0 100.0) (< s2_q1 100.0) (< s2_q2 100.0) (< s2_q3 100.0))(or (and (>= b3 p0) (<= s1_q3 p1) (<= s2_q3 p2)) (and (>= b3 p3) (<= s1_q3 p4) (<= s2_q3 p5)))))))
 (check-sat)
 (exit)

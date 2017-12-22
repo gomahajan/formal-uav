@@ -314,14 +314,23 @@ printSensors (Just mode) modeNum prevModeNum sensors = fmap (printConstraint . E
 
 
 --TODO: automate this! (especially once we actually add the program)
-initGoal :: [String]
-initGoal = preamble "Goal" ++ ["(assert (not (=>" ++ initInvariant "i" ++ "(and "++ initSafety ++ initInvariant "3" ++ "))))"]
+initGoal :: Int -> [String]
+initGoal numSensors = preamble "Goal" ++ ["(assert (not (=>" ++ initInvariant numSensors "i" ++ "(and "++ initSafety numSensors ++ initInvariant numSensors "3" ++ "))))"]
 
-initSafety :: String
-initSafety = "(and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< s1_q0 100) (< s1_q1 100) (< s1_q2 100) (< s1_q3 100) (< s2_q0 100) (< s2_q1 100) (< s2_q2 100) (< s2_q3 100))"
+initSafety :: Int -> String
+initSafety numSensors = printConstraint' (And (bbounds ++ sbounds))
+  where
+    qs = fmap (("_q" ++) . show) [0..3]
+    s = fmap (("s" ++) . show) [1..numSensors]
+    sqs = concatMap (\sen -> fmap (sen ++) qs) s
+    sbounds = fmap (\s -> Expr (EBin Lt (EStrLit s) (ERealLit 100))) sqs
+    bs = fmap (("b" ++) . show) [0..3]
+    bbounds = fmap (\b -> Expr (EBin Gt (EStrLit b) (ERealLit 0))) bs
 
-initInvariant :: String -> String
-initInvariant num = "(or (and (>= b"++num++" p0) (<= s1_q"++num++" p1) (<= s2_q"++num++" p2)) (and (>= b"++num++" p3) (<= s1_q"++num++" p4) (<= s2_q"++num++" p5)))"
+-- not sure we can automate this construction with numSensors as an argument without
+--   expressing the program in the DSL somewhere
+initInvariant :: Int -> String -> String
+initInvariant numSensors stepNum = "(or (and (>= b" ++ stepNum ++ " p0) (<= s1_q" ++ stepNum ++ " p1) (<= s2_q" ++ stepNum ++ " p2)) (and (>= b" ++ stepNum ++ " p3) (<= s1_q" ++ stepNum ++ " p4) (<= s2_q" ++ stepNum ++ " p5)))"
 
 
 -- Initialize choice variable
