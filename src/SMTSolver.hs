@@ -22,7 +22,7 @@ data SolverConfig = SolverConfig {
 -- Call solver
 run :: SolverConfig -> String -> Double -> IO String
 run sconf f delta = do
-    let p = (shell (genSolverCall sconf f delta))
+    let p = (shell (genSolverCallZ3 sconf f delta))
             { std_in  = Inherit
             , std_out = CreatePipe
             , std_err = Inherit
@@ -34,9 +34,24 @@ run sconf f delta = do
 genSolverCall :: SolverConfig -> String -> Double -> String
 genSolverCall sconf f delta = dRealPath sconf ++ " " ++ f ++ " --model --precision " ++ show delta ++ " " ++ solverArgs sconf
 
+genSolverCallZ3 :: SolverConfig -> String -> Double -> String
+genSolverCallZ3 sconf f delta = "./z3win/bin/z3" ++ " " ++ f
+
 -- Parsing utilities for solver response
 
 nonWhitespace = many $ noneOf " \t\n"
+
+parseVar :: Parser Assignment
+parseVar = do
+  string "(("
+  whitespace
+  s <- many1 (letter <|> digit)
+  whitespace
+  x <- parseDouble
+  whitespace
+  string "))"
+  whitespace
+  return (s, x)
 
 -- Placeholders until specification language parser is done
 parseDReal4Var :: Parser Assignment
@@ -71,6 +86,7 @@ parseDRealRange = do
 parseDRealResponse :: Int -> Parser Response
 parseDRealResponse v = do
   let p = case v of
+        2 -> parseVar
         3 -> parseDReal3Var
         4 -> parseDReal4Var
   vs <- many p
@@ -81,6 +97,7 @@ parseDRealSat v s = case splitOn "\n" s of
   ("unsat"):_ -> Response "unsat" []
   strs ->
     let strs' = case v of
+         2 -> tail (rmLast strs)
          3 -> tail $ rmLast (rmLast strs)
          4 -> tail (rmLast strs)
     in case parse (parseDRealResponse v <* eof) "" (join strs') of

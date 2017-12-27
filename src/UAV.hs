@@ -207,7 +207,7 @@ generateAndTerm3 s1 s2 s3 v1 v2 v3= And [makeEqPred s1 v1, makeEqPred s2 v2, mak
 
 -- Read solver response
 read :: SolverConfig -> String -> IO Response
-read sconf src = return $ parseDRealSat (dRealVersion sconf) src
+read sconf src = return $ parseDRealSat 2 src
 
 
 -- Extract Counterexample from solver response
