@@ -71,4 +71,5 @@
 counterexamples
 
 (check-sat)
+(get-model)
 (exit)

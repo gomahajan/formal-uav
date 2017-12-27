@@ -1334,8 +1334,8 @@
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
-; Add (assert (and (= bc_2 30.0) (= s1_qc_2 8.877840909090606e-4) (= s2_qc_2 8.877840909090606e-4))) here
-(assert (and (= bc_2 30.0) (= s1_qc_2 8.877840909090606e-4) (= s2_qc_2 8.877840909090606e-4)))
+; Add (assert (and (= bc_2 30.0) (= s1_qc_2 0.0008877840909090606) (= s2_qc_2 0.0008877840909090606))) here
+(assert (and (= bc_2 30.0) (= s1_qc_2 0.0008877840909090606) (= s2_qc_2 0.0008877840909090606)))
 
 (assert (and (= bi_2 bc_2) (= s1_qi_2 s1_qc_2) (= s2_qi_2 s2_qc_2)))
 (assert (=> (or (and (>= bi_2 p0) (<= s1_qi_2 p1) (<= (+ s2_qi_2 p2) s1_qi_2)) (and (>= bi_2 p3) (<= (+ s1_qi_2 p4) s2_qi_2) (<= s2_qi_2 p5))) (and (> b0_2 0) (> b1_2 0) (> b2_2 0) (> b3_2 0) (< s1_q0_2 100) (< s1_q1_2 100) (< s1_q2_2 100) (< s1_q3_2 100) (< s2_q0_2 100) (< s2_q1_2 100) (< s2_q2_2 100) (< s2_q3_2 100) (or (and (>= b3_2 p0) (<= s1_q3_2 p1) (<= (+ s2_q3_2 p2) s1_q3_2)) (and (>= b3_2 p3) (<= (+ s1_q3_2 p4) s2_q3_2) (<= s2_q3_2 p5))))))
