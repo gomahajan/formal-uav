@@ -43,13 +43,13 @@ nonWhitespace = many $ noneOf " \t\n"
 
 parseVar :: Parser Assignment
 parseVar = do
-  string "(("
+  string "("
   whitespace
-  s <- many1 (letter <|> digit)
+  s <- many1 (letter <|> digit <|> oneOf "_")
   whitespace
-  x <- parseDouble
+  x <- try parseRational <|> parseSci <|> try parseDouble <|> parseDInt
   whitespace
-  string "))"
+  string ")"
   whitespace
   return (s, x)
 
@@ -97,12 +97,12 @@ parseDRealSat v s = case splitOn "\n" s of
   ("unsat"):_ -> Response "unsat" []
   strs ->
     let strs' = case v of
-         2 -> tail (rmLast strs)
+         2 -> tail strs
          3 -> tail $ rmLast (rmLast strs)
          4 -> tail (rmLast strs)
-    in case parse (parseDRealResponse v <* eof) "" (join strs') of
-      Left err -> error $ show err
-      Right v -> v
+    in case parse (parseDRealResponse v <* eof) "" (tail (rmLast (join strs'))) of
+            Left err -> error $ show err
+            Right v -> v
 
 rmLast :: [a] -> [a]
 rmLast [] = []

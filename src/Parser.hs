@@ -69,6 +69,18 @@ parseDouble = do
     [] -> val
     _  -> (-1) * val
 
+-- Rationals
+parseRational :: Parser Double
+parseRational = do
+  string "(/"
+  whitespace
+  num <- parseDouble
+  whitespace
+  den <- parseDouble
+  whitespace
+  string ")"
+  return $ num/den
+
 -- Parser for doubles in scientific notation
 parseSci :: Parser Double
 parseSci = do
