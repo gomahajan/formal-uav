@@ -35,7 +35,7 @@ genSolverCall :: SolverConfig -> String -> Double -> String
 genSolverCall sconf f delta = dRealPath sconf ++ " " ++ f ++ " --model --precision " ++ show delta ++ " " ++ solverArgs sconf
 
 genSolverCallZ3 :: SolverConfig -> String -> Double -> String
-genSolverCallZ3 sconf f delta = "./z3win/bin/z3" ++ " " ++ f
+genSolverCallZ3 sconf f delta = "z3win\\bin\\z3" ++ " " ++ f
 
 -- Parsing utilities for solver response
 

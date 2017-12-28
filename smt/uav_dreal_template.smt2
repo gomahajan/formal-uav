@@ -122,8 +122,8 @@ parametervalues
 (assert (=> (= choice 1) (and (= s2_q2 (- s2_q1 (* queue_upload_rate t2))) (= s1_q2 (+ s1_q1 (* queue_data_rate t2))))))
 (assert(= b2 (- b1 (* battery_discharge_rate_hover t2))))
 ;program: empty queue till battery <= 4
-(assert (=> (= choice 0) (and (< (+ s1_q2 p9) s2_q2))))
-(assert (=> (= choice 1) (and (< (+ s2_q2 p9) s1_q2))))
+(assert (=> (= choice 0) (and (=> (<= s1_q1 p7) (= s1_q2 s1_q1)) (=> (> s1_q1 p7) (= s1_q2 p7)))))
+(assert (=> (= choice 1) (and (=> (<= s2_q1 p8) (= s2_q2 s2_q1)) (=> (> s2_q1 p8) (= s2_q2 p8)))))
 
 ;flying back
 (assert(= x3 0))
