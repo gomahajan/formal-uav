@@ -108,8 +108,8 @@ cegisLoop p =
           bs -> printConstraint (And (fmap Not bs))
     addParams (paramStr ++ "\n" ++ ballStr) (templateFile p) (completeFile p)
     when (verboseMode p) $ putStrLn "Finding counterexample..."
-    output <- run (solverConfig p) (completeFile p) (solverPrecision p)
-    resp <- Main.read (solverConfig p) output
+    output <- run (dRealVersion (solverConfig p)) (solverConfig p) (completeFile p) (solverPrecision p)
+    resp <- Main.read (dRealVersion (solverConfig p)) output
     let cxs = getCX "bi" "s1_qi" "s2_qi" resp
     case cxs of
       Nothing -> do
@@ -129,8 +129,8 @@ cegisLoop p =
         when (verboseMode p) $ putStrLn $ "Adding Counterexample: " ++ show (c1, c2, c3)
         addAllPhis p $ zip3 bcxs' qcxs' qcxs2'
         when (verboseMode p) $ putStrLn "Finding parameters..."
-        new_params_output <- run (solverConfig p) (paramCompleteFile p) (solverPrecision p)
-        new_params_output_string <- Main.read (solverConfig p) new_params_output
+        new_params_output <- run 2 (solverConfig p) (paramCompleteFile p) (solverPrecision p)
+        new_params_output_string <- Main.read 2 new_params_output
         if unsatResp new_params_output_string
         then return $ Just (params p, False)
         else do
@@ -208,8 +208,8 @@ generateAndTerm3 :: String -> String -> String -> Double -> Double -> Double -> 
 generateAndTerm3 s1 s2 s3 v1 v2 v3= And [makeEqPred s1 v1, makeEqPred s2 v2, makeEqPred s3 v3]
 
 -- Read solver response
-read :: SolverConfig -> String -> IO Response
-read sconf src = return $ parseDRealSat 2 src
+read :: Int -> String -> IO Response
+read n src = return $ parseDRealSat n src
 
 
 -- Extract Counterexample from solver response
