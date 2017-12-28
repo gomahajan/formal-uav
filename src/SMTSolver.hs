@@ -15,7 +15,8 @@ import Control.Monad
 data SolverConfig = SolverConfig {
   solverArgs :: String,
   dRealVersion :: Int,
-  dRealPath :: String
+  dRealPath :: String,
+  z3Path :: String
 } deriving (Show, Eq)
 
 
@@ -35,7 +36,7 @@ genSolverCall :: SolverConfig -> String -> Double -> String
 genSolverCall sconf f delta = dRealPath sconf ++ " " ++ f ++ " --model --precision " ++ show delta ++ " " ++ solverArgs sconf
 
 genSolverCallZ3 :: SolverConfig -> String -> Double -> String
-genSolverCallZ3 sconf f delta = "z3win\\bin\\z3" ++ " " ++ f
+genSolverCallZ3 sconf f delta = z3Path sconf ++ " " ++ f
 
 -- Parsing utilities for solver response
 

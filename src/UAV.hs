@@ -78,10 +78,12 @@ readConfig f = do
     dpath <- get x "DEFAULT" "path"
     dv    <- get x "DEFAULT" "version"
     dargs <- get x "DEFAULT" "args"
+    zpath <- get x "DEFAULT" "z3_path"
     return SolverConfig {
       solverArgs = dargs,
       dRealVersion = dv,
-      dRealPath = dpath
+      dRealPath = dpath,
+      z3Path = zpath
     }
   either (error . snd) return rv
 
