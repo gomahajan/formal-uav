@@ -162,7 +162,7 @@ unsatResp (Response _ []) = True
 unsatResp _               = False
 
 createParameterBall :: [(String, Double)] -> Double -> String
-createParameterBall a eps = "(assert (< "++ (createParameterSum a)++ " "++ show eps ++ "))"
+createParameterBall a eps = "(assert (< "++ (createParameterSum a)++ " "++ "0.001" ++ "))"
 
 createParameterSum :: [(String, Double)] -> String
 createParameterSum [(a,b)] = "(* (- "++ a ++" "++ show b ++ ") (- "++ a ++" "++ show b ++ "))"
