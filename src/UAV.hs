@@ -39,7 +39,7 @@ data CommandLineArgs = Args {
 
 cargs = Args {
   smt_file      = ""    &= argPos 0,
-  depth         = 10    &= help "Maximum number of iterations when running synthesis algorithm.",
+  depth         = 1000    &= help "Maximum number of iterations when running synthesis algorithm.",
   precision     = 0.01  &= help "Precision for hybrid system synthesis.",
   smt_precision = 0.001 &= help "Delta-precision for SMT solver.",
   verbose       = False &= help "Verbose mode.",
@@ -161,11 +161,18 @@ unsatResp :: Response -> Bool
 unsatResp (Response _ []) = True
 unsatResp _               = False
 
+createParameterBall :: [(String, Double)] -> Double -> String
+createParameterBall a eps = "(assert (< "++ (createParameterSum a)++ " "++ show eps ++ "))"
+
+createParameterSum :: [(String, Double)] -> String
+createParameterSum [(a,b)] = "(* (- "++ a ++" "++ show b ++ ") (- "++ a ++" "++ show b ++ "))"
+createParameterSum (x:xs) = "(+ " ++ (createParameterSum [x]) ++ " " ++ (createParameterSum xs) ++ ")"
 
 addAllPhis :: Params -> [(Double, Double, Double)] -> IO ()
 addAllPhis p cxs = do
   str <- addAllPhis' (paramTempFile p) (length cxs) cxs
-  let phis = unlines str --fmap
+  let parameterBalls = (createParameterBall (params p) (synthesisPrecision p))
+  let phis = unlines (parameterBalls : str) --fmap
   s <- readFile (paramConstantFile p)
   let s_i = replace "counterexamples" phis s
   writeFile (paramCompleteFile p) s_i
