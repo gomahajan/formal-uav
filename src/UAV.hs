@@ -131,6 +131,7 @@ cegisLoop p =
         when (verboseMode p) $ putStrLn "Finding parameters..."
         new_params_output <- run 2 (solverConfig p) (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read 2 new_params_output
+        putStrLn $ "Previous params: " ++ show (params p)
         if unsatResp new_params_output_string
         then return $ Just (params p, False)
         else do
@@ -162,7 +163,7 @@ unsatResp (Response _ []) = True
 unsatResp _               = False
 
 createParameterBall :: [(String, Double)] -> Double -> String
-createParameterBall a eps = "(assert (< "++ (createParameterSum a)++ " "++ "0.001" ++ "))"
+createParameterBall a eps = "(assert (< "++ (createParameterSum a)++ " "++ "1" ++ "))"
 
 createParameterSum :: [(String, Double)] -> String
 createParameterSum [(a,b)] = "(* (- "++ a ++" "++ show b ++ ") (- "++ a ++" "++ show b ++ "))"
@@ -171,7 +172,7 @@ createParameterSum (x:xs) = "(+ " ++ (createParameterSum [x]) ++ " " ++ (createP
 addAllPhis :: Params -> [(Double, Double, Double)] -> IO ()
 addAllPhis p cxs = do
   str <- addAllPhis' (paramTempFile p) (length cxs) cxs
-  let parameterBalls = (createParameterBall (params p) (synthesisPrecision p))
+  let parameterBalls = "" --(createParameterBall (params p) (synthesisPrecision p))
   let phis = unlines (parameterBalls : str) --fmap
   s <- readFile (paramConstantFile p)
   let s_i = replace "counterexamples" phis s
