@@ -1,10 +1,30 @@
 (set-logic QF_NRA)
 
-;parameters
+;parameters invariant (numSensors+1)*numSensors
 (declare-fun p0 () Real)
 (declare-fun p1 () Real)
 (declare-fun p2 () Real)
 (declare-fun p3 () Real)
+(declare-fun p4 () Real)
+(declare-fun p5 () Real)
+
+;parameters program numSensors + 2
+(declare-fun p6 () Real)
+(declare-fun p7 () Real)
+(declare-fun p8 () Real)
+(declare-fun p9 () Real)
+
+(assert (> p0 1))
+(assert (> p3 1))
+(assert (> p1 p2))
+(assert (> p5 p4))
+(assert (> p5 p2))
+(assert (> p1 p4))
+(assert (= p2 0))
+(assert (= p4 0))
+;(assert (= p9 2))
+;(assert (= p7 20))
+;(assert (= p8 20))
 
 ;constants
 (declare-fun battery_charging_rate () Real)
@@ -13,13 +33,18 @@
 (declare-fun queue_data_rate () Real)
 (declare-fun queue_upload_rate () Real)
 (declare-fun drone_velocity () Real)
+(declare-fun s1_loc () Real)
+(declare-fun s2_loc () Real)
 
 (assert(= drone_velocity 10))
 (assert(= battery_charging_rate 50))
 (assert(= battery_discharge_rate_fly 1))
 (assert(= battery_discharge_rate_hover 1))
 (assert(= queue_data_rate 1))
-(assert(= queue_upload_rate 1))
+(assert(= queue_upload_rate 10))
+(assert(= s1_loc 10))
+(assert(= s2_loc 10))
+
 
 (assert (<= p0 100))
 (assert (>= p0 0))
@@ -29,184 +54,150 @@
 (assert (>= p2 0))
 (assert (<= p3 100))
 (assert (>= p3 0))
+(assert (<= p4 100))
+(assert (>= p4 0))
+(assert (<= p5 100))
+(assert (>= p5 0))
+(assert (<= p6 100))
+(assert (>= p6 0))
+(assert (<= p7 100))
+(assert (>= p7 0))
+(assert (<= p8 100))
+(assert (>= p8 0))
+(assert (<= p9 100))
+(assert (>= p9 0))
 
 ; Add all phi(counterexample) here
-(declare-fun x0_2 () Real)
-(declare-fun x1_2 () Real)
-(declare-fun x2_2 () Real)
-(declare-fun x3_2 () Real)
+(declare-fun x0_8 () Real)
+(declare-fun x1_8 () Real)
+(declare-fun x2_8 () Real)
+(declare-fun x3_8 () Real)
 
-(declare-fun bi_2 () Real)
-(declare-fun b0_2 () Real)
-(declare-fun b1_2 () Real)
-(declare-fun b2_2 () Real)
-(declare-fun b3_2 () Real)
+(declare-fun bi_8 () Real)
+(declare-fun b0_8 () Real)
+(declare-fun b1_8 () Real)
+(declare-fun b2_8 () Real)
+(declare-fun b3_8 () Real)
 
-(declare-fun qi_2 () Real)
-(declare-fun q0_2 () Real)
-(declare-fun q1_2 () Real)
-(declare-fun q2_2 () Real)
-(declare-fun q3_2 () Real)
+(declare-fun s1_qi_8 () Real)
+(declare-fun s1_q0_8 () Real)
+(declare-fun s1_q1_8 () Real)
+(declare-fun s1_q2_8 () Real)
+(declare-fun s1_q3_8 () Real)
 
-(declare-fun t0_2 () Real)
-(declare-fun t1_2 () Real)
-(declare-fun t2_2 () Real)
-(declare-fun t3_2 () Real)
+(declare-fun s2_qi_8 () Real)
+(declare-fun s2_q0_8 () Real)
+(declare-fun s2_q1_8 () Real)
+(declare-fun s2_q2_8 () Real)
+(declare-fun s2_q3_8 () Real)
+
+(declare-fun choice_8 () Real)
+
+(declare-fun t0_8 () Real)
+(declare-fun t1_8 () Real)
+(declare-fun t2_8 () Real)
+(declare-fun t3_8 () Real)
 
 ;counterexample
-(declare-fun bc_2 () Real)
-(declare-fun qc_2 () Real)
+(declare-fun bc_8 () Real)
+(declare-fun s1_qc_8 () Real)
+(declare-fun s2_qc_8 () Real)
 
-(assert(>= t0_2 0))
-(assert(>= t1_2 0))
-(assert(>= t2_2 0))
-(assert(>= t3_2 0))
-(assert (<= bi_2 100))
-(assert (<= b0_2 100))
-(assert (<= b1_2 100))
-(assert (<= b2_2 100))
-(assert (<= b3_2 100))
-(assert (>= qi_2 0))
-(assert (>= q0_2 0))
-(assert (>= q1_2 0))
-(assert (>= q2_2 0))
-(assert (>= q3_2 0))
-(assert (<= x0_2 10))
-(assert (<= x1_2 10))
-(assert (<= x2_2 10))
-(assert (<= x3_2 10))
-(assert (>= x0_2 0))
-(assert (>= x1_2 0))
-(assert (>= x2_2 0))
-(assert (>= x3_2 0))
+(assert(>= t0_8 0))
+(assert(>= t1_8 0))
+(assert(>= t2_8 0))
+(assert(>= t3_8 0))
+(assert (<= bi_8 100))
+(assert (<= b0_8 100))
+(assert (<= b1_8 100))
+(assert (<= b2_8 100))
+(assert (<= b3_8 100))
+(assert (>= s2_qi_8 0))
+(assert (<= s2_qi_8 100))
+(assert (>= s2_q0_8 0))
+(assert (>= s2_q1_8 0))
+(assert (>= s2_q2_8 0))
+(assert (>= s2_q3_8 0))
+(assert (>= s1_qi_8 0))
+(assert (<= s1_qi_8 100))
+(assert (>= s1_q0_8 0))
+(assert (>= s1_q1_8 0))
+(assert (>= s1_q2_8 0))
+(assert (>= s1_q3_8 0))
+
+(assert (or (= choice_8 0) (= choice_8 1)))
 
 ;charging
-(assert(= x0_2 0))
-(assert(= b0_2 (+ bi_2 (* battery_charging_rate t0_2))))
-(assert(= q0_2 (+ qi_2 (* queue_data_rate t0_2))))
+(assert(= x0_8 0))
+(assert(= b0_8 (+ bi_8 (* battery_charging_rate t0_8))))
+(assert(= s1_q0_8 (+ s1_qi_8 (* queue_data_rate t0_8))))
+(assert(= s2_q0_8 (+ s2_qi_8 (* queue_data_rate t0_8))))
+; TODO: allow to stay when battery = 100
 ;program: charge till battery >= 20
-(assert (=> (>= bi_2 p2) (= b0_2 bi_2)))
-(assert (or (=> (< bi_2 p2) (= b0_2 p2)) (= q0_2 100)))
+;decide when to leave, that is b0_8 and choice_8 of sensor
+(assert (and (=> (>= bi_8 p6) (= b0_8 bi_8)) (=> (< bi_8 p6) (= b0_8 p6))))
+(assert (=> (and (>= bi_8 p0) (<= s1_qi_8 p1) (<= (+ s2_qi_8 p2) s1_qi_8)) (= choice_8 0)))
+(assert (=> (not (and (>= bi_8 p0) (<= s1_qi_8 p1) (<= (+ s2_qi_8 p2) s1_qi_8))) (= choice_8 1)))
+
 
 ;flying to D
-(assert(= x1_2 10))
-(assert(= x1_2 (+ x0_2 (* drone_velocity t1_2))))
-(assert(= b1_2 (- b0_2 (* battery_discharge_rate_fly t1_2))))
-(assert(= q1_2 (+ q0_2 (* queue_data_rate t1_2))))
+(assert (=> (= choice_8 0) (= x1_8 s1_loc)))
+(assert (=> (= choice_8 1) (= x1_8 s2_loc)))
+(assert(= x1_8 (+ x0_8 (* drone_velocity t1_8))))
+(assert(= b1_8 (- b0_8 (* battery_discharge_rate_fly t1_8))))
+(assert(= s1_q1_8 (+ s1_q0_8 (* queue_data_rate t1_8))))
+(assert(= s2_q1_8 (+ s2_q0_8 (* queue_data_rate t1_8))))
 
 ;emptying queue
-(assert(= x2_2 10))
-(assert(= q2_2 (- q1_2 (* queue_upload_rate t2_2))))
-(assert(= b2_2 (- b1_2 (* battery_discharge_rate_hover t2_2))))
+(assert(= x2_8 x1_8))
+(assert (=> (= choice_8 0) (and (= s1_q2_8 (- s1_q1_8 (* queue_upload_rate t2_8))) (= s2_q2_8 (+ s2_q1_8 (* queue_data_rate t2_8))))))
+(assert (=> (= choice_8 1) (and (= s2_q2_8 (- s2_q1_8 (* queue_upload_rate t2_8))) (= s1_q2_8 (+ s1_q1_8 (* queue_data_rate t2_8))))))
+(assert(= b2_8 (- b1_8 (* battery_discharge_rate_hover t2_8))))
 ;program: empty queue till battery <= 4
-(assert (or (=> (> b1_2 p3) (= b2_2 p3)) (= q2_2 0)))
-(assert (=> (<= b1_2 p3) (= b2_2 b1_2)))
+(assert (=> (= choice_8 0) (and (=> (<= s1_q1_8 p7) (= s1_q2_8 s1_q1_8)) (=> (> s1_q1_8 p7) (= s1_q2_8 p7)))))
+(assert (=> (= choice_8 1) (and (=> (<= s2_q1_8 p8) (= s2_q2_8 s2_q1_8)) (=> (> s2_q1_8 p8) (= s2_q2_8 p8)))))
 
 ;flying back
-(assert(= x3_2 0))
-(assert(= x3_2 (- x2_2 (* drone_velocity t3_2))))
-(assert(= q3_2 (+ q2_2 (* queue_data_rate t3_2))))
-(assert(= b3_2 (- b2_2 (* battery_discharge_rate_fly t3_2))))
+(assert(= x3_8 0))
+(assert(= x3_8 (- x2_8 (* drone_velocity t3_8))))
+(assert(= s1_q3_8 (+ s1_q2_8 (* queue_data_rate t3_8))))
+(assert(= s2_q3_8 (+ s2_q2_8 (* queue_data_rate t3_8))))
+(assert(= b3_8 (- b2_8 (* battery_discharge_rate_fly t3_8))))
 
 
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
-; Add (assert (and (= bc_2 51.1315) (= qc_2 99.9642))) here
-(assert (and (= bc_2 51.1315) (= qc_2 99.9642)))
+; Add (assert (and (= bc_8 78.0) (= s1_qc_8 0.0) (= s2_qc_8 0.0))) here
+(assert (and (= bc_8 78.0) (= s1_qc_8 0.0) (= s2_qc_8 0.0)))
 
-(assert (and (= bi_2 bc_2) (= qi_2 qc_2)))
-(assert (=> (and (>= bi_2 p0) (<= qi_2 p1)) (and (> b0_2 0) (> b1_2 0) (> b2_2 0) (> b3_2 0) (< q0_2 100) (< q1_2 100) (< q2_2 100) (< q3_2 100) (and (>= b3_2 p0) (<= q3_2 p1)))))
+(assert (and (= bi_8 bc_8) (= s1_qi_8 s1_qc_8) (= s2_qi_8 s2_qc_8)))
+(assert (=> (or (and (>= bi_8 p0) (<= s1_qi_8 p1) (<= (+ s2_qi_8 p2) s1_qi_8)) (and (>= bi_8 p3) (<= (+ s1_qi_8 p4) s2_qi_8) (<= s2_qi_8 p5))) (and (> b0_8 0) (> b1_8 0) (> b2_8 0) (> b3_8 0) (< s1_q0_8 100) (< s1_q1_8 100) (< s1_q2_8 100) (< s1_q3_8 100) (< s2_q0_8 100) (< s2_q1_8 100) (< s2_q2_8 100) (< s2_q3_8 100) (or (and (>= b3_8 p0) (<= s1_q3_8 p1) (<= (+ s2_q3_8 p2) s1_q3_8)) (and (>= b3_8 p3) (<= (+ s1_q3_8 p4) s2_q3_8) (<= s2_q3_8 p5))))))
 
-(declare-fun x0_1 () Real)
-(declare-fun x1_1 () Real)
-(declare-fun x2_1 () Real)
-(declare-fun x3_1 () Real)
+(declare-fun x0_7 () Real)
+(declare-fun x1_7 () Real)
+(declare-fun x2_7 () Real)
+(declare-fun x3_7 () Real)
 
-(declare-fun bi_1 () Real)
-(declare-fun b0_1 () Real)
-(declare-fun b1_1 () Real)
-(declare-fun b2_1 () Real)
-(declare-fun b3_1 () Real)
+(declare-fun bi_7 () Real)
+(declare-fun b0_7 () Real)
+(declare-fun b1_7 () Real)
+(declare-fun b2_7 () Real)
+(declare-fun b3_7 () Real)
 
-(declare-fun qi_1 () Real)
-(declare-fun q0_1 () Real)
-(declare-fun q1_1 () Real)
-(declare-fun q2_1 () Real)
-(declare-fun q3_1 () Real)
+(declare-fun s1_qi_7 () Real)
+(declare-fun s1_q0_7 () Real)
+(declare-fun s1_q1_7 () Real)
+(declare-fun s1_q2_7 () Real)
+(declare-fun s1_q3_7 () Real)
 
-(declare-fun t0_1 () Real)
-(declare-fun t1_1 () Real)
-(declare-fun t2_1 () Real)
-(declare-fun t3_1 () Real)
+(declare-fun s2_qi_7 () Real)
+(declare-fun s2_q0_7 () Real)
+(declare-fun s2_q1_7 () Real)
+(declare-fun s2_q2_7 () Real)
+(declare-fun s2_q3_7 () Real)
 
-;counterexample
-(declare-fun bc_1 () Real)
-(declare-fun qc_1 () Real)
+(declare-fun choice_7 () Real)
 
-(assert(>= t0_1 0))
-(assert(>= t1_1 0))
-(assert(>= t2_1 0))
-(assert(>= t3_1 0))
-(assert (<= bi_1 100))
-(assert (<= b0_1 100))
-(assert (<= b1_1 100))
-(assert (<= b2_1 100))
-(assert (<= b3_1 100))
-(assert (>= qi_1 0))
-(assert (>= q0_1 0))
-(assert (>= q1_1 0))
-(assert (>= q2_1 0))
-(assert (>= q3_1 0))
-(assert (<= x0_1 10))
-(assert (<= x1_1 10))
-(assert (<= x2_1 10))
-(assert (<= x3_1 10))
-(assert (>= x0_1 0))
-(assert (>= x1_1 0))
-(assert (>= x2_1 0))
-(assert (>= x3_1 0))
-
-;charging
-(assert(= x0_1 0))
-(assert(= b0_1 (+ bi_1 (* battery_charging_rate t0_1))))
-(assert(= q0_1 (+ qi_1 (* queue_data_rate t0_1))))
-;program: charge till battery >= 20
-(assert (=> (>= bi_1 p2) (= b0_1 bi_1)))
-(assert (or (=> (< bi_1 p2) (= b0_1 p2)) (= q0_1 100)))
-
-;flying to D
-(assert(= x1_1 10))
-(assert(= x1_1 (+ x0_1 (* drone_velocity t1_1))))
-(assert(= b1_1 (- b0_1 (* battery_discharge_rate_fly t1_1))))
-(assert(= q1_1 (+ q0_1 (* queue_data_rate t1_1))))
-
-;emptying queue
-(assert(= x2_1 10))
-(assert(= q2_1 (- q1_1 (* queue_upload_rate t2_1))))
-(assert(= b2_1 (- b1_1 (* battery_discharge_rate_hover t2_1))))
-;program: empty queue till battery <= 4
-(assert (or (=> (> b1_1 p3) (= b2_1 p3)) (= q2_1 0)))
-(assert (=> (<= b1_1 p3) (= b2_1 b1_1)))
-
-;flying back
-(assert(= x3_1 0))
-(assert(= x3_1 (- x2_1 (* drone_velocity t3_1))))
-(assert(= q3_1 (+ q2_1 (* queue_data_rate t3_1))))
-(assert(= b3_1 (- b2_1 (* battery_discharge_rate_fly t3_1))))
-
-
-
-;goal
-;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
-; Add (assert (and (= bc_1 50.2455) (= qc_1 49.87))) here
-(assert (and (= bc_1 50.2455) (= qc_1 49.87)))
-
-(assert (and (= bi_1 bc_1) (= qi_1 qc_1)))
-(assert (=> (and (>= bi_1 p0) (<= qi_1 p1)) (and (> b0_1 0) (> b1_1 0) (> b2_1 0) (> b3_1 0) (< q0_1 100) (< q1_1 100) (< q2_1 100) (< q3_1 100) (and (>= b3_1 p0) (<= q3_1 p1)))))
-
-
-
-(check-sat)
-(get-value (p0 p1 p2 p3 p5 p6 p7 p8 p9))
-(exit)
+(declare-fun t0_7 () Real)
+(declare-fun t1_7

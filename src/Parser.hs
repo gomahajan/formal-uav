@@ -79,7 +79,7 @@ parseRational = do
   den <- parseDouble
   whitespace
   string ")"
-  return $ num/den
+  return $ num / den
 
 -- Parser for doubles in scientific notation
 parseSci :: Parser Double

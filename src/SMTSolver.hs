@@ -9,6 +9,7 @@ import System.Exit
 import System.Process
 import Data.List.Split (splitOn)
 import Control.Monad
+import Debug.Trace
 
 
 -- Solver-related data structures
@@ -46,13 +47,13 @@ genSolverCallZ3 sconf f delta = z3Path sconf ++ " " ++ f
 
 nonWhitespace = many $ noneOf " \t\n"
 
-parseVar :: Parser Assignment
-parseVar = do
+parseZ3Var :: Parser Assignment
+parseZ3Var = do
   string "("
   whitespace
-  s <- many1 (letter <|> digit <|> oneOf "_")
+  s <- nonWhitespace
   whitespace
-  x <- try parseRational <|> parseSci <|> try parseDouble <|> parseDInt
+  x <- try parseRational <|> try parseSci <|> try parseDouble <|> parseDInt
   whitespace
   string ")"
   whitespace
@@ -91,21 +92,28 @@ parseDRealRange = do
 parseDRealResponse :: Int -> Parser Response
 parseDRealResponse v = do
   let p = case v of
-        2 -> parseVar
+        2 -> error $ "Incorrect solver parser"
         3 -> parseDReal3Var
         4 -> parseDReal4Var
   vs <- many p
   return $ Response "sat" vs -- This got weird with the addition of dreal4...
 
+parseZ3Response :: Parser Response
+parseZ3Response = do
+  char '('
+  vs <- many parseZ3Var
+  char ')'
+  return $ Response "sat" vs
+
 parseDRealSat :: Int -> String -> Response
 parseDRealSat v s = case splitOn "\n" s of
   ("unsat"):_ -> Response "unsat" []
   strs ->
-    let strs' = case v of
-         2 -> tail strs
-         3 -> tail $ rmLast (rmLast strs)
-         4 -> tail (rmLast strs)
-    in case parse (parseDRealResponse v <* eof) "" (tail (rmLast (join strs'))) of
+    let (strs', respParser) = case v of
+         2 -> (tail strs, parseZ3Response)
+         3 -> (tail $ rmLast (rmLast strs), parseDRealResponse 3)
+         4 -> (tail (rmLast strs), parseDRealResponse 4)
+    in traceShow (join strs') $ case parse (respParser <* eof) "" (join strs') of
             Left err -> error $ show err
             Right v -> v
 
