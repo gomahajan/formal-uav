@@ -100,6 +100,7 @@ parseDRealResponse v = do
 
 parseZ3Response :: Parser Response
 parseZ3Response = do
+  void.many $ letter
   char '('
   vs <- many parseZ3Var
   char ')'
@@ -114,7 +115,7 @@ parseDRealSat v s = case splitOn "\n" s of
          3 -> (tail $ rmLast (rmLast strs), parseDRealResponse 3)
          4 -> (tail (rmLast strs), parseDRealResponse 4)
     in case parse (respParser <* eof) "" (join strs') of
-            Left err -> error $ show err
+            Left err -> traceShow (join strs') $ error $ show err
             Right v -> v
 
 rmLast :: [a] -> [a]

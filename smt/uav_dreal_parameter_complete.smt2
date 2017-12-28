@@ -69,6 +69,112 @@
 
 ; Add all phi(counterexample) here
 
+(declare-fun x0_13 () Real)
+(declare-fun x1_13 () Real)
+(declare-fun x2_13 () Real)
+(declare-fun x3_13 () Real)
+
+(declare-fun bi_13 () Real)
+(declare-fun b0_13 () Real)
+(declare-fun b1_13 () Real)
+(declare-fun b2_13 () Real)
+(declare-fun b3_13 () Real)
+
+(declare-fun s1_qi_13 () Real)
+(declare-fun s1_q0_13 () Real)
+(declare-fun s1_q1_13 () Real)
+(declare-fun s1_q2_13 () Real)
+(declare-fun s1_q3_13 () Real)
+
+(declare-fun s2_qi_13 () Real)
+(declare-fun s2_q0_13 () Real)
+(declare-fun s2_q1_13 () Real)
+(declare-fun s2_q2_13 () Real)
+(declare-fun s2_q3_13 () Real)
+
+(declare-fun choice_13 () Real)
+
+(declare-fun t0_13 () Real)
+(declare-fun t1_13 () Real)
+(declare-fun t2_13 () Real)
+(declare-fun t3_13 () Real)
+
+;counterexample
+(declare-fun bc_13 () Real)
+(declare-fun s1_qc_13 () Real)
+(declare-fun s2_qc_13 () Real)
+
+(assert(>= t0_13 0))
+(assert(>= t1_13 0))
+(assert(>= t2_13 0))
+(assert(>= t3_13 0))
+(assert (<= bi_13 100))
+(assert (<= b0_13 100))
+(assert (<= b1_13 100))
+(assert (<= b2_13 100))
+(assert (<= b3_13 100))
+(assert (>= s2_qi_13 0))
+(assert (<= s2_qi_13 100))
+(assert (>= s2_q0_13 0))
+(assert (>= s2_q1_13 0))
+(assert (>= s2_q2_13 0))
+(assert (>= s2_q3_13 0))
+(assert (>= s1_qi_13 0))
+(assert (<= s1_qi_13 100))
+(assert (>= s1_q0_13 0))
+(assert (>= s1_q1_13 0))
+(assert (>= s1_q2_13 0))
+(assert (>= s1_q3_13 0))
+
+(assert (or (= choice_13 0) (= choice_13 1)))
+
+;charging
+(assert(= x0_13 0))
+(assert(= b0_13 (+ bi_13 (* battery_charging_rate t0_13))))
+(assert(= s1_q0_13 (+ s1_qi_13 (* queue_data_rate t0_13))))
+(assert(= s2_q0_13 (+ s2_qi_13 (* queue_data_rate t0_13))))
+; TODO: allow to stay when battery = 100
+;program: charge till battery >= 20
+;decide when to leave, that is b0_13 and choice_13 of sensor
+(assert (and (=> (>= bi_13 p6) (= b0_13 bi_13)) (=> (< bi_13 p6) (= b0_13 p6))))
+(assert (=> (and (>= bi_13 p0) (<= s1_qi_13 p1) (<= (+ s2_qi_13 p2) s1_qi_13)) (= choice_13 0)))
+(assert (=> (not (and (>= bi_13 p0) (<= s1_qi_13 p1) (<= (+ s2_qi_13 p2) s1_qi_13))) (= choice_13 1)))
+
+
+;flying to D
+(assert (=> (= choice_13 0) (= x1_13 s1_loc)))
+(assert (=> (= choice_13 1) (= x1_13 s2_loc)))
+(assert(= x1_13 (+ x0_13 (* drone_velocity t1_13))))
+(assert(= b1_13 (- b0_13 (* battery_discharge_rate_fly t1_13))))
+(assert(= s1_q1_13 (+ s1_q0_13 (* queue_data_rate t1_13))))
+(assert(= s2_q1_13 (+ s2_q0_13 (* queue_data_rate t1_13))))
+
+;emptying queue
+(assert(= x2_13 x1_13))
+(assert (=> (= choice_13 0) (and (= s1_q2_13 (- s1_q1_13 (* queue_upload_rate t2_13))) (= s2_q2_13 (+ s2_q1_13 (* queue_data_rate t2_13))))))
+(assert (=> (= choice_13 1) (and (= s2_q2_13 (- s2_q1_13 (* queue_upload_rate t2_13))) (= s1_q2_13 (+ s1_q1_13 (* queue_data_rate t2_13))))))
+(assert(= b2_13 (- b1_13 (* battery_discharge_rate_hover t2_13))))
+;program: empty queue till battery <= 4
+(assert (=> (= choice_13 0) (and (=> (<= s1_q1_13 p7) (= s1_q2_13 s1_q1_13)) (=> (> s1_q1_13 p7) (= s1_q2_13 p7)))))
+(assert (=> (= choice_13 1) (and (=> (<= s2_q1_13 p8) (= s2_q2_13 s2_q1_13)) (=> (> s2_q1_13 p8) (= s2_q2_13 p8)))))
+
+;flying back
+(assert(= x3_13 0))
+(assert(= x3_13 (- x2_13 (* drone_velocity t3_13))))
+(assert(= s1_q3_13 (+ s1_q2_13 (* queue_data_rate t3_13))))
+(assert(= s2_q3_13 (+ s2_q2_13 (* queue_data_rate t3_13))))
+(assert(= b3_13 (- b2_13 (* battery_discharge_rate_fly t3_13))))
+
+
+
+;goal
+;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
+; Add (assert (and (= bc_13 99.0625) (= s1_qc_13 0.0) (= s2_qc_13 1.09765625e-2))) here
+(assert (and (= bc_13 99.0625) (= s1_qc_13 0.0) (= s2_qc_13 1.09765625e-2)))
+
+(assert (and (= bi_13 bc_13) (= s1_qi_13 s1_qc_13) (= s2_qi_13 s2_qc_13)))
+(assert (=> (or (and (>= bi_13 p0) (<= s1_qi_13 p1) (<= (+ s2_qi_13 p2) s1_qi_13)) (and (>= bi_13 p3) (<= (+ s1_qi_13 p4) s2_qi_13) (<= s2_qi_13 p5))) (and (> b0_13 0) (> b1_13 0) (> b2_13 0) (> b3_13 0) (< s1_q0_13 100) (< s1_q1_13 100) (< s1_q2_13 100) (< s1_q3_13 100) (< s2_q0_13 100) (< s2_q1_13 100) (< s2_q2_13 100) (< s2_q3_13 100) (or (and (>= b3_13 p0) (<= s1_q3_13 p1) (<= (+ s2_q3_13 p2) s1_q3_13)) (and (>= b3_13 p3) (<= (+ s1_q3_13 p4) s2_q3_13) (<= s2_q3_13 p5))))))
+
 (declare-fun x0_12 () Real)
 (declare-fun x1_12 () Real)
 (declare-fun x2_12 () Real)
