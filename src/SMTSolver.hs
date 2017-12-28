@@ -20,9 +20,13 @@ data SolverConfig = SolverConfig {
 
 
 -- Call solver
-run :: SolverConfig -> String -> Double -> IO String
-run sconf f delta = do
-    let p = (shell (genSolverCallZ3 sconf f delta))
+run :: Int -> SolverConfig -> String -> Double -> IO String
+run n sconf f delta = do
+    let solver = case n of
+                  2 -> genSolverCallZ3
+                  3 -> genSolverCall
+                  4 -> genSolverCall
+    let p = (shell (solver sconf f delta))
             { std_in  = Inherit
             , std_out = CreatePipe
             , std_err = Inherit

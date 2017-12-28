@@ -137,5 +137,4 @@ parametervalues
 ; that is not (invariant => safety)
 (assert (not (=> (or (and (>= bi p0) (<= s1_qi p1) (<= (+ s2_qi p2) s1_qi)) (and (>= bi p3) (<= (+ s1_qi p4) s2_qi) (<= s2_qi p5))) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< s1_q0 100) (< s1_q1 100) (< s1_q2 100) (< s1_q3 100) (< s2_q0 100) (< s2_q1 100) (< s2_q2 100) (< s2_q3 100) (or (and (>= b3 p0) (<= s1_q3 p1) (<= (+ s2_q3 p2) s1_q3)) (and (>= b3 p3) (<= (+ s1_q3 p4) s2_q3) (<= s2_q3 p5)))))))
 (check-sat)
-(get-value (bi s1_qi s2_qi))
 (exit)
