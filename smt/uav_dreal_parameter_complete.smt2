@@ -169,8 +169,8 @@
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
-; Add (assert (and (= bc_1 10.0) (= s1_qc_1 0.0) (= s2_qc_1 9.0))) here
-(assert (and (= bc_1 10.0) (= s1_qc_1 0.0) (= s2_qc_1 9.0)))
+; Add (assert (and (= bc_1 (/ 10 1)) (= s1_qc_1 (/ 0 1)) (= s2_qc_1 (/ 9 1)))) here
+(assert (and (= bc_1 (/ 10 1)) (= s1_qc_1 (/ 0 1)) (= s2_qc_1 (/ 9 1))))
 
 (assert (and (= bi_1 bc_1) (= s1_qi_1 s1_qc_1) (= s2_qi_1 s2_qc_1)))
 (assert (=> (or (and (>= bi_1 p0) (<= s1_qi_1 p1) (<= (+ s2_qi_1 p2) s1_qi_1)) (and (>= bi_1 p3) (<= (+ s1_qi_1 p4) s2_qi_1) (<= s2_qi_1 p5))) (and (> b0_1 0) (> b1_1 0) (> b2_1 0) (> b3_1 0) (< s1_q0_1 100) (< s1_q1_1 100) (< s1_q2_1 100) (< s1_q3_1 100) (< s2_q0_1 100) (< s2_q1_1 100) (< s2_q2_1 100) (< s2_q3_1 100) (or (and (>= b3_1 p0) (<= s1_q3_1 p1) (<= (+ s2_q3_1 p2) s1_q3_1)) (and (>= b3_1 p3) (<= (+ s1_q3_1 p4) s2_q3_1) (<= s2_q3_1 p5))))))

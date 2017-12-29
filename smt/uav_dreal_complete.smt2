@@ -87,16 +87,16 @@
 (assert (>= s1_q3 0))
 
 ;template
-(assert (= p0 9.0))
-(assert (= p1 9.0))
-(assert (= p2 10.0))
-(assert (= p3 1.0))
-(assert (= p4 9.0))
-(assert (= p5 9.0))
-(assert (= p6 10.0))
-(assert (= p7 1.0))
-(assert (= p8 9.0))
-(assert (= p9 9.0))
+(assert (= p0 (/ 9 1)))
+(assert (= p1 (/ 9 1)))
+(assert (= p2 (/ 10 1)))
+(assert (= p3 (/ 1 1)))
+(assert (= p4 (/ 9 1)))
+(assert (= p5 (/ 9 1)))
+(assert (= p6 (/ 10 1)))
+(assert (= p7 (/ 1 1)))
+(assert (= p8 (/ 9 1)))
+(assert (= p9 (/ 9 1)))
 
 
 ;sample (assert (= p0 1))

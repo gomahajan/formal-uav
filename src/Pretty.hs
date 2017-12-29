@@ -1,6 +1,7 @@
 module Pretty where
 
 import Data.Char
+import Data.Ratio
 
 import Logic
 
@@ -19,7 +20,11 @@ printConstraint' (Impl p1 p2) = "(=> " ++ printConstraint' p1 ++ " " ++ printCon
 
 printE :: Exp -> String
 printE (EStrLit s)     = s
-printE (ERealLit x)    = show x
+--printE (ERealLit x)    =  "(/ " ++ show n ++ " " ++ show d ++ ")"
+--  where r = toRational x
+--        n = numerator r
+--        d = denominator r
+printE (ERealLit x)    =  show x
 printE (EUOp op e)     = "(" ++ printUOp op ++ " " ++ printE e ++ ")"
 printE (EBin op e1 e2) = "(" ++ printBOp op ++ " " ++ printE e1 ++ " " ++ printE e2 ++ ")"
 printE (EVar s)        = s

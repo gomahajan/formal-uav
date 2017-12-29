@@ -113,7 +113,7 @@ parseDRealSat v s = case splitOn "\n" s of
          2 -> (tail strs, parseZ3Response)
          3 -> (tail $ rmLast (rmLast strs), parseDRealResponse 3)
          4 -> (tail (rmLast strs), parseDRealResponse 4)
-    in traceShow (join strs') $ case parse (respParser <* eof) "" (join strs') of
+    in traceShow (join strs) $ case parse (respParser <* eof) "" (join strs') of
             Left err -> error $ show err
             Right v -> v
 
