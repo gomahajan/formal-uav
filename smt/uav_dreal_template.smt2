@@ -58,7 +58,7 @@
 (assert(= battery_discharge_rate_fly 1))
 (assert(= battery_discharge_rate_hover 1))
 (assert(= queue_data_rate 1))
-(assert(= queue_upload_rate 10))
+(assert(= queue_upload_rate 50))
 
 (assert(= s1_loc 10))
 (assert(= s2_loc 10))

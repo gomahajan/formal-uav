@@ -164,16 +164,16 @@ unsatResp (Response _ []) = True
 unsatResp _               = False
 
 createParameterBall :: [(String, Double)] -> Double -> String
-createParameterBall a eps = "(assert (< "++ (createParameterSum a)++ " "++ "1" ++ "))"
+createParameterBall a eps = "(assert (> "++ (createParameterSum a)++ " "++ "1" ++ "))"
 
 createParameterSum :: [(String, Double)] -> String
-createParameterSum [(a,b)] = "(* (- "++ a ++" "++ show b ++ ") (- "++ a ++" "++ show b ++ "))"
+createParameterSum [(a,b)] = "(norm (- "++ a ++" "++ show b ++ "))"
 createParameterSum (x:xs) = "(+ " ++ (createParameterSum [x]) ++ " " ++ (createParameterSum xs) ++ ")"
 
 addAllPhis :: Params -> [(Double, Double, Double)] -> IO ()
 addAllPhis p cxs = do
   str <- addAllPhis' (paramTempFile p) (length cxs) cxs
-  let parameterBalls = "" --(createParameterBall (params p) (synthesisPrecision p))
+  let parameterBalls = (createParameterBall (params p) (synthesisPrecision p))
   let phis = unlines (parameterBalls : str) --fmap
   s <- readFile (paramConstantFile p)
   let s_i = replace "counterexamples" phis s
