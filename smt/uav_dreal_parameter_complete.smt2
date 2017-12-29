@@ -69,6 +69,536 @@
 
 ; Add all phi(counterexample) here
 
+(declare-fun x0_18 () Real)
+(declare-fun x1_18 () Real)
+(declare-fun x2_18 () Real)
+(declare-fun x3_18 () Real)
+
+(declare-fun bi_18 () Real)
+(declare-fun b0_18 () Real)
+(declare-fun b1_18 () Real)
+(declare-fun b2_18 () Real)
+(declare-fun b3_18 () Real)
+
+(declare-fun s1_qi_18 () Real)
+(declare-fun s1_q0_18 () Real)
+(declare-fun s1_q1_18 () Real)
+(declare-fun s1_q2_18 () Real)
+(declare-fun s1_q3_18 () Real)
+
+(declare-fun s2_qi_18 () Real)
+(declare-fun s2_q0_18 () Real)
+(declare-fun s2_q1_18 () Real)
+(declare-fun s2_q2_18 () Real)
+(declare-fun s2_q3_18 () Real)
+
+(declare-fun choice_18 () Real)
+
+(declare-fun t0_18 () Real)
+(declare-fun t1_18 () Real)
+(declare-fun t2_18 () Real)
+(declare-fun t3_18 () Real)
+
+;counterexample
+(declare-fun bc_18 () Real)
+(declare-fun s1_qc_18 () Real)
+(declare-fun s2_qc_18 () Real)
+
+(assert(>= t0_18 0))
+(assert(>= t1_18 0))
+(assert(>= t2_18 0))
+(assert(>= t3_18 0))
+(assert (<= bi_18 100))
+(assert (<= b0_18 100))
+(assert (<= b1_18 100))
+(assert (<= b2_18 100))
+(assert (<= b3_18 100))
+(assert (>= s2_qi_18 0))
+(assert (<= s2_qi_18 100))
+(assert (>= s2_q0_18 0))
+(assert (>= s2_q1_18 0))
+(assert (>= s2_q2_18 0))
+(assert (>= s2_q3_18 0))
+(assert (>= s1_qi_18 0))
+(assert (<= s1_qi_18 100))
+(assert (>= s1_q0_18 0))
+(assert (>= s1_q1_18 0))
+(assert (>= s1_q2_18 0))
+(assert (>= s1_q3_18 0))
+
+(assert (or (= choice_18 0) (= choice_18 1)))
+
+;charging
+(assert(= x0_18 0))
+(assert(= b0_18 (+ bi_18 (* battery_charging_rate t0_18))))
+(assert(= s1_q0_18 (+ s1_qi_18 (* queue_data_rate t0_18))))
+(assert(= s2_q0_18 (+ s2_qi_18 (* queue_data_rate t0_18))))
+; TODO: allow to stay when battery = 100
+;program: charge till battery >= 20
+;decide when to leave, that is b0_18 and choice_18 of sensor
+(assert (and (=> (>= bi_18 p6) (= b0_18 bi_18)) (=> (< bi_18 p6) (= b0_18 p6))))
+(assert (=> (and (>= bi_18 p0) (<= s1_qi_18 p1) (<= (+ s2_qi_18 p2) s1_qi_18)) (= choice_18 0)))
+(assert (=> (not (and (>= bi_18 p0) (<= s1_qi_18 p1) (<= (+ s2_qi_18 p2) s1_qi_18))) (= choice_18 1)))
+
+
+;flying to D
+(assert (=> (= choice_18 0) (= x1_18 s1_loc)))
+(assert (=> (= choice_18 1) (= x1_18 s2_loc)))
+(assert(= x1_18 (+ x0_18 (* drone_velocity t1_18))))
+(assert(= b1_18 (- b0_18 (* battery_discharge_rate_fly t1_18))))
+(assert(= s1_q1_18 (+ s1_q0_18 (* queue_data_rate t1_18))))
+(assert(= s2_q1_18 (+ s2_q0_18 (* queue_data_rate t1_18))))
+
+;emptying queue
+(assert(= x2_18 x1_18))
+(assert (=> (= choice_18 0) (and (= s1_q2_18 (- s1_q1_18 (* queue_upload_rate t2_18))) (= s2_q2_18 (+ s2_q1_18 (* queue_data_rate t2_18))))))
+(assert (=> (= choice_18 1) (and (= s2_q2_18 (- s2_q1_18 (* queue_upload_rate t2_18))) (= s1_q2_18 (+ s1_q1_18 (* queue_data_rate t2_18))))))
+(assert(= b2_18 (- b1_18 (* battery_discharge_rate_hover t2_18))))
+;program: empty queue till battery <= 4
+(assert (=> (= choice_18 0) (and (=> (<= s1_q1_18 p7) (= s1_q2_18 s1_q1_18)) (=> (> s1_q1_18 p7) (= s1_q2_18 p7)))))
+(assert (=> (= choice_18 1) (and (=> (<= s2_q1_18 p8) (= s2_q2_18 s2_q1_18)) (=> (> s2_q1_18 p8) (= s2_q2_18 p8)))))
+
+;flying back
+(assert(= x3_18 0))
+(assert(= x3_18 (- x2_18 (* drone_velocity t3_18))))
+(assert(= s1_q3_18 (+ s1_q2_18 (* queue_data_rate t3_18))))
+(assert(= s2_q3_18 (+ s2_q2_18 (* queue_data_rate t3_18))))
+(assert(= b3_18 (- b2_18 (* battery_discharge_rate_fly t3_18))))
+
+
+
+;goal
+;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
+; Add (assert (and (= bc_18 99.99906936810227) (= s1_qc_18 0.007141355227671287) (= s2_qc_18 0.0))) here
+(assert (and (= bc_18 99.99906936810227) (= s1_qc_18 0.007141355227671287) (= s2_qc_18 0.0)))
+
+(assert (and (= bi_18 bc_18) (= s1_qi_18 s1_qc_18) (= s2_qi_18 s2_qc_18)))
+(assert (=> (or (and (>= bi_18 p0) (<= s1_qi_18 p1) (<= (+ s2_qi_18 p2) s1_qi_18)) (and (>= bi_18 p3) (<= (+ s1_qi_18 p4) s2_qi_18) (<= s2_qi_18 p5))) (and (> b0_18 0) (> b1_18 0) (> b2_18 0) (> b3_18 0) (< s1_q0_18 100) (< s1_q1_18 100) (< s1_q2_18 100) (< s1_q3_18 100) (< s2_q0_18 100) (< s2_q1_18 100) (< s2_q2_18 100) (< s2_q3_18 100) (or (and (>= b3_18 p0) (<= s1_q3_18 p1) (<= (+ s2_q3_18 p2) s1_q3_18)) (and (>= b3_18 p3) (<= (+ s1_q3_18 p4) s2_q3_18) (<= s2_q3_18 p5))))))
+
+(declare-fun x0_17 () Real)
+(declare-fun x1_17 () Real)
+(declare-fun x2_17 () Real)
+(declare-fun x3_17 () Real)
+
+(declare-fun bi_17 () Real)
+(declare-fun b0_17 () Real)
+(declare-fun b1_17 () Real)
+(declare-fun b2_17 () Real)
+(declare-fun b3_17 () Real)
+
+(declare-fun s1_qi_17 () Real)
+(declare-fun s1_q0_17 () Real)
+(declare-fun s1_q1_17 () Real)
+(declare-fun s1_q2_17 () Real)
+(declare-fun s1_q3_17 () Real)
+
+(declare-fun s2_qi_17 () Real)
+(declare-fun s2_q0_17 () Real)
+(declare-fun s2_q1_17 () Real)
+(declare-fun s2_q2_17 () Real)
+(declare-fun s2_q3_17 () Real)
+
+(declare-fun choice_17 () Real)
+
+(declare-fun t0_17 () Real)
+(declare-fun t1_17 () Real)
+(declare-fun t2_17 () Real)
+(declare-fun t3_17 () Real)
+
+;counterexample
+(declare-fun bc_17 () Real)
+(declare-fun s1_qc_17 () Real)
+(declare-fun s2_qc_17 () Real)
+
+(assert(>= t0_17 0))
+(assert(>= t1_17 0))
+(assert(>= t2_17 0))
+(assert(>= t3_17 0))
+(assert (<= bi_17 100))
+(assert (<= b0_17 100))
+(assert (<= b1_17 100))
+(assert (<= b2_17 100))
+(assert (<= b3_17 100))
+(assert (>= s2_qi_17 0))
+(assert (<= s2_qi_17 100))
+(assert (>= s2_q0_17 0))
+(assert (>= s2_q1_17 0))
+(assert (>= s2_q2_17 0))
+(assert (>= s2_q3_17 0))
+(assert (>= s1_qi_17 0))
+(assert (<= s1_qi_17 100))
+(assert (>= s1_q0_17 0))
+(assert (>= s1_q1_17 0))
+(assert (>= s1_q2_17 0))
+(assert (>= s1_q3_17 0))
+
+(assert (or (= choice_17 0) (= choice_17 1)))
+
+;charging
+(assert(= x0_17 0))
+(assert(= b0_17 (+ bi_17 (* battery_charging_rate t0_17))))
+(assert(= s1_q0_17 (+ s1_qi_17 (* queue_data_rate t0_17))))
+(assert(= s2_q0_17 (+ s2_qi_17 (* queue_data_rate t0_17))))
+; TODO: allow to stay when battery = 100
+;program: charge till battery >= 20
+;decide when to leave, that is b0_17 and choice_17 of sensor
+(assert (and (=> (>= bi_17 p6) (= b0_17 bi_17)) (=> (< bi_17 p6) (= b0_17 p6))))
+(assert (=> (and (>= bi_17 p0) (<= s1_qi_17 p1) (<= (+ s2_qi_17 p2) s1_qi_17)) (= choice_17 0)))
+(assert (=> (not (and (>= bi_17 p0) (<= s1_qi_17 p1) (<= (+ s2_qi_17 p2) s1_qi_17))) (= choice_17 1)))
+
+
+;flying to D
+(assert (=> (= choice_17 0) (= x1_17 s1_loc)))
+(assert (=> (= choice_17 1) (= x1_17 s2_loc)))
+(assert(= x1_17 (+ x0_17 (* drone_velocity t1_17))))
+(assert(= b1_17 (- b0_17 (* battery_discharge_rate_fly t1_17))))
+(assert(= s1_q1_17 (+ s1_q0_17 (* queue_data_rate t1_17))))
+(assert(= s2_q1_17 (+ s2_q0_17 (* queue_data_rate t1_17))))
+
+;emptying queue
+(assert(= x2_17 x1_17))
+(assert (=> (= choice_17 0) (and (= s1_q2_17 (- s1_q1_17 (* queue_upload_rate t2_17))) (= s2_q2_17 (+ s2_q1_17 (* queue_data_rate t2_17))))))
+(assert (=> (= choice_17 1) (and (= s2_q2_17 (- s2_q1_17 (* queue_upload_rate t2_17))) (= s1_q2_17 (+ s1_q1_17 (* queue_data_rate t2_17))))))
+(assert(= b2_17 (- b1_17 (* battery_discharge_rate_hover t2_17))))
+;program: empty queue till battery <= 4
+(assert (=> (= choice_17 0) (and (=> (<= s1_q1_17 p7) (= s1_q2_17 s1_q1_17)) (=> (> s1_q1_17 p7) (= s1_q2_17 p7)))))
+(assert (=> (= choice_17 1) (and (=> (<= s2_q1_17 p8) (= s2_q2_17 s2_q1_17)) (=> (> s2_q1_17 p8) (= s2_q2_17 p8)))))
+
+;flying back
+(assert(= x3_17 0))
+(assert(= x3_17 (- x2_17 (* drone_velocity t3_17))))
+(assert(= s1_q3_17 (+ s1_q2_17 (* queue_data_rate t3_17))))
+(assert(= s2_q3_17 (+ s2_q2_17 (* queue_data_rate t3_17))))
+(assert(= b3_17 (- b2_17 (* battery_discharge_rate_fly t3_17))))
+
+
+
+;goal
+;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
+; Add (assert (and (= bc_17 99.9921875) (= s1_qc_17 0.0111112568144111) (= s2_qc_17 0.0111112568144111))) here
+(assert (and (= bc_17 99.9921875) (= s1_qc_17 0.0111112568144111) (= s2_qc_17 0.0111112568144111)))
+
+(assert (and (= bi_17 bc_17) (= s1_qi_17 s1_qc_17) (= s2_qi_17 s2_qc_17)))
+(assert (=> (or (and (>= bi_17 p0) (<= s1_qi_17 p1) (<= (+ s2_qi_17 p2) s1_qi_17)) (and (>= bi_17 p3) (<= (+ s1_qi_17 p4) s2_qi_17) (<= s2_qi_17 p5))) (and (> b0_17 0) (> b1_17 0) (> b2_17 0) (> b3_17 0) (< s1_q0_17 100) (< s1_q1_17 100) (< s1_q2_17 100) (< s1_q3_17 100) (< s2_q0_17 100) (< s2_q1_17 100) (< s2_q2_17 100) (< s2_q3_17 100) (or (and (>= b3_17 p0) (<= s1_q3_17 p1) (<= (+ s2_q3_17 p2) s1_q3_17)) (and (>= b3_17 p3) (<= (+ s1_q3_17 p4) s2_q3_17) (<= s2_q3_17 p5))))))
+
+(declare-fun x0_16 () Real)
+(declare-fun x1_16 () Real)
+(declare-fun x2_16 () Real)
+(declare-fun x3_16 () Real)
+
+(declare-fun bi_16 () Real)
+(declare-fun b0_16 () Real)
+(declare-fun b1_16 () Real)
+(declare-fun b2_16 () Real)
+(declare-fun b3_16 () Real)
+
+(declare-fun s1_qi_16 () Real)
+(declare-fun s1_q0_16 () Real)
+(declare-fun s1_q1_16 () Real)
+(declare-fun s1_q2_16 () Real)
+(declare-fun s1_q3_16 () Real)
+
+(declare-fun s2_qi_16 () Real)
+(declare-fun s2_q0_16 () Real)
+(declare-fun s2_q1_16 () Real)
+(declare-fun s2_q2_16 () Real)
+(declare-fun s2_q3_16 () Real)
+
+(declare-fun choice_16 () Real)
+
+(declare-fun t0_16 () Real)
+(declare-fun t1_16 () Real)
+(declare-fun t2_16 () Real)
+(declare-fun t3_16 () Real)
+
+;counterexample
+(declare-fun bc_16 () Real)
+(declare-fun s1_qc_16 () Real)
+(declare-fun s2_qc_16 () Real)
+
+(assert(>= t0_16 0))
+(assert(>= t1_16 0))
+(assert(>= t2_16 0))
+(assert(>= t3_16 0))
+(assert (<= bi_16 100))
+(assert (<= b0_16 100))
+(assert (<= b1_16 100))
+(assert (<= b2_16 100))
+(assert (<= b3_16 100))
+(assert (>= s2_qi_16 0))
+(assert (<= s2_qi_16 100))
+(assert (>= s2_q0_16 0))
+(assert (>= s2_q1_16 0))
+(assert (>= s2_q2_16 0))
+(assert (>= s2_q3_16 0))
+(assert (>= s1_qi_16 0))
+(assert (<= s1_qi_16 100))
+(assert (>= s1_q0_16 0))
+(assert (>= s1_q1_16 0))
+(assert (>= s1_q2_16 0))
+(assert (>= s1_q3_16 0))
+
+(assert (or (= choice_16 0) (= choice_16 1)))
+
+;charging
+(assert(= x0_16 0))
+(assert(= b0_16 (+ bi_16 (* battery_charging_rate t0_16))))
+(assert(= s1_q0_16 (+ s1_qi_16 (* queue_data_rate t0_16))))
+(assert(= s2_q0_16 (+ s2_qi_16 (* queue_data_rate t0_16))))
+; TODO: allow to stay when battery = 100
+;program: charge till battery >= 20
+;decide when to leave, that is b0_16 and choice_16 of sensor
+(assert (and (=> (>= bi_16 p6) (= b0_16 bi_16)) (=> (< bi_16 p6) (= b0_16 p6))))
+(assert (=> (and (>= bi_16 p0) (<= s1_qi_16 p1) (<= (+ s2_qi_16 p2) s1_qi_16)) (= choice_16 0)))
+(assert (=> (not (and (>= bi_16 p0) (<= s1_qi_16 p1) (<= (+ s2_qi_16 p2) s1_qi_16))) (= choice_16 1)))
+
+
+;flying to D
+(assert (=> (= choice_16 0) (= x1_16 s1_loc)))
+(assert (=> (= choice_16 1) (= x1_16 s2_loc)))
+(assert(= x1_16 (+ x0_16 (* drone_velocity t1_16))))
+(assert(= b1_16 (- b0_16 (* battery_discharge_rate_fly t1_16))))
+(assert(= s1_q1_16 (+ s1_q0_16 (* queue_data_rate t1_16))))
+(assert(= s2_q1_16 (+ s2_q0_16 (* queue_data_rate t1_16))))
+
+;emptying queue
+(assert(= x2_16 x1_16))
+(assert (=> (= choice_16 0) (and (= s1_q2_16 (- s1_q1_16 (* queue_upload_rate t2_16))) (= s2_q2_16 (+ s2_q1_16 (* queue_data_rate t2_16))))))
+(assert (=> (= choice_16 1) (and (= s2_q2_16 (- s2_q1_16 (* queue_upload_rate t2_16))) (= s1_q2_16 (+ s1_q1_16 (* queue_data_rate t2_16))))))
+(assert(= b2_16 (- b1_16 (* battery_discharge_rate_hover t2_16))))
+;program: empty queue till battery <= 4
+(assert (=> (= choice_16 0) (and (=> (<= s1_q1_16 p7) (= s1_q2_16 s1_q1_16)) (=> (> s1_q1_16 p7) (= s1_q2_16 p7)))))
+(assert (=> (= choice_16 1) (and (=> (<= s2_q1_16 p8) (= s2_q2_16 s2_q1_16)) (=> (> s2_q1_16 p8) (= s2_q2_16 p8)))))
+
+;flying back
+(assert(= x3_16 0))
+(assert(= x3_16 (- x2_16 (* drone_velocity t3_16))))
+(assert(= s1_q3_16 (+ s1_q2_16 (* queue_data_rate t3_16))))
+(assert(= s2_q3_16 (+ s2_q2_16 (* queue_data_rate t3_16))))
+(assert(= b3_16 (- b2_16 (* battery_discharge_rate_fly t3_16))))
+
+
+
+;goal
+;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
+; Add (assert (and (= bc_16 99.99569154685673) (= s1_qc_16 0.002147904416618748) (= s2_qc_16 0.007516826491936099))) here
+(assert (and (= bc_16 99.99569154685673) (= s1_qc_16 0.002147904416618748) (= s2_qc_16 0.007516826491936099)))
+
+(assert (and (= bi_16 bc_16) (= s1_qi_16 s1_qc_16) (= s2_qi_16 s2_qc_16)))
+(assert (=> (or (and (>= bi_16 p0) (<= s1_qi_16 p1) (<= (+ s2_qi_16 p2) s1_qi_16)) (and (>= bi_16 p3) (<= (+ s1_qi_16 p4) s2_qi_16) (<= s2_qi_16 p5))) (and (> b0_16 0) (> b1_16 0) (> b2_16 0) (> b3_16 0) (< s1_q0_16 100) (< s1_q1_16 100) (< s1_q2_16 100) (< s1_q3_16 100) (< s2_q0_16 100) (< s2_q1_16 100) (< s2_q2_16 100) (< s2_q3_16 100) (or (and (>= b3_16 p0) (<= s1_q3_16 p1) (<= (+ s2_q3_16 p2) s1_q3_16)) (and (>= b3_16 p3) (<= (+ s1_q3_16 p4) s2_q3_16) (<= s2_q3_16 p5))))))
+
+(declare-fun x0_15 () Real)
+(declare-fun x1_15 () Real)
+(declare-fun x2_15 () Real)
+(declare-fun x3_15 () Real)
+
+(declare-fun bi_15 () Real)
+(declare-fun b0_15 () Real)
+(declare-fun b1_15 () Real)
+(declare-fun b2_15 () Real)
+(declare-fun b3_15 () Real)
+
+(declare-fun s1_qi_15 () Real)
+(declare-fun s1_q0_15 () Real)
+(declare-fun s1_q1_15 () Real)
+(declare-fun s1_q2_15 () Real)
+(declare-fun s1_q3_15 () Real)
+
+(declare-fun s2_qi_15 () Real)
+(declare-fun s2_q0_15 () Real)
+(declare-fun s2_q1_15 () Real)
+(declare-fun s2_q2_15 () Real)
+(declare-fun s2_q3_15 () Real)
+
+(declare-fun choice_15 () Real)
+
+(declare-fun t0_15 () Real)
+(declare-fun t1_15 () Real)
+(declare-fun t2_15 () Real)
+(declare-fun t3_15 () Real)
+
+;counterexample
+(declare-fun bc_15 () Real)
+(declare-fun s1_qc_15 () Real)
+(declare-fun s2_qc_15 () Real)
+
+(assert(>= t0_15 0))
+(assert(>= t1_15 0))
+(assert(>= t2_15 0))
+(assert(>= t3_15 0))
+(assert (<= bi_15 100))
+(assert (<= b0_15 100))
+(assert (<= b1_15 100))
+(assert (<= b2_15 100))
+(assert (<= b3_15 100))
+(assert (>= s2_qi_15 0))
+(assert (<= s2_qi_15 100))
+(assert (>= s2_q0_15 0))
+(assert (>= s2_q1_15 0))
+(assert (>= s2_q2_15 0))
+(assert (>= s2_q3_15 0))
+(assert (>= s1_qi_15 0))
+(assert (<= s1_qi_15 100))
+(assert (>= s1_q0_15 0))
+(assert (>= s1_q1_15 0))
+(assert (>= s1_q2_15 0))
+(assert (>= s1_q3_15 0))
+
+(assert (or (= choice_15 0) (= choice_15 1)))
+
+;charging
+(assert(= x0_15 0))
+(assert(= b0_15 (+ bi_15 (* battery_charging_rate t0_15))))
+(assert(= s1_q0_15 (+ s1_qi_15 (* queue_data_rate t0_15))))
+(assert(= s2_q0_15 (+ s2_qi_15 (* queue_data_rate t0_15))))
+; TODO: allow to stay when battery = 100
+;program: charge till battery >= 20
+;decide when to leave, that is b0_15 and choice_15 of sensor
+(assert (and (=> (>= bi_15 p6) (= b0_15 bi_15)) (=> (< bi_15 p6) (= b0_15 p6))))
+(assert (=> (and (>= bi_15 p0) (<= s1_qi_15 p1) (<= (+ s2_qi_15 p2) s1_qi_15)) (= choice_15 0)))
+(assert (=> (not (and (>= bi_15 p0) (<= s1_qi_15 p1) (<= (+ s2_qi_15 p2) s1_qi_15))) (= choice_15 1)))
+
+
+;flying to D
+(assert (=> (= choice_15 0) (= x1_15 s1_loc)))
+(assert (=> (= choice_15 1) (= x1_15 s2_loc)))
+(assert(= x1_15 (+ x0_15 (* drone_velocity t1_15))))
+(assert(= b1_15 (- b0_15 (* battery_discharge_rate_fly t1_15))))
+(assert(= s1_q1_15 (+ s1_q0_15 (* queue_data_rate t1_15))))
+(assert(= s2_q1_15 (+ s2_q0_15 (* queue_data_rate t1_15))))
+
+;emptying queue
+(assert(= x2_15 x1_15))
+(assert (=> (= choice_15 0) (and (= s1_q2_15 (- s1_q1_15 (* queue_upload_rate t2_15))) (= s2_q2_15 (+ s2_q1_15 (* queue_data_rate t2_15))))))
+(assert (=> (= choice_15 1) (and (= s2_q2_15 (- s2_q1_15 (* queue_upload_rate t2_15))) (= s1_q2_15 (+ s1_q1_15 (* queue_data_rate t2_15))))))
+(assert(= b2_15 (- b1_15 (* battery_discharge_rate_hover t2_15))))
+;program: empty queue till battery <= 4
+(assert (=> (= choice_15 0) (and (=> (<= s1_q1_15 p7) (= s1_q2_15 s1_q1_15)) (=> (> s1_q1_15 p7) (= s1_q2_15 p7)))))
+(assert (=> (= choice_15 1) (and (=> (<= s2_q1_15 p8) (= s2_q2_15 s2_q1_15)) (=> (> s2_q1_15 p8) (= s2_q2_15 p8)))))
+
+;flying back
+(assert(= x3_15 0))
+(assert(= x3_15 (- x2_15 (* drone_velocity t3_15))))
+(assert(= s1_q3_15 (+ s1_q2_15 (* queue_data_rate t3_15))))
+(assert(= s2_q3_15 (+ s2_q2_15 (* queue_data_rate t3_15))))
+(assert(= b3_15 (- b2_15 (* battery_discharge_rate_fly t3_15))))
+
+
+
+;goal
+;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
+; Add (assert (and (= bc_15 99.990234375) (= s1_qc_15 0.0) (= s2_qc_15 0.0))) here
+(assert (and (= bc_15 99.990234375) (= s1_qc_15 0.0) (= s2_qc_15 0.0)))
+
+(assert (and (= bi_15 bc_15) (= s1_qi_15 s1_qc_15) (= s2_qi_15 s2_qc_15)))
+(assert (=> (or (and (>= bi_15 p0) (<= s1_qi_15 p1) (<= (+ s2_qi_15 p2) s1_qi_15)) (and (>= bi_15 p3) (<= (+ s1_qi_15 p4) s2_qi_15) (<= s2_qi_15 p5))) (and (> b0_15 0) (> b1_15 0) (> b2_15 0) (> b3_15 0) (< s1_q0_15 100) (< s1_q1_15 100) (< s1_q2_15 100) (< s1_q3_15 100) (< s2_q0_15 100) (< s2_q1_15 100) (< s2_q2_15 100) (< s2_q3_15 100) (or (and (>= b3_15 p0) (<= s1_q3_15 p1) (<= (+ s2_q3_15 p2) s1_q3_15)) (and (>= b3_15 p3) (<= (+ s1_q3_15 p4) s2_q3_15) (<= s2_q3_15 p5))))))
+
+(declare-fun x0_14 () Real)
+(declare-fun x1_14 () Real)
+(declare-fun x2_14 () Real)
+(declare-fun x3_14 () Real)
+
+(declare-fun bi_14 () Real)
+(declare-fun b0_14 () Real)
+(declare-fun b1_14 () Real)
+(declare-fun b2_14 () Real)
+(declare-fun b3_14 () Real)
+
+(declare-fun s1_qi_14 () Real)
+(declare-fun s1_q0_14 () Real)
+(declare-fun s1_q1_14 () Real)
+(declare-fun s1_q2_14 () Real)
+(declare-fun s1_q3_14 () Real)
+
+(declare-fun s2_qi_14 () Real)
+(declare-fun s2_q0_14 () Real)
+(declare-fun s2_q1_14 () Real)
+(declare-fun s2_q2_14 () Real)
+(declare-fun s2_q3_14 () Real)
+
+(declare-fun choice_14 () Real)
+
+(declare-fun t0_14 () Real)
+(declare-fun t1_14 () Real)
+(declare-fun t2_14 () Real)
+(declare-fun t3_14 () Real)
+
+;counterexample
+(declare-fun bc_14 () Real)
+(declare-fun s1_qc_14 () Real)
+(declare-fun s2_qc_14 () Real)
+
+(assert(>= t0_14 0))
+(assert(>= t1_14 0))
+(assert(>= t2_14 0))
+(assert(>= t3_14 0))
+(assert (<= bi_14 100))
+(assert (<= b0_14 100))
+(assert (<= b1_14 100))
+(assert (<= b2_14 100))
+(assert (<= b3_14 100))
+(assert (>= s2_qi_14 0))
+(assert (<= s2_qi_14 100))
+(assert (>= s2_q0_14 0))
+(assert (>= s2_q1_14 0))
+(assert (>= s2_q2_14 0))
+(assert (>= s2_q3_14 0))
+(assert (>= s1_qi_14 0))
+(assert (<= s1_qi_14 100))
+(assert (>= s1_q0_14 0))
+(assert (>= s1_q1_14 0))
+(assert (>= s1_q2_14 0))
+(assert (>= s1_q3_14 0))
+
+(assert (or (= choice_14 0) (= choice_14 1)))
+
+;charging
+(assert(= x0_14 0))
+(assert(= b0_14 (+ bi_14 (* battery_charging_rate t0_14))))
+(assert(= s1_q0_14 (+ s1_qi_14 (* queue_data_rate t0_14))))
+(assert(= s2_q0_14 (+ s2_qi_14 (* queue_data_rate t0_14))))
+; TODO: allow to stay when battery = 100
+;program: charge till battery >= 20
+;decide when to leave, that is b0_14 and choice_14 of sensor
+(assert (and (=> (>= bi_14 p6) (= b0_14 bi_14)) (=> (< bi_14 p6) (= b0_14 p6))))
+(assert (=> (and (>= bi_14 p0) (<= s1_qi_14 p1) (<= (+ s2_qi_14 p2) s1_qi_14)) (= choice_14 0)))
+(assert (=> (not (and (>= bi_14 p0) (<= s1_qi_14 p1) (<= (+ s2_qi_14 p2) s1_qi_14))) (= choice_14 1)))
+
+
+;flying to D
+(assert (=> (= choice_14 0) (= x1_14 s1_loc)))
+(assert (=> (= choice_14 1) (= x1_14 s2_loc)))
+(assert(= x1_14 (+ x0_14 (* drone_velocity t1_14))))
+(assert(= b1_14 (- b0_14 (* battery_discharge_rate_fly t1_14))))
+(assert(= s1_q1_14 (+ s1_q0_14 (* queue_data_rate t1_14))))
+(assert(= s2_q1_14 (+ s2_q0_14 (* queue_data_rate t1_14))))
+
+;emptying queue
+(assert(= x2_14 x1_14))
+(assert (=> (= choice_14 0) (and (= s1_q2_14 (- s1_q1_14 (* queue_upload_rate t2_14))) (= s2_q2_14 (+ s2_q1_14 (* queue_data_rate t2_14))))))
+(assert (=> (= choice_14 1) (and (= s2_q2_14 (- s2_q1_14 (* queue_upload_rate t2_14))) (= s1_q2_14 (+ s1_q1_14 (* queue_data_rate t2_14))))))
+(assert(= b2_14 (- b1_14 (* battery_discharge_rate_hover t2_14))))
+;program: empty queue till battery <= 4
+(assert (=> (= choice_14 0) (and (=> (<= s1_q1_14 p7) (= s1_q2_14 s1_q1_14)) (=> (> s1_q1_14 p7) (= s1_q2_14 p7)))))
+(assert (=> (= choice_14 1) (and (=> (<= s2_q1_14 p8) (= s2_q2_14 s2_q1_14)) (=> (> s2_q1_14 p8) (= s2_q2_14 p8)))))
+
+;flying back
+(assert(= x3_14 0))
+(assert(= x3_14 (- x2_14 (* drone_velocity t3_14))))
+(assert(= s1_q3_14 (+ s1_q2_14 (* queue_data_rate t3_14))))
+(assert(= s2_q3_14 (+ s2_q2_14 (* queue_data_rate t3_14))))
+(assert(= b3_14 (- b2_14 (* battery_discharge_rate_fly t3_14))))
+
+
+
+;goal
+;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
+; Add (assert (and (= bc_14 99.94140625) (= s1_qc_14 0.0) (= s2_qc_14 0.0009765625))) here
+(assert (and (= bc_14 99.94140625) (= s1_qc_14 0.0) (= s2_qc_14 0.0009765625)))
+
+(assert (and (= bi_14 bc_14) (= s1_qi_14 s1_qc_14) (= s2_qi_14 s2_qc_14)))
+(assert (=> (or (and (>= bi_14 p0) (<= s1_qi_14 p1) (<= (+ s2_qi_14 p2) s1_qi_14)) (and (>= bi_14 p3) (<= (+ s1_qi_14 p4) s2_qi_14) (<= s2_qi_14 p5))) (and (> b0_14 0) (> b1_14 0) (> b2_14 0) (> b3_14 0) (< s1_q0_14 100) (< s1_q1_14 100) (< s1_q2_14 100) (< s1_q3_14 100) (< s2_q0_14 100) (< s2_q1_14 100) (< s2_q2_14 100) (< s2_q3_14 100) (or (and (>= b3_14 p0) (<= s1_q3_14 p1) (<= (+ s2_q3_14 p2) s1_q3_14)) (and (>= b3_14 p3) (<= (+ s1_q3_14 p4) s2_q3_14) (<= s2_q3_14 p5))))))
+
 (declare-fun x0_13 () Real)
 (declare-fun x1_13 () Real)
 (declare-fun x2_13 () Real)
@@ -169,8 +699,8 @@
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
-; Add (assert (and (= bc_13 99.0625) (= s1_qc_13 0.0) (= s2_qc_13 1.09765625e-2))) here
-(assert (and (= bc_13 99.0625) (= s1_qc_13 0.0) (= s2_qc_13 1.09765625e-2)))
+; Add (assert (and (= bc_13 99.84375) (= s1_qc_13 0.0) (= s2_qc_13 0.0))) here
+(assert (and (= bc_13 99.84375) (= s1_qc_13 0.0) (= s2_qc_13 0.0)))
 
 (assert (and (= bi_13 bc_13) (= s1_qi_13 s1_qc_13) (= s2_qi_13 s2_qc_13)))
 (assert (=> (or (and (>= bi_13 p0) (<= s1_qi_13 p1) (<= (+ s2_qi_13 p2) s1_qi_13)) (and (>= bi_13 p3) (<= (+ s1_qi_13 p4) s2_qi_13) (<= s2_qi_13 p5))) (and (> b0_13 0) (> b1_13 0) (> b2_13 0) (> b3_13 0) (< s1_q0_13 100) (< s1_q1_13 100) (< s1_q2_13 100) (< s1_q3_13 100) (< s2_q0_13 100) (< s2_q1_13 100) (< s2_q2_13 100) (< s2_q3_13 100) (or (and (>= b3_13 p0) (<= s1_q3_13 p1) (<= (+ s2_q3_13 p2) s1_q3_13)) (and (>= b3_13 p3) (<= (+ s1_q3_13 p4) s2_q3_13) (<= s2_q3_13 p5))))))
@@ -275,8 +805,8 @@
 
 ;goal
 ;Question: Does there exist parameters such that given battery,queue values, invariant => safety is maintained
-; Add (assert (and (= bc_12 99.0625) (= s1_qc_12 0.0) (= s2_qc_12 9.765625e-4))) here
-(assert (and (= bc_12 99.0625) (= s1_qc_12 0.0) (= s2_qc_12 9.765625e-4)))
+; Add (assert (and (= bc_12 99.0625) (= s1_qc_12 0.0) (= s2_qc_12 0.0009765625))) here
+(assert (and (= bc_12 99.0625) (= s1_qc_12 0.0) (= s2_qc_12 0.0009765625)))
 
 (assert (and (= bi_12 bc_12) (= s1_qi_12 s1_qc_12) (= s2_qi_12 s2_qc_12)))
 (assert (=> (or (and (>= bi_12 p0) (<= s1_qi_12 p1) (<= (+ s2_qi_12 p2) s1_qi_12)) (and (>= bi_12 p3) (<= (+ s1_qi_12 p4) s2_qi_12) (<= s2_qi_12 p5))) (and (> b0_12 0) (> b1_12 0) (> b2_12 0) (> b3_12 0) (< s1_q0_12 100) (< s1_q1_12 100) (< s1_q2_12 100) (< s1_q3_12 100) (< s2_q0_12 100) (< s2_q1_12 100) (< s2_q2_12 100) (< s2_q3_12 100) (or (and (>= b3_12 p0) (<= s1_q3_12 p1) (<= (+ s2_q3_12 p2) s1_q3_12)) (and (>= b3_12 p3) (<= (+ s1_q3_12 p4) s2_q3_12) (<= s2_q3_12 p5))))))
