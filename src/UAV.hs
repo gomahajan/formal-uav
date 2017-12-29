@@ -12,6 +12,7 @@ import Control.Monad
 import Data.ConfigFile
 import Data.Either.Utils
 import Control.Monad.Except
+import Numeric
 
 import Logic
 import Parser
@@ -188,7 +189,8 @@ addAllPhis' file n (x:xs) = do s <- createPhi file x (show n)
 createPhi :: String -> (Double, Double,Double) -> String -> IO String
 createPhi file (c1,c2,c3) name = do
   s <- readFile file
-  let s_i = replace "batteryvalue" (printConstraint (generateAndTerm3 "bc" "s1_qc" "s2_qc" c1 c2 c3)) s
+  let andTerm = "(assert (and (= bc " ++ (Numeric.showFFloat Nothing c1 "") ++ ") (= s1_qc " ++ (Numeric.showFFloat Nothing c2 "") ++ ") (= s2_qc " ++ (Numeric.showFFloat Nothing c3 "") ++ ")))"
+      s_i = replace "batteryvalue" andTerm s
       variables = ["x0", "x1", "x2", "x3", "bi", "b0", "b1", "b2", "b3", "s1_qi", "s1_q0", "s1_q1", "s1_q2", "s1_q3", "s2_qi", "s2_q0", "s2_q1", "s2_q2", "s2_q3", "t0", "t1", "t2", "t3", "bc", "s1_qc", "s2_qc", "choice"]
       s_i_g = foldl (\str v -> (replace v (v ++ "_" ++ name) str)) s_i variables
   return s_i_g
