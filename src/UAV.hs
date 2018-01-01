@@ -335,15 +335,27 @@ writeSMT infile outfile = do
     Left e -> error $ show e
     Right decls -> do
       let spec = finishSpec decls
-          smt = initializeSMT uavParams spec
-          charge = printCharge "charge" uavParams spec
-          flyto = printFlyTo "fly_to" uavParams spec
-          collect = printCollect "collect" uavParams spec
-          flyfrom = printFlyFrom "fly_back" uavParams spec
+          smt = initializeSMT spec
+          charge = printCharge "charge" spec
+          flyto = printFlyTo "fly_to" spec
+          collect = printCollect "collect" spec
+          flyfrom = printFlyFrom "fly_back" spec
       writeFile outfile (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initGoal (_numSensors spec) ++ endSMT))
 
--- Initialize program and values
-uavParams :: UAVParams
-uavParams = UAVParams {
-  varNames = ["p0"] --this obviously does nothing
-}
+-- Create uav_dreal_template.smt2
+writeTemplate :: Params -> CompleteSpec -> IO ()
+writeTemplate p spec = do
+  let f = templateFile p
+  writeFile f f
+
+-- Create uav_dreal_paramterer_template.smt2
+writeParamTemplate :: Params -> CompleteSpec -> IO ()
+writeParamTemplate p spec = do
+  let f = paramTempFile p
+  writeFile f f
+
+-- Create uav_dreal_parameter_constant_template.smt2
+writeParamConstTemplate :: Params -> CompleteSpec -> IO ()
+writeParamConstTemplate p spec = do
+  let f = paramConstantFile p
+  writeFile f f

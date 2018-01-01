@@ -11,7 +11,7 @@ import Control.Monad.Except
 import System.IO
 import Numeric
 import qualified Data.Map as Map
-import Data.Map (Map)
+import Data.Map (Map, empty)
 import Data.List
 
 import Logic
@@ -34,7 +34,7 @@ ignore = do
   skipMany comment
   whitespace
 
-name = many1 $ noneOf " \t\n:#"
+name = many1 $ noneOf " ()\t\n:#"
 
 comment :: Parser String
 comment = do
@@ -120,7 +120,9 @@ parseDecls = do
     _varDomains = Map.fromList doms,
     _modeDefs = modes,
     _uavModes = uavms,
-    _sensors = s
+    _sensors = s,
+    _prog = [],
+    _environment = empty
   }
 
 opNames :: [String]
@@ -268,8 +270,9 @@ parseSMode = do
   form <- parseODE
   return (n, form)
 
+
 parseODE :: Parser ODE
-parseODE = buildExpressionParser (exprTable EUOp EBin) parseLit <?> "ode"
+parseODE = buildExpressionParser (exprTable EUOp EBin) parseLit <?> "ODE"
 
 parseLit :: Parser ODE
 parseLit = try (parens parseODE) <|> try pNum <|> pStr
@@ -294,7 +297,7 @@ exprTable mkUnary mkBinary = [
     unary op = Prefix (Token.reservedOp lexer (unOpTokens Map.! op) >> return (mkUnary op))
     binary op = Infix (Token.reservedOp lexer (binOpTokens Map.! op) >> return (mkBinary op))
 
--- Tokens
+-- Expr tokens
 unOpTokens :: Map UnOp String
 unOpTokens = Map.fromList [ (Neg, "-")
                       , (Sin, "sin")
@@ -314,3 +317,85 @@ binOpTokens = Map.fromList [ (Times, "*")
                        , (Gt,        ">")
                        , (Geq,       ">=")
                        ]
+
+
+-- Predicate parsers:
+-- This is a little hacky, couldn't do buildExpressionParser since
+--   the types are structured differently (ie wrong)
+-- This is also probably right-associative, not left-associative...
+-- my bad
+-- it works though
+-- future hack: restructure AST for left-associativity after parsing
+
+parsePred :: Parser Pred
+--parsePred = try parseExpr <|> try parseParens <|> try parseNot <|> try parseImpl <|> try parseAnd <|> parseOr --try parseOr <|> parseExpr <?> "Predicate"
+--parsePred = try parseImpl <|> try parseAnd <|> try parseOr <|> try parseNot <|> try parseParens <|> parseExpr
+parsePred = try parseImpl <|> try parseAnd <|> try parseOr <|> try parseParens <|> try parseNotP <|> parseTerm
+
+parseTerm = try parseNotT <|> parseExpr
+
+
+parseParens :: Parser Pred
+parseParens = do
+  whitespace
+  char '('
+  whitespace
+  p <- parsePred
+  whitespace
+  char ')'
+  whitespace
+  return p
+
+parseExpr :: Parser Pred
+parseExpr = do
+  e <- parseODE
+  return $ Expr e
+
+parseAnd :: Parser Pred
+parseAnd = do
+  whitespace
+  p1 <- parseTerm
+  whitespace
+  string "&&"
+  whitespace
+  p2 <- parsePred
+  whitespace
+  return $ BAnd p1 p2
+
+parseOr :: Parser Pred
+parseOr = do
+  whitespace
+  p1 <- parseTerm
+  whitespace
+  string "||"
+  whitespace
+  p2 <- parsePred
+  whitespace
+  return $ BOr p1 p2
+
+parseNotP :: Parser Pred
+parseNotP = do
+  whitespace
+  char '!'
+  whitespace
+  p <- parsePred
+  return $ Not p
+
+parseNotT :: Parser Pred
+parseNotT = do
+  whitespace
+  char '!'
+  whitespace
+  p <- parseTerm
+  return $ Not p
+
+parseImpl :: Parser Pred
+parseImpl = do
+  whitespace
+  p1 <- parseTerm
+  whitespace
+  string "=>"
+  whitespace
+  p2 <- parsePred
+  whitespace
+  return $ Impl p1 p2

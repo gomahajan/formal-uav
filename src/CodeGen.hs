@@ -51,13 +51,24 @@ data Mode = Mode {
   sensorMode :: String
 } deriving (Show, Eq)
 
+-- Goal mode and
+data Transition = Transition {
+  _startMode :: Int,
+  _goalMode :: Int,
+  _pred :: Pred
+} deriving (Show, Eq)
+
+type Env = Map String Pred
+
 -- Overall specification (for parsing)
 data Decls = Decls {
   _defns :: Defs,
   _varDomains :: Map String Domain,
   _modeDefs :: [Mode],
   _uavModes :: [UAVMode],
-  _sensors :: [Sensor]
+  _sensors :: [Sensor],
+  _prog :: [Transition],
+  _environment :: Env
 } deriving (Show, Eq)
 
 makeLenses ''Decls
@@ -73,11 +84,28 @@ data Vars = Vars {
 
 makeLenses ''Vars
 
+-- Type encapsulating program and parameter values
+-- TODO: expand this. This would probably be a good place for the
+--   param program/variables to go?
+data UAVParams = UAVParams {
+  _varNames :: [String]
+} deriving (Show, Eq)
+
+makeLenses ''UAVParams
+
+-- Initialize program and values
+-- Temporary helper
+uavParameters :: UAVParams
+uavParameters = UAVParams {
+  _varNames = ["p0"] --this obviously does nothing
+}
+
 data CompleteSpec = CompleteSpec {
   _declarations :: Decls,
   _numModes :: Int,
   _numSensors :: Int,
-  _vars :: Vars
+  _vars :: Vars,
+  _uavParams :: UAVParams
 } deriving (Show, Eq)
 
 makeLenses ''CompleteSpec
@@ -124,16 +152,16 @@ makeLenses ''CompleteSpec
       invariant (bi, all sensor qi) => (safe and invariant (b3, all sensor q3))
 -}
 
+
 -- Expand specification from declarations
 finishSpec :: Decls -> CompleteSpec
 finishSpec d = CompleteSpec {
   _declarations = d,
   _numModes = length (_uavModes d),
   _vars = generateVars d,
-  _numSensors = length (_sensors d)
+  _numSensors = length (_sensors d),
+  _uavParams = uavParameters
 }
-
-
 
 -- Functions for converting specification to SMT-readable form
 
@@ -162,13 +190,6 @@ generateVars ds = Vars {
     bdoms = zip bs (replicate (numModes + 1) (_varDomains ds ! "b" ))
     qdoms = zip sqs (replicate (numSensors * (numModes + 1)) (_varDomains ds ! "q" ))
 
--- Type encapsulating program and parameter values
--- TODO: expand this. This would probably be a good place for the
---   param program/variables to go?
-data UAVParams = UAVParams {
-  varNames :: [String]
-} deriving (Show, Eq)
-
 -- Get corresponding sensor mode from a UAV mode
 uavModeToSensor :: String -> CompleteSpec -> Maybe String
 uavModeToSensor s spec = fmap sensorMode mode
@@ -185,9 +206,10 @@ sensorModeToUAV s spec = fmap uavMode mode
 
 -- Top-level declarations for SMT (mostly all function/variable declarations)
 -- TODO: when the program is added it will need to be included here
-initializeSMT :: UAVParams -> CompleteSpec -> [String]
-initializeSMT params spec = logic : (vdecls ++ defs ++ slocs ++ tmin ++ doms ++ choice)
+initializeSMT :: CompleteSpec -> [String]
+initializeSMT spec = logic : (vdecls ++ defs ++ slocs ++ tmin ++ doms ++ choice)
   where
+    params = _uavParams spec
     choice = initChoice (_numSensors spec)
     vdecls = fmap declFun ((_allVars . _vars) spec)
     defList = assocs $ (_defns . _declarations) spec
@@ -227,16 +249,18 @@ preamble :: String -> [String]
 preamble title = "\n" : [";" ++ title]
 
 -- TODO: is it still ok to have x dynamics?
-printCharge :: String -> UAVParams -> CompleteSpec -> [String]
-printCharge name params spec = preamble "charging" ++ fmap (replace " t" " t0") (pos : dyn)
+printCharge :: String -> CompleteSpec -> [String]
+printCharge name spec = preamble "charging" ++ fmap (replace " t" " t0") (pos : dyn)
   where
+    params = _uavParams spec
     pos = initConstant "xi" "0"
     dyn = printDynamics name spec (show 0) "i"
 
 -- Print mode flying from sensor to charge
-printFlyFrom :: String -> UAVParams -> CompleteSpec -> [String]
-printFlyFrom name params spec = preamble "flying back" ++ fmap (replace " t" " t3") (pos : dyn)
+printFlyFrom :: String -> CompleteSpec -> [String]
+printFlyFrom name spec = preamble "flying back" ++ fmap (replace " t" " t3") (pos : dyn)
   where
+    params = _uavParams spec
     pos = initConstant "x3" "0"
     dyn = printDynamics name spec (show 3) (show 2)
 
@@ -245,9 +269,10 @@ printFlyFrom name params spec = preamble "flying back" ++ fmap (replace " t" " t
 -- But it works
 -- ...
 -- For now
-printCollect :: String -> UAVParams -> CompleteSpec -> [String]
-printCollect name params spec = preamble "Collecting data" ++ fmap (replace " t" " t2") (pos : battery ++ fmap printConstraint completePred)
+printCollect :: String -> CompleteSpec -> [String]
+printCollect name spec = preamble "Collecting data" ++ fmap (replace " t" " t2") (pos : battery ++ fmap printConstraint completePred)
   where
+    params = _uavParams spec
     -- battery dynamics
     uavm = sensorModeToUAV name spec
     battery = printDEs (fromMaybe name uavm) spec "b" "2" "1" bde
@@ -294,9 +319,10 @@ assembleSensors qs = fmap others qs
   where others q = Data.List.filter (/= q) qs
 
 -- Print constraints for uav flying to sensor
-printFlyTo :: String -> UAVParams -> CompleteSpec -> [String]
-printFlyTo name params spec = preamble "flying to sensors" ++ fmap (replace " t" " t1") (fmap printConstraint impls ++ dyn)
+printFlyTo :: String -> CompleteSpec -> [String]
+printFlyTo name spec = preamble "flying to sensors" ++ fmap (replace " t" " t1") (fmap printConstraint impls ++ dyn)
   where
+    params = _uavParams spec
     numm = _numModes spec
     nums = _numSensors spec
     mkSensor x = "s" ++ show x ++ "_loc"

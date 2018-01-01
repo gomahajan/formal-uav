@@ -8,11 +8,6 @@ import Control.Monad.Except
 
 type Counterexample = (Double, Double)
 
--- Environment
-type Env = Map String Exp
-
-data SpVar = B | Q deriving (Eq, Show)
-
 data Val where
   VLit  :: String -> Val -- Special variable (b, q, etc)
   VReal :: Double -> Val
@@ -77,9 +72,30 @@ data Pred = Lit Bool
   | Expr Exp
   | And [Pred]
   | Or [Pred]
+  | BAnd Pred Pred -- intermediate constructor for parsing
+  | BOr Pred Pred -- intermediate constructor for parsing
   | Not Pred
   | Impl Pred Pred
   deriving (Eq, Show)
+
+-- Convert preliminary BAnd to regular And (or Or)
+convert :: Pred -> Pred
+convert p@(BAnd p1 p2) = And $ convert <$> getps p
+convert p@(BOr p1 p2)  = Or $ convert <$> getps p
+convert (And ps)       = And $ fmap convert ps
+convert (Or ps)        = Or $ fmap convert ps
+convert (Not p)        = Not $ convert p
+convert (Impl p1 p2)   = Impl (convert p1) (convert p2)
+convert p              = p
+
+-- Helper function
+getps :: Pred -> [Pred]
+getps (BAnd p1 p2) = p1 : case p2 of
+  (BAnd p3 p4) -> getps p2
+  _            -> [p2]
+getps (BOr p1 p2) = p1 : case p2 of
+  (BOr p3 p4) -> getps p2
+  _           -> [p2]
 
 {- Currently unused!
 -- Checks that predicate is well formed (ie all terms are booleans)
