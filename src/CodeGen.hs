@@ -207,16 +207,38 @@ sensorModeToUAV s spec = fmap uavMode mode
     mode = find (\m -> sensorMode m == s) ms
 
 initializeParams :: CompleteSpec -> [String]
-initializeParams spec = logic : (vdecls ++ defs ++ pbounds)
+initializeParams spec = vdecls ++ cxdecs ++ defs ++ tmin ++ doms ++ choice ++ hole ++  [(printConstraint cxgoal)]
+  where
+    hole = ["\nbatteryvalue\n"]
+    params = _uavParams spec
+    numSensors = _numSensors spec
+    cxs = mkvars "c"
+    ivs = mkvars "i"
+    cxdecs = fmap declFun cxs
+    cxgoal = And (zipWith (\x y -> (Expr (EBin Eq (EStrLit x) (EStrLit y)))) cxs ivs)
+    mkvars v = ("b" ++ v) : fmap ((++ ("_q" ++ v)) . ("s" ++) . show) [0..(numSensors - 1)]
+    choice = initChoice (_numSensors spec)
+    vdecls = fmap declFun $ ((_allVars . _vars) spec) ++ cxs
+    defList = assocs $ (_defns . _declarations) spec
+    defs = zipWith initConstant (fmap fst defList) (fmap (show . snd) defList)
+    tmin = fmap (`decMin` 0) ((_tvars . _vars) spec)
+    doms = fmap declBound ((_allDomains . _vars) spec)
+    sensors = (_sensors . _declarations) spec
+
+
+initializeParamConsts :: CompleteSpec -> [String]
+initializeParamConsts spec = logic : (vdecls ++ defs ++ pbounds ++ slocs)
   where
     params = (_pNames . _uavParams) spec
-    vdecls = fmap declFun (params ++ (keys ((_defns . _declarations) spec)))
+    vdecls = fmap declFun params ++ keys ((_defns . _declarations) spec)
     defList = assocs $ (_defns . _declarations) spec
     defs = zipWith initConstant (fmap fst defList) (fmap (show . snd) defList)
     -- TODO: generalize pmax below
     pdoms = replicate (length params) Domain {vmin = Just 0.0, vmax = Just 100.0}
     pdoms' = zip params pdoms
     pbounds = fmap declBound pdoms'
+    sensors = (_sensors . _declarations) spec
+    slocs = zipWith initConstant (fmap (\x -> "s" ++ (show (sId x) ++ "_loc")) sensors) (fmap (show . position) sensors)
 
 -- Top-level declarations for SMT (mostly all function/variable declarations)
 -- TODO: when the program is added it will need to be included here
