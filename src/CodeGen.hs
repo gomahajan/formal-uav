@@ -210,7 +210,7 @@ initializeParams :: CompleteSpec -> [String]
 initializeParams spec = logic : (vdecls ++ defs ++ pbounds)
   where
     params = (_pNames . _uavParams) spec
-    vdecls = fmap declFun ((_allVars . _vars) spec)
+    vdecls = fmap declFun (params ++ (keys ((_defns . _declarations) spec)))
     defList = assocs $ (_defns . _declarations) spec
     defs = zipWith initConstant (fmap fst defList) (fmap (show . snd) defList)
     -- TODO: generalize pmax below

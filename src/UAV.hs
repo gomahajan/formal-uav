@@ -360,14 +360,16 @@ writeParamTemplate p spec = do
   writeFile f f
 
 -- Create uav_dreal_parameter_constant_template.smt2
-writeParamConstTemplate :: String -> CompleteSpec -> IO ()
-writeParamConstTemplate f spec = do
-  let --f = paramConstantFile p
+-- TODO: doesn't do the norm function for now -- is that necessary? we don't use it...
+writeParamConstTemplate :: Params -> CompleteSpec -> IO ()
+writeParamConstTemplate p spec = do
+  let f = paramConstantFile p
       top = initializeParams spec
       hole = ["\ncounterexamples\n"]
       footer = z3Footer spec
   writeFile f (unlines (top ++ hole ++ footer))
 
+{--
 testWrite :: String -> String -> IO ()
 testWrite infile outfile = do
   x <- parseFromFile parseDecls infile
@@ -376,3 +378,4 @@ testWrite infile outfile = do
     Right decls -> do
       let spec = finishSpec decls
       writeParamConstTemplate outfile spec
+--}
