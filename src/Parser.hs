@@ -362,5 +362,5 @@ parseNot = do
   whitespace
   char '!'
   whitespace
-  p <- parseTerm
+  p <- parsePred
   return $ Not p
