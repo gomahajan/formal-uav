@@ -320,20 +320,32 @@ binOpTokens = Map.fromList [ (Times, "*")
 
 
 -- Predicate parsers:
--- This is a little hacky, couldn't do buildExpressionParser since
---   the types are structured differently (ie wrong)
--- This is also probably right-associative, not left-associative...
--- my bad
--- it works though
--- future hack: restructure AST for left-associativity after parsing
+-- TODO: typecheck the predicates? it's possible to have real-valued
+--   preds, which are meaningless in an And for example
 
 parsePred :: Parser Pred
---parsePred = try parseExpr <|> try parseParens <|> try parseNot <|> try parseImpl <|> try parseAnd <|> parseOr --try parseOr <|> parseExpr <?> "Predicate"
---parsePred = try parseImpl <|> try parseAnd <|> try parseOr <|> try parseNot <|> try parseParens <|> parseExpr
-parsePred = try parseImpl <|> try parseAnd <|> try parseOr <|> try parseParens <|> try parseNotP <|> parseTerm
+parsePred = chainl1 parseTerm parsePEx
 
-parseTerm = try parseNotT <|> parseExpr
+-- Parser for predicate expressions (and, or, etc)
+parsePEx :: Parser (Pred -> Pred -> Pred)
+parsePEx = do
+  whitespace
+  s <- string "=>" <|> string "&&" <|> string "||"
+  whitespace
+  case s of
+    "=>" -> return Impl
+    "&&" -> return BAnd
+    "||" -> return BOr
 
+-- Parser for predicate terminals
+parseTerm :: Parser Pred
+parseTerm = try parseNot <|> try parseParens <|> parseExpr
+
+
+parseExpr :: Parser Pred
+parseExpr = do
+  e <- parseODE
+  return $ Expr e
 
 parseParens :: Parser Pred
 parseParens = do
@@ -343,59 +355,12 @@ parseParens = do
   p <- parsePred
   whitespace
   char ')'
-  whitespace
   return p
 
-parseExpr :: Parser Pred
-parseExpr = do
-  e <- parseODE
-  return $ Expr e
-
-parseAnd :: Parser Pred
-parseAnd = do
-  whitespace
-  p1 <- parseTerm
-  whitespace
-  string "&&"
-  whitespace
-  p2 <- parsePred
-  whitespace
-  return $ BAnd p1 p2
-
-parseOr :: Parser Pred
-parseOr = do
-  whitespace
-  p1 <- parseTerm
-  whitespace
-  string "||"
-  whitespace
-  p2 <- parsePred
-  whitespace
-  return $ BOr p1 p2
-
-parseNotP :: Parser Pred
-parseNotP = do
-  whitespace
-  char '!'
-  whitespace
-  p <- parsePred
-  return $ Not p
-
-parseNotT :: Parser Pred
-parseNotT = do
+parseNot :: Parser Pred
+parseNot = do
   whitespace
   char '!'
   whitespace
   p <- parseTerm
   return $ Not p
-
-parseImpl :: Parser Pred
-parseImpl = do
-  whitespace
-  p1 <- parseTerm
-  whitespace
-  string "=>"
-  whitespace
-  p2 <- parsePred
-  whitespace
-  return $ Impl p1 p2
