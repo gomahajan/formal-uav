@@ -243,8 +243,9 @@ initializeParamConsts spec = logic : (vdecls ++ defs ++ pbounds ++ slocs)
 -- Top-level declarations for SMT (mostly all function/variable declarations)
 -- TODO: when the program is added it will need to be included here
 initializeSMT :: CompleteSpec -> [String]
-initializeSMT spec = logic : (vdecls ++ defs ++ slocs ++ tmin ++ doms ++ choice)
+initializeSMT spec = logic : (vdecls ++ defs ++ slocs ++ tmin ++ doms ++ hole ++ choice)
   where
+    hole = ["\nparametervalues\n"]
     params = _uavParams spec
     choice = initChoice (_numSensors spec)
     vdecls = fmap declFun ((_allVars . _vars) spec)

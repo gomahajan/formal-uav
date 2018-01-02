@@ -358,7 +358,11 @@ writeParamTemplate :: Params -> CompleteSpec -> IO ()
 writeParamTemplate p spec = do
   let f = paramTempFile p
       top = initializeParams spec
-  writeFile f $ unlines top
+      charge = printCharge "charge" spec
+      flyto = printFlyTo "fly_to" spec
+      collect = printCollect "collect" spec
+      flyfrom = printFlyFrom "fly_back" spec
+  writeFile f $ unlines (top ++ charge ++ flyto ++ collect ++ flyfrom)
 
 -- Create uav_dreal_parameter_constant_template.smt2
 -- TODO: doesn't do the norm function for now -- is that necessary? we don't use it...
