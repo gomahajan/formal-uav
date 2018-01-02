@@ -88,7 +88,8 @@ makeLenses ''Vars
 -- TODO: expand this. This would probably be a good place for the
 --   param program/variables to go?
 data UAVParams = UAVParams {
-  _varNames :: [String]
+  _varNames :: [String],
+  _pNames :: [String]
 } deriving (Show, Eq)
 
 makeLenses ''UAVParams
@@ -97,7 +98,8 @@ makeLenses ''UAVParams
 -- Temporary helper
 uavParameters :: UAVParams
 uavParameters = UAVParams {
-  _varNames = ["p0"] --this obviously does nothing
+  _varNames = ["p0"],
+  _pNames = ["p0"]
 }
 
 data CompleteSpec = CompleteSpec {
@@ -203,6 +205,18 @@ sensorModeToUAV s spec = fmap uavMode mode
   where
     ms = (_modeDefs . _declarations) spec
     mode = find (\m -> sensorMode m == s) ms
+
+initializeParams :: CompleteSpec -> [String]
+initializeParams spec = logic : (vdecls ++ defs ++ pbounds)
+  where
+    params = (_pNames . _uavParams) spec
+    vdecls = fmap declFun ((_allVars . _vars) spec)
+    defList = assocs $ (_defns . _declarations) spec
+    defs = zipWith initConstant (fmap fst defList) (fmap (show . snd) defList)
+    -- TODO: generalize pmax below
+    pdoms = replicate (length params) Domain {vmin = Just 0.0, vmax = Just 100.0}
+    pdoms' = zip params pdoms
+    pbounds = fmap declBound pdoms'
 
 -- Top-level declarations for SMT (mostly all function/variable declarations)
 -- TODO: when the program is added it will need to be included here
@@ -392,3 +406,11 @@ declBound (v, d) = case ((vmin d), (vmax d)) of
   (Just low, Nothing) -> "(assert (>= " ++ v ++ " " ++ show low ++ "))"
   (Nothing, Just high) -> "(assert (<= " ++ v ++ " " ++ show high ++ "))"
   (Just low, Just high) -> "(assert (>= " ++ v ++ " " ++ show low ++ "))" ++ "\n" ++ "(assert (<= " ++ v ++ " " ++ show high ++ "))"
+
+z3Footer :: CompleteSpec -> [String]
+z3Footer spec = [sat, ps', ex]
+  where
+    sat = "(check-sat)"
+    ps = unwords $ (_pNames . _uavParams) spec
+    ps' = "(get-value (" ++ ps ++ "))"
+    ex = "(exit)"

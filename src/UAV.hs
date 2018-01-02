@@ -346,7 +346,12 @@ writeSMT infile outfile = do
 writeTemplate :: Params -> CompleteSpec -> IO ()
 writeTemplate p spec = do
   let f = templateFile p
-  writeFile f f
+      smt = initializeSMT spec
+      charge = printCharge "charge" spec
+      flyto = printFlyTo "fly_to" spec
+      collect = printCollect "collect" spec
+      flyfrom = printFlyFrom "fly_back" spec
+  writeFile f (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initGoal (_numSensors spec) ++ endSMT))
 
 -- Create uav_dreal_paramterer_template.smt2
 writeParamTemplate :: Params -> CompleteSpec -> IO ()
@@ -355,7 +360,19 @@ writeParamTemplate p spec = do
   writeFile f f
 
 -- Create uav_dreal_parameter_constant_template.smt2
-writeParamConstTemplate :: Params -> CompleteSpec -> IO ()
-writeParamConstTemplate p spec = do
-  let f = paramConstantFile p
-  writeFile f f
+writeParamConstTemplate :: String -> CompleteSpec -> IO ()
+writeParamConstTemplate f spec = do
+  let --f = paramConstantFile p
+      top = initializeParams spec
+      hole = ["\ncounterexamples\n"]
+      footer = z3Footer spec
+  writeFile f (unlines (top ++ hole ++ footer))
+
+testWrite :: String -> String -> IO ()
+testWrite infile outfile = do
+  x <- parseFromFile parseDecls infile
+  case x of
+    Left e -> error $ show e
+    Right decls -> do
+      let spec = finishSpec decls
+      writeParamConstTemplate outfile spec
