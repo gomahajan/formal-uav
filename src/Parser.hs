@@ -104,11 +104,7 @@ parseDecls = do
   defs <- many $ try parseDef
   ignore
   doms <- many $ try parseDomain
-  ignore
-  string "#complete_dynamics" -- relational dynamics
-  ignore
-  modes <- many1 $ try parseMode
-  ignore
+  modes <- try parseCD
   string "#variables" -- variables
   ignore
   vars <- many1 $ try parseVar
@@ -119,6 +115,12 @@ parseDecls = do
   ignore
   s <- many1 $ try parseSensor
   ignore
+  let modes' = case modes of
+       [] -> [Mode {modeId = 0, uavMode = "charge", sensorMode = "collect"}
+            , Mode {modeId = 1, uavMode = "fly_to", sensorMode = "collect"}
+            , Mode {modeId = 2, uavMode = "download", sensorMode = "upload"}
+            , Mode {modeId = 3, uavMode = "fly_back", sensorMode = "collect"}]
+       m  -> m
   return Decls {
     _defns = Map.fromList defs,
     _varDomains = Map.fromList doms,
@@ -128,6 +130,7 @@ parseDecls = do
     _prog = [],
     _environment = vars
   }
+
 
 opNames :: [String]
 opNames = Map.elems unOpTokens ++ Map.elems binOpTokens ++ ["//"]
@@ -210,6 +213,15 @@ parseDomain = do
   char ']'
   ignore
   return (v, Domain { vmin = Just x, vmax = Just y } )
+
+parseCD :: Parser [Mode]
+parseCD = do
+  ignore
+  string "#complete_dynamics" -- relational dynamics
+  ignore
+  modes <- many1 $ try parseMode
+  ignore
+  return modes
 
 parseMode :: Parser Mode
 parseMode = do

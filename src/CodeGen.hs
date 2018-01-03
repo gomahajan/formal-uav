@@ -383,7 +383,7 @@ printSensors spec (Just mode) modeNum prevModeNum sensors = fmap ((printConstrai
 
 --TODO: automate this! (especially once we actually add the program)
 initGoal :: CompleteSpec -> [String]
-initGoal spec = preamble "Goal" ++ ["(assert (not (=>" ++ initInvariant numSensors "i" ++ "(and "++ initSafety spec ++ initInvariant numSensors "3" ++ "))))"]
+initGoal spec = preamble "Goal" ++ ["(assert (not (=>" ++ initInvariant spec "i" ++ "(and "++ initSafety spec ++ initInvariant spec "3" ++ "))))"]
   where numSensors = _numSensors spec
 
 initSafety :: CompleteSpec -> String
@@ -394,15 +394,19 @@ initSafety spec = printConstraint' env (And (bbounds ++ sbounds))
     qs = fmap (("_q" ++) . show) [0..3]
     s = fmap (("s" ++) . show) [1..numSensors]
     sqs = concatMap (\sen -> fmap (sen ++) qs) s
-    sbounds = fmap (\s -> Expr (EBin Lt (EStrLit s) (ERealLit 100))) sqs
+    smax = vmax $ (_varDomains . _declarations) spec ! "s"
+    smax' = fromMaybe 100.0 smax
+    sbounds = fmap (\s -> Expr (EBin Lt (EStrLit s) (ERealLit smax'))) sqs
     bs = fmap (("b" ++) . show) [0..3]
-    bbounds = fmap (\b -> Expr (EBin Gt (EStrLit b) (ERealLit 0))) bs
+    bmin = vmin $ (_varDomains . _declarations) spec ! "b"
+    bmin' = fromMaybe 0.0 bmin
+    bbounds = fmap (\b -> Expr (EBin Gt (EStrLit b) (ERealLit bmin'))) bs
 
 -- not sure we can automate this construction with numSensors as an argument without
 --   expressing the program in the DSL somewhere
-initInvariant :: Int -> String -> String
-initInvariant numSensors stepNum = "(or (and (>= b" ++ stepNum ++ " p0) (<= s1_q" ++ stepNum ++ " p1) (<= s2_q" ++ stepNum ++ " p2)) (and (>= b" ++ stepNum ++ " p3) (<= s1_q" ++ stepNum ++ " p4) (<= s2_q" ++ stepNum ++ " p5)))"
-
+-- This is wrong right now
+initInvariant :: CompleteSpec -> String -> String
+initInvariant spec index = ";placeholder"
 
 -- Initialize choice variable
 initChoice :: Env -> Int -> [String]

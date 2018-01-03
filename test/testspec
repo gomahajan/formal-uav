@@ -11,22 +11,6 @@
 #domain b [0,100]
 #domain q [0,100]
 
-
-// Relational dynamics
-#complete_dynamics
-mode 0:
-  uav: charge
-  sensor: collect
-mode 1:
-  uav: fly_to
-  sensor: collect
-mode 2:
-  uav: download
-  sensor: upload
-mode 3:
-  uav: fly_back
-  sensor: collect
-
 // Environment: variable definitions
 #variables
 r = t * t

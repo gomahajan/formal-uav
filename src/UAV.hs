@@ -382,5 +382,5 @@ testWrite infile outfile = do
     Left e -> error $ show e
     Right decls -> do
       let spec = finishSpec decls
-      writeParamTemplate outfile spec
+      writeFile outfile (initSafety spec)
 -}
