@@ -58,7 +58,6 @@ data Transition = Transition {
   _pred :: Pred
 } deriving (Show, Eq)
 
-type Env = Map String Pred
 
 -- Overall specification (for parsing)
 data Decls = Decls {
@@ -207,8 +206,9 @@ sensorModeToUAV s spec = fmap uavMode mode
     mode = find (\m -> sensorMode m == s) ms
 
 initializeParams :: CompleteSpec -> [String]
-initializeParams spec = vdecls ++ cxdecs ++ defs ++ tmin ++ doms ++ choice ++ hole ++  [(printConstraint cxgoal)]
+initializeParams spec = vdecls ++ cxdecs ++ defs ++ tmin ++ doms ++ choice ++ hole ++  [(printConstraint env cxgoal)]
   where
+    env = _environment . _declarations $ spec
     hole = ["\nbatteryvalue\n"]
     params = _uavParams spec
     numSensors = _numSensors spec
@@ -217,7 +217,7 @@ initializeParams spec = vdecls ++ cxdecs ++ defs ++ tmin ++ doms ++ choice ++ ho
     cxdecs = fmap declFun cxs
     cxgoal = And (zipWith (\x y -> (Expr (EBin Eq (EStrLit x) (EStrLit y)))) cxs ivs)
     mkvars v = ("b" ++ v) : fmap ((++ ("_q" ++ v)) . ("s" ++) . show) [0..(numSensors - 1)]
-    choice = initChoice (_numSensors spec)
+    choice = initChoice env (_numSensors spec)
     vdecls = fmap declFun $ ((_allVars . _vars) spec) ++ cxs
     defList = assocs $ (_defns . _declarations) spec
     defs = zipWith initConstant (fmap fst defList) (fmap (show . snd) defList)
@@ -245,9 +245,10 @@ initializeParamConsts spec = logic : (vdecls ++ defs ++ pbounds ++ slocs)
 initializeSMT :: CompleteSpec -> [String]
 initializeSMT spec = logic : (vdecls ++ defs ++ slocs ++ tmin ++ doms ++ hole ++ choice)
   where
+    env = _environment . _declarations $ spec
     hole = ["\nparametervalues\n"]
     params = _uavParams spec
-    choice = initChoice (_numSensors spec)
+    choice = initChoice env (_numSensors spec)
     vdecls = fmap declFun ((_allVars . _vars) spec)
     defList = assocs $ (_defns . _declarations) spec
     defs = zipWith initConstant (fmap fst defList) (fmap (show . snd) defList)
@@ -265,13 +266,14 @@ printDynamics mode spec curr prev = xds ++ bds ++ sens
     qc = "q" ++ curr
     qp = "q" ++ prev
     smode = uavModeToSensor mode spec
-    sens = printSensors smode qc qp ((_sensors . _declarations) spec)
+    sens = printSensors spec smode qc qp ((_sensors . _declarations) spec)
 
 -- TODO: refactor so that the following two functions are encapsulated in one
 -- Prints dynamics for an arbitrary variable (b or q)
 printDEs :: String -> CompleteSpec -> String -> String -> String -> (UAVMode -> ODE) -> [String]
-printDEs mode spec var curr prev dynamics = [printConstraint new]
+printDEs mode spec var curr prev dynamics = [printConstraint env new]
   where
+    env = _environment . _declarations $ spec
     vc = var ++ curr
     vp = var ++ prev
     uavm = find (\m -> modeName m == mode) ((_uavModes . _declarations) spec)
@@ -307,8 +309,9 @@ printFlyFrom name spec = preamble "flying back" ++ fmap (replace " t" " t3") (po
 -- ...
 -- For now
 printCollect :: String -> CompleteSpec -> [String]
-printCollect name spec = preamble "Collecting data" ++ fmap (replace " t" " t2") (pos : battery ++ fmap printConstraint completePred)
+printCollect name spec = preamble "Collecting data" ++ fmap (replace " t" " t2") (pos : battery ++ fmap (printConstraint env) completePred)
   where
+    env = _environment . _declarations $ spec
     params = _uavParams spec
     -- battery dynamics
     uavm = sensorModeToUAV name spec
@@ -357,8 +360,9 @@ assembleSensors qs = fmap others qs
 
 -- Print constraints for uav flying to sensor
 printFlyTo :: String -> CompleteSpec -> [String]
-printFlyTo name spec = preamble "flying to sensors" ++ fmap (replace " t" " t1") (fmap printConstraint impls ++ dyn)
+printFlyTo name spec = preamble "flying to sensors" ++ fmap (replace " t" " t1") (fmap (printConstraint env) impls ++ dyn)
   where
+    env = _environment . _declarations $ spec
     params = _uavParams spec
     numm = _numModes spec
     nums = _numSensors spec
@@ -367,22 +371,26 @@ printFlyTo name spec = preamble "flying to sensors" ++ fmap (replace " t" " t1")
     dyn = printDynamics name spec (show 1) (show 0)
 
 -- Prints sensor dynamics for a given mode
-printSensors :: Maybe String -> String -> String -> [Sensor] -> [String]
-printSensors Nothing _ _ _ = error "Invalid UAV mode"
-printSensors (Just mode) modeNum prevModeNum sensors = fmap (printConstraint . Expr) s
-  where ids = fmap ((++ ("_" ++ modeNum)) . ("s" ++) . show . sId) sensors
+printSensors :: CompleteSpec -> Maybe String -> String -> String -> [Sensor] -> [String]
+printSensors _ Nothing _ _ _ = error "Invalid UAV mode"
+printSensors spec (Just mode) modeNum prevModeNum sensors = fmap ((printConstraint env) . Expr) s
+  where env = _environment . _declarations $ spec
+        ids = fmap ((++ ("_" ++ modeNum)) . ("s" ++) . show . sId) sensors
         prevIds = fmap ((++ ("_" ++ prevModeNum)) . ("s" ++) . show . sId) sensors
         dyn = fmap ((! mode) . modes) sensors
         s = zipWith3 (\p c d -> (EBin Eq (EStrLit c) (EBin Plus (EStrLit p) d))) prevIds ids dyn
 
 
 --TODO: automate this! (especially once we actually add the program)
-initGoal :: Int -> [String]
-initGoal numSensors = preamble "Goal" ++ ["(assert (not (=>" ++ initInvariant numSensors "i" ++ "(and "++ initSafety numSensors ++ initInvariant numSensors "3" ++ "))))"]
+initGoal :: CompleteSpec -> [String]
+initGoal spec = preamble "Goal" ++ ["(assert (not (=>" ++ initInvariant numSensors "i" ++ "(and "++ initSafety spec ++ initInvariant numSensors "3" ++ "))))"]
+  where numSensors = _numSensors spec
 
-initSafety :: Int -> String
-initSafety numSensors = printConstraint' (And (bbounds ++ sbounds))
+initSafety :: CompleteSpec -> String
+initSafety spec = printConstraint' env (And (bbounds ++ sbounds))
   where
+    numSensors = _numSensors spec
+    env = _environment . _declarations $ spec
     qs = fmap (("_q" ++) . show) [0..3]
     s = fmap (("s" ++) . show) [1..numSensors]
     sqs = concatMap (\sen -> fmap (sen ++) qs) s
@@ -397,12 +405,12 @@ initInvariant numSensors stepNum = "(or (and (>= b" ++ stepNum ++ " p0) (<= s1_q
 
 
 -- Initialize choice variable
-initChoice :: Int -> [String]
-initChoice n = top : [ors]
+initChoice :: Env -> Int -> [String]
+initChoice env n = top : [ors]
   where
     top = declFun "choice"
     con = Or (fmap ((Expr . EBin Eq (EStrLit "choice") . ERealLit) . fromIntegral) [0..(n-1)])
-    ors = printConstraint con
+    ors = printConstraint env con
 
 -- SMT syntax printing utilities
 

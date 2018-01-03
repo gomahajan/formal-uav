@@ -27,6 +27,9 @@ mode 3:
   uav: fly_back
   sensor: collect
 
+// Environment: variable definitions
+#variables
+r = t * t
 
 // UAV Dynamics
 #uav

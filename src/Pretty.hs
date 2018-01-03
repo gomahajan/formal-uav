@@ -6,28 +6,32 @@ import Data.Ratio
 import Logic
 
 
-printConstraint :: Pred -> String
-printConstraint p = "(assert " ++ printConstraint' p ++ ")"
+printConstraint :: Env -> Pred -> String
+printConstraint e p = "(assert " ++ printConstraint' e p ++ ")"
 
-printConstraint' :: Pred -> String
-printConstraint' (Lit b)     = map toLower (show b)
-printConstraint' (Expr e)    = printE e
-printConstraint' (And ps) = "(and " ++ unwords (map printConstraint' ps) ++ ")"
-printConstraint' (Or ps)  = "(or " ++ unwords (map printConstraint' ps) ++ ")"
-printConstraint' (Not p)     = "(not " ++ printConstraint' p ++ ")"
-printConstraint' (Impl p1 p2) = "(=> " ++ printConstraint' p1 ++ " " ++ printConstraint' p2 ++ ")"
+printConstraint' :: Env -> Pred -> String
+printConstraint' _ (Lit b)     = map toLower (show b)
+printConstraint' env (Expr e)    = printE env e
+printConstraint' env (And ps) = "(and " ++ unwords (map (printConstraint' env) ps) ++ ")"
+printConstraint' env (Or ps)  = "(or " ++ unwords (map (printConstraint' env) ps) ++ ")"
+printConstraint' env (Not p)     = "(not " ++ printConstraint' env p ++ ")"
+printConstraint' env (Impl p1 p2) = "(=> " ++ printConstraint' env p1 ++ " " ++ printConstraint' env p2 ++ ")"
 
 
-printE :: Exp -> String
-printE (EStrLit s)     = s
+printE :: Env -> Exp -> String
+printE env (EStrLit s)     = case lookup s env of
+  Nothing -> s
+  Just p -> printConstraint' env p
 --printE (ERealLit x)    =  "(/ " ++ show n ++ " " ++ show d ++ ")"
 --  where r = toRational x
 --        n = numerator r
 --        d = denominator r
-printE (ERealLit x)    =  show x
-printE (EUOp op e)     = "(" ++ printUOp op ++ " " ++ printE e ++ ")"
-printE (EBin op e1 e2) = "(" ++ printBOp op ++ " " ++ printE e1 ++ " " ++ printE e2 ++ ")"
-printE (EVar s)        = s
+printE _ (ERealLit x)    =  show x
+printE env (EUOp op e)     = "(" ++ printUOp op ++ " " ++ printE env e ++ ")"
+printE env (EBin op e1 e2) = "(" ++ printBOp op ++ " " ++ printE env e1 ++ " " ++ printE env e2 ++ ")"
+printE env (EVar s)        = case lookup s env of
+  Nothing -> s
+  Just p -> printConstraint' env p
 
 printUOp :: UnOp -> String
 printUOp Neg = "-"

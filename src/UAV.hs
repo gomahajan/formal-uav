@@ -102,11 +102,11 @@ cegisLoop p =
   if iterations p <= 0
   then return $ Just (params p, False)
   else do
-    let paramStr = unlines (fmap (printConstraint . Expr) (zipWith (EBin Eq) (fmap (EStrLit . fst) (params p)) (fmap (ERealLit . snd) (params p))))
+    let paramStr = unlines (fmap ((printConstraint []) . Expr) (zipWith (EBin Eq) (fmap (EStrLit . fst) (params p)) (fmap (ERealLit . snd) (params p))))
         balls = findAllCXBalls (synthesisPrecision p) (zip3 (bcxs p) (qcxs p) (qcxs2 p))
         ballStr = case balls of
           [] -> ""
-          bs -> printConstraint (And (fmap Not bs))
+          bs -> printConstraint [] (And (fmap Not bs))
     addParams (paramStr ++ "\n" ++ ballStr) (templateFile p) (completeFile p)
     when (verboseMode p) $ putStrLn "Finding counterexample..."
     output <- run (dRealVersion (solverConfig p)) (solverConfig p) (completeFile p) (solverPrecision p)
@@ -340,7 +340,7 @@ writeSMT infile outfile = do
           flyto = printFlyTo "fly_to" spec
           collect = printCollect "collect" spec
           flyfrom = printFlyFrom "fly_back" spec
-      writeFile outfile (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initGoal (_numSensors spec) ++ endSMT))
+      writeFile outfile (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initGoal spec ++ endSMT))
 
 -- Create uav_dreal_template.smt2
 writeTemplate :: Params -> CompleteSpec -> IO ()
@@ -351,7 +351,7 @@ writeTemplate p spec = do
       flyto = printFlyTo "fly_to" spec
       collect = printCollect "collect" spec
       flyfrom = printFlyFrom "fly_back" spec
-  writeFile f (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initGoal (_numSensors spec) ++ endSMT))
+  writeFile f (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initGoal spec ++ endSMT))
 
 -- Create uav_dreal_paramterer_template.smt2
 writeParamTemplate :: Params -> CompleteSpec -> IO ()

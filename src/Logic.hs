@@ -78,6 +78,8 @@ data Pred = Lit Bool
   | Impl Pred Pred
   deriving (Eq, Show)
 
+type Env = [(String, Pred)]
+
 -- Convert preliminary BAnd to regular And (or Or)
 convert :: Pred -> Pred
 convert p@(BAnd p1 p2) = And $ convert <$> getps p

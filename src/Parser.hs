@@ -109,6 +109,10 @@ parseDecls = do
   ignore
   modes <- many1 $ try parseMode
   ignore
+  string "#variables" -- variables
+  ignore
+  vars <- many1 $ try parseVar
+  ignore
   string "#uav" -- uav dynamics
   ignore
   uavms <- many1 $ try parseUAV
@@ -122,7 +126,7 @@ parseDecls = do
     _uavModes = uavms,
     _sensors = s,
     _prog = [],
-    _environment = empty
+    _environment = vars
   }
 
 opNames :: [String]
@@ -152,6 +156,17 @@ lexer :: Token.TokenParser ()
 lexer = Token.makeTokenParser specLang
 
 parens = Token.parens lexer
+
+parseVar :: Parser (String, Pred)
+parseVar = do
+  whitespace
+  s <- name
+  whitespace
+  char '='
+  whitespace
+  v <- parsePred
+  whitespace
+  return (s,v)
 
 parseDynamics :: Char -> Parser ODE
 parseDynamics c = do
@@ -339,7 +354,7 @@ parsePEx = do
 
 -- Parser for predicate terminals
 parseTerm :: Parser Pred
-parseTerm = try parseNot <|> try parseParens <|> parseExpr
+parseTerm = try parseNot <|> try parseParens <|> try parsePLit <|> parseExpr
 
 
 parseExpr :: Parser Pred
@@ -356,6 +371,15 @@ parseParens = do
   whitespace
   char ')'
   return p
+
+parsePLit :: Parser Pred
+parsePLit = do
+  whitespace
+  s <- string "True" <|> string "False"
+  whitespace
+  case s of
+    "True" -> return $ Lit True
+    "False" -> return $ Lit False
 
 parseNot :: Parser Pred
 parseNot = do
