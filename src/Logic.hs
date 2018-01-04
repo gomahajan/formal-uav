@@ -4,6 +4,7 @@ module Logic where
 
 import Text.Parsec
 import Data.Map
+import Data.String.Utils
 import Control.Monad.Except
 
 type Counterexample = (Double, Double)
@@ -98,6 +99,23 @@ getps (BAnd p1 p2) = p1 : case p2 of
 getps (BOr p1 p2) = p1 : case p2 of
   (BOr p3 p4) -> getps p2
   _           -> [p2]
+
+-- Replace string x with string y in predicate
+replacePred :: String -> String -> Pred -> Pred
+replacePred x y (Expr e)     = Expr $ replaceExp x y e
+replacePred x y (And ps)     = And $ fmap (replacePred x y) ps
+replacePred x y (Or ps)      = And $ fmap (replacePred x y) ps
+replacePred x y (Not p)      = Not $ replacePred x y p
+replacePred x y (Impl p1 p2) = Impl (replacePred x y p1) (replacePred x y p2)
+
+
+
+replaceExp :: String -> String -> Exp -> Exp
+replaceExp x y (EStrLit s)     = EStrLit (replace x y s)
+replaceExp x y (EUOp op e)     = EUOp op (replaceExp x y e)
+replaceExp x y (EBin op e1 e2) = EBin op (replaceExp x y e1) (replaceExp x y e2)
+replaceExp x y (EVar s)        = EVar (replace x y s)
+replaceExp x y e               = e
 
 {- Currently unused!
 -- Checks that predicate is well formed (ie all terms are booleans)

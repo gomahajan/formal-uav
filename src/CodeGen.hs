@@ -88,14 +88,6 @@ data UAVParams = UAVParams {
 
 makeLenses ''UAVParams
 
--- Initialize program and values
--- Temporary helper
-uavParameters :: UAVParams
-uavParameters = UAVParams {
-  _varNames = ["p0"],
-  _pNames = ["p0"]
-}
-
 data CompleteSpec = CompleteSpec {
   _declarations :: Decls,
   _numModes :: Int,
@@ -156,8 +148,15 @@ finishSpec d = CompleteSpec {
   _numModes = length (_uavModes d),
   _vars = generateVars d,
   _numSensors = length (_sensors d),
-  _uavParams = uavParameters
+  _uavParams = initUAVParams (_numHoles d)
 }
+
+initUAVParams :: Int -> UAVParams
+initUAVParams x = UAVParams {
+  _varNames = ps,
+  _pNames = ps
+} where
+    ps = fmap (("p" ++) . show) [0..(x-1)]
 
 -- Functions for converting specification to SMT-readable form
 
@@ -165,7 +164,7 @@ finishSpec d = CompleteSpec {
 generateVars :: Decls -> Vars
 generateVars ds = Vars {
   _allDomains = bdoms ++ qdoms,
-  _allVars = xs ++ bs ++ sqs ++ ts ++ ks ++ sls,
+  _allVars = xs ++ bs ++ sqs ++ ts ++ ks ++ sls ++ ps,
   _tvars = ts,
   _xvars = xs,
   _bvars = bs,
@@ -185,6 +184,7 @@ generateVars ds = Vars {
     xdoms = zip xs (replicate numModes (_varDomains ds ! "x" ))
     bdoms = zip bs (replicate (numModes + 1) (_varDomains ds ! "b" ))
     qdoms = zip sqs (replicate (numSensors * (numModes + 1)) (_varDomains ds ! "q" ))
+    ps = fmap (("p" ++) . show) [0..((_numHoles ds)-1)]
 
 -- Get corresponding sensor mode from a UAV mode
 uavModeToSensor :: String -> CompleteSpec -> Maybe String
@@ -408,11 +408,14 @@ initSafety spec = printConstraint' env (And (bbounds ++ sbounds))
     bmin' = fromMaybe 0.0 bmin
     bbounds = fmap (\b -> Expr (EBin Gt (EStrLit b) (ERealLit bmin'))) bs
 
--- not sure we can automate this construction with numSensors as an argument without
---   expressing the program in the DSL somewhere
+
 -- This is wrong right now
 initInvariant :: CompleteSpec -> String -> String
-initInvariant spec index = ";placeholder"
+initInvariant spec index = printConstraint' env invt''
+  where env =_environment . _declarations $ spec
+        invt = _invt . _declarations $ spec
+        invt' = replacePred "b" ("b" ++ index) invt
+        invt'' = replacePred "q" ("q" ++ index) invt
 
 -- Initialize choice variable
 initChoice :: Env -> Int -> [String]
