@@ -34,7 +34,8 @@ data Domain = Domain {
 data UAVMode = UAVMode {
   modeName :: String,
   xde :: ODE, -- position dynamics
-  bde :: ODE -- battery dynamics
+  bde :: ODE, -- battery dynamics
+  prog :: [Pred]
 } deriving (Show, Eq)
 
 data Sensor = Sensor {
@@ -51,13 +52,6 @@ data Mode = Mode {
   sensorMode :: String
 } deriving (Show, Eq)
 
--- Goal mode and
-data Transition = Transition {
-  _startMode :: Int,
-  _goalMode :: Int,
-  _pred :: Pred
-} deriving (Show, Eq)
-
 
 -- Overall specification (for parsing)
 data Decls = Decls {
@@ -66,8 +60,9 @@ data Decls = Decls {
   _modeDefs :: [Mode],
   _uavModes :: [UAVMode],
   _sensors :: [Sensor],
-  _prog :: [Transition],
-  _environment :: Env
+  _environment :: Env,
+  _numHoles :: Int,
+  _invt :: Pred
 } deriving (Show, Eq)
 
 makeLenses ''Decls
@@ -287,21 +282,30 @@ printDEs mode spec var curr prev dynamics = [printConstraint env new]
 preamble :: String -> [String]
 preamble title = "\n" : [";" ++ title]
 
+printProgMode :: String -> CompleteSpec -> [String]
+printProgMode name spec = fmap (printConstraint ((_environment . _declarations) spec)) (prog m')
+  where
+    modes = (_uavModes . _declarations) spec
+    m = find (\x -> modeName x == name) modes
+    m' = fromMaybe (error "Invalid mode") m
+
 -- TODO: is it still ok to have x dynamics?
 printCharge :: String -> CompleteSpec -> [String]
-printCharge name spec = preamble "charging" ++ fmap (replace " t" " t0") (pos : dyn)
+printCharge name spec = preamble "charging" ++ fmap (replace " t" " t0") (pos : dyn ++ prog)
   where
     params = _uavParams spec
     pos = initConstant "xi" "0"
     dyn = printDynamics name spec (show 0) "i"
+    prog = printProgMode name spec
 
 -- Print mode flying from sensor to charge
 printFlyFrom :: String -> CompleteSpec -> [String]
-printFlyFrom name spec = preamble "flying back" ++ fmap (replace " t" " t3") (pos : dyn)
+printFlyFrom name spec = preamble "flying back" ++ fmap (replace " t" " t3") (pos : dyn ++ prog)
   where
     params = _uavParams spec
     pos = initConstant "x3" "0"
     dyn = printDynamics name spec (show 3) (show 2)
+    prog = printProgMode name spec
 
 -- Prints constraints for the "collect data" mode
 -- This is impossible to understand sorry
@@ -309,7 +313,7 @@ printFlyFrom name spec = preamble "flying back" ++ fmap (replace " t" " t3") (po
 -- ...
 -- For now
 printCollect :: String -> CompleteSpec -> [String]
-printCollect name spec = preamble "Collecting data" ++ fmap (replace " t" " t2") (pos : battery ++ fmap (printConstraint env) completePred)
+printCollect name spec = preamble "Collecting data" ++ fmap (replace " t" " t2") (pos : battery ++ fmap (printConstraint env) completePred ++ prog)
   where
     env = _environment . _declarations $ spec
     params = _uavParams spec
@@ -331,6 +335,7 @@ printCollect name spec = preamble "Collecting data" ++ fmap (replace " t" " t2")
       Nothing -> fmap (: []) uploadDyn
       Just ps -> zipWith (:) uploadDyn ps
     completePred = zipWith (\c s -> Impl c (And s)) choices allSensors
+    prog = printProgMode name spec
 
 -- get dynamics for a given mode from a sensor with a given id number
 getDE :: String -> Int -> [Sensor] -> ODE
@@ -360,7 +365,7 @@ assembleSensors qs = fmap others qs
 
 -- Print constraints for uav flying to sensor
 printFlyTo :: String -> CompleteSpec -> [String]
-printFlyTo name spec = preamble "flying to sensors" ++ fmap (replace " t" " t1") (fmap (printConstraint env) impls ++ dyn)
+printFlyTo name spec = preamble "flying to sensors" ++ fmap (replace " t" " t1") (fmap (printConstraint env) impls ++ dyn ++ prog)
   where
     env = _environment . _declarations $ spec
     params = _uavParams spec
@@ -369,6 +374,7 @@ printFlyTo name spec = preamble "flying to sensors" ++ fmap (replace " t" " t1")
     mkSensor x = "s" ++ show x ++ "_loc"
     impls = fmap ((\x -> Impl (Expr (EBin Eq (EStrLit "choice") (ERealLit x))) (Expr (EBin Eq (EStrLit "x1") (EStrLit (mkSensor x))))) . fromIntegral) [0..(nums - 1)]
     dyn = printDynamics name spec (show 1) (show 0)
+    prog = printProgMode name spec
 
 -- Prints sensor dynamics for a given mode
 printSensors :: CompleteSpec -> Maybe String -> String -> String -> [Sensor] -> [String]
@@ -394,7 +400,7 @@ initSafety spec = printConstraint' env (And (bbounds ++ sbounds))
     qs = fmap (("_q" ++) . show) [0..3]
     s = fmap (("s" ++) . show) [1..numSensors]
     sqs = concatMap (\sen -> fmap (sen ++) qs) s
-    smax = vmax $ (_varDomains . _declarations) spec ! "s"
+    smax = vmax $ (_varDomains . _declarations) spec ! "q"
     smax' = fromMaybe 100.0 smax
     sbounds = fmap (\s -> Expr (EBin Lt (EStrLit s) (ERealLit smax'))) sqs
     bs = fmap (("b" ++) . show) [0..3]

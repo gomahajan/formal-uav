@@ -28,16 +28,21 @@ parseFromFile parser fname = do
 
 --Clears whitespace
 whitespace = void . many $ oneOf " \t\n"
+onelineWS = void . many $ oneOf " \t"
+
+-- debugging helper
+println msg = trace (show msg) $ return ()
 
 ignore = do
   whitespace
-  skipMany comment
+  skipMany comment <?> "comment"
   whitespace
 
-name = many1 $ noneOf " ()\t\n:#"
+name = many1 $ noneOf " ()\t\n:#=[]*/&|{}"
 
 comment :: Parser String
 comment = do
+  onelineWS
   string "//"
   s <- manyTill anyChar newline
   return s
@@ -104,16 +109,20 @@ parseDecls = do
   defs <- many $ try parseDef
   ignore
   doms <- many $ try parseDomain
-  modes <- try parseCD
-  string "#variables" -- variables
   ignore
-  vars <- many1 $ try parseVar
+  modes <- try parseCD <|> return [] <?> "relational dynamics"
   ignore
+  vars <- try parseEnv <|> return [] <?> "environment"
+  ignore
+  numh <- parseHoles
   string "#uav" -- uav dynamics
   ignore
-  uavms <- many1 $ try parseUAV
+  uavms <- many1 (try parseUAV) <?> "uav dynamics"
+  s <- many1 (try parseSensor) <?> "sensor definition"
   ignore
-  s <- many1 $ try parseSensor
+  string "#invariant"
+  ignore
+  inv <- parsePred
   ignore
   let modes' = case modes of
        [] -> [Mode {modeId = 0, uavMode = "charge", sensorMode = "collect"}
@@ -124,11 +133,12 @@ parseDecls = do
   return Decls {
     _defns = Map.fromList defs,
     _varDomains = Map.fromList doms,
-    _modeDefs = modes,
+    _modeDefs = modes',
     _uavModes = uavms,
     _sensors = s,
-    _prog = [],
-    _environment = vars
+    _environment = vars,
+    _numHoles = numh,
+    _invt = convert inv
   }
 
 
@@ -160,6 +170,15 @@ lexer = Token.makeTokenParser specLang
 
 parens = Token.parens lexer
 
+parseEnv :: Parser [(String, Pred)]
+parseEnv = do
+  whitespace
+  string "#variables"
+  ignore
+  vars <- many1 $ try parseVar
+  ignore
+  return vars
+
 parseVar :: Parser (String, Pred)
 parseVar = do
   whitespace
@@ -170,6 +189,17 @@ parseVar = do
   v <- parsePred
   whitespace
   return (s,v)
+
+parseHoles :: Parser Int
+parseHoles = do
+  whitespace
+  string "num_holes"
+  whitespace
+  char '='
+  whitespace
+  ns <- many1 digit
+  ignore
+  return $ read ns
 
 parseDynamics :: Char -> Parser ODE
 parseDynamics c = do
@@ -216,11 +246,9 @@ parseDomain = do
 
 parseCD :: Parser [Mode]
 parseCD = do
-  ignore
-  string "#complete_dynamics" -- relational dynamics
+  s <- string "#complete_dynamics" -- relational dynamics
   ignore
   modes <- many1 $ try parseMode
-  ignore
   return modes
 
 parseMode :: Parser Mode
@@ -257,7 +285,7 @@ parseDynamic v = do
 
 parseUAV :: Parser UAVMode
 parseUAV = do
-  n <- name
+  n <- name <?> "uav mode name"
   whitespace
   char ':'
   ignore
@@ -265,8 +293,18 @@ parseUAV = do
   ignore
   db <- parseDynamic "b"
   ignore
-  return UAVMode { modeName = n, xde = dx, bde = db }
+  ps <- try parseProg <|> return [] <?> "program"
+  ignore
+  return UAVMode { modeName = n, xde = dx, bde = db, prog = ps }
 
+parseProg :: Parser [Pred]
+parseProg = do
+  string "program"
+  whitespace
+  char '{'
+  ps <- many $ try parsePred
+  char '}'
+  return $ fmap convert ps
 
 parseSensor :: Parser Sensor
 parseSensor = do
@@ -351,14 +389,18 @@ binOpTokens = Map.fromList [ (Times, "*")
 --   preds, which are meaningless in an And for example
 
 parsePred :: Parser Pred
-parsePred = chainl1 parseTerm parsePEx
+parsePred = do
+  whitespace
+  p <- chainl1 parseTerm parsePEx
+  whitespace
+  return p
 
 -- Parser for predicate expressions (and, or, etc)
 parsePEx :: Parser (Pred -> Pred -> Pred)
 parsePEx = do
-  whitespace
+  onelineWS
   s <- string "=>" <|> string "&&" <|> string "||"
-  whitespace
+  onelineWS
   case s of
     "=>" -> return Impl
     "&&" -> return BAnd
@@ -366,37 +408,37 @@ parsePEx = do
 
 -- Parser for predicate terminals
 parseTerm :: Parser Pred
-parseTerm = try parseNot <|> try parseParens <|> try parsePLit <|> parseExpr
+parseTerm = try parseParens <|> try parseNot <|> try parsePLit <|> parseExpr <?> "predicate terminal"
 
 
 parseExpr :: Parser Pred
 parseExpr = do
-  e <- parseODE
+  e <- parseODE <?> "Predicate expression"
   return $ Expr e
 
 parseParens :: Parser Pred
 parseParens = do
-  whitespace
+  onelineWS
   char '('
-  whitespace
+  onelineWS
   p <- parsePred
-  whitespace
+  onelineWS
   char ')'
   return p
 
 parsePLit :: Parser Pred
 parsePLit = do
-  whitespace
+  onelineWS
   s <- string "True" <|> string "False"
-  whitespace
+  onelineWS
   case s of
     "True" -> return $ Lit True
     "False" -> return $ Lit False
 
 parseNot :: Parser Pred
 parseNot = do
-  whitespace
+  onelineWS
   char '!'
-  whitespace
-  p <- parsePred
+  onelineWS
+  p <- parseTerm
   return $ Not p

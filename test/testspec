@@ -12,20 +12,31 @@
 #domain q [0,100]
 
 // Environment: variable definitions
-#variables
-r = t * t
+//#variables
+//r = t * t
+
+num_holes = 9
 
 // UAV Dynamics
 #uav
 charge:
   d/dt[x] = 0
   d/dt[b] = battery_charging_rate * t
+  program {
+  ((bi >= p6) => (b0 == bi)) && ((bi < p6) => (b0 == p6))
+  ((bi >= p0) && (s1_qi <= p1) && ((s2_qi + p2) <= s1_q1)) => (choice == 0)
+  !((bi >= p0) && (s1_qi <= p1) && ((s2_qi + p2) <= s1_q1)) => (choice == 1)
+  }
 fly_to:
   d/dt[x] = drone_velocity * t
   d/dt[b] = battery_discharge_rate_fly * t
 download:
   d/dt[x] = 0
   d/dt[b] = battery_discharge_rate_hover * t
+  program {
+  (choice == 0) => ((s1_q1 <= p7) => (s1_q2 == s1_q1)) && ((s1_q1 > p7) => (s1_q2 == p7))
+  (choice == 1) => ((s2_q1 <= p8) => (s2_q2 == s2_q1)) && ((s2_q1 > p8) => (s2_q2 == p8))
+  }
 fly_back:
   d/dt[x] = -(drone_velocity * t)
   d/dt[b] = battery_discharge_rate_fly * t
@@ -44,3 +55,7 @@ collect:
   d/dt[q] = queue_data_rate * t
 upload:
   d/dt[q] = queue_upload_rate * t
+
+// Declared without indices!! (ie b instead of bi)
+#invariant
+((b >= p0) && (s1_q <= p1) && ((s2_q + p2) <= s1_q)) || ((b >= p3) && (s1_q <= p5) && ((s1_q + p4) <= s2_q))

@@ -338,18 +338,18 @@ writeSMT infile outfile = do
           smt = initializeSMT spec
           charge = printCharge "charge" spec
           flyto = printFlyTo "fly_to" spec
-          collect = printCollect "collect" spec
+          collect = printCollect "download" spec
           flyfrom = printFlyFrom "fly_back" spec
       writeFile outfile (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initGoal spec ++ endSMT))
 
 -- Create uav_dreal_template.smt2
-writeTemplate :: Params -> CompleteSpec -> IO ()
-writeTemplate p spec = do
-  let f = templateFile p
+writeTemplate :: String -> CompleteSpec -> IO ()
+writeTemplate f spec = do
+  let --f = templateFile p
       smt = initializeSMT spec
       charge = printCharge "charge" spec
       flyto = printFlyTo "fly_to" spec
-      collect = printCollect "collect" spec
+      collect = printCollect "download" spec
       flyfrom = printFlyFrom "fly_back" spec
   writeFile f (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initGoal spec ++ endSMT))
 
@@ -360,7 +360,7 @@ writeParamTemplate p spec = do
       top = initializeParams spec
       charge = printCharge "charge" spec
       flyto = printFlyTo "fly_to" spec
-      collect = printCollect "collect" spec
+      collect = printCollect "download" spec
       flyfrom = printFlyFrom "fly_back" spec
   writeFile f $ unlines (top ++ charge ++ flyto ++ collect ++ flyfrom)
 
@@ -374,7 +374,7 @@ writeParamConstTemplate p spec = do
       footer = z3Footer spec
   writeFile f (unlines (top ++ hole ++ footer))
 
-{-
+
 testWrite :: String -> String -> IO ()
 testWrite infile outfile = do
   x <- parseFromFile parseDecls infile
@@ -382,5 +382,4 @@ testWrite infile outfile = do
     Left e -> error $ show e
     Right decls -> do
       let spec = finishSpec decls
-      writeFile outfile (initSafety spec)
--}
+      writeTemplate outfile spec
