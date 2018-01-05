@@ -11,11 +11,22 @@
 #domain b [0,100]
 #domain q [0,100]
 
+// Initial parameters (optional)
+#params
+p0 9
+p1 0
+p2 10
+p3 1
+p4 9
+p5 9
+p6 10
+p7 1
+p8 9
+p9 9
+
 // Environment: variable definitions
 //#variables
 //r = t * t
-
-num_holes = 9
 
 // UAV Dynamics
 #uav

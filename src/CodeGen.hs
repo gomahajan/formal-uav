@@ -62,7 +62,8 @@ data Decls = Decls {
   _sensors :: [Sensor],
   _environment :: Env,
   _numHoles :: Int,
-  _invt :: Pred
+  _invt :: Pred,
+  _paramValues :: [(String, Double)]
 } deriving (Show, Eq)
 
 makeLenses ''Decls
@@ -73,27 +74,18 @@ data Vars = Vars {
   _tvars :: [String],
   _xvars :: [String],
   _bvars :: [String],
-  _qvars :: [String]
+  _qvars :: [String],
+  _pvars :: [String]
 } deriving (Show, Eq)
 
 makeLenses ''Vars
 
--- Type encapsulating program and parameter values
--- TODO: expand this. This would probably be a good place for the
---   param program/variables to go?
-data UAVParams = UAVParams {
-  _varNames :: [String],
-  _pNames :: [String]
-} deriving (Show, Eq)
-
-makeLenses ''UAVParams
 
 data CompleteSpec = CompleteSpec {
   _declarations :: Decls,
   _numModes :: Int,
   _numSensors :: Int,
-  _vars :: Vars,
-  _uavParams :: UAVParams
+  _vars :: Vars
 } deriving (Show, Eq)
 
 makeLenses ''CompleteSpec
@@ -147,16 +139,9 @@ finishSpec d = CompleteSpec {
   _declarations = d,
   _numModes = length (_uavModes d),
   _vars = generateVars d,
-  _numSensors = length (_sensors d),
-  _uavParams = initUAVParams (_numHoles d)
+  _numSensors = length (_sensors d)
 }
 
-initUAVParams :: Int -> UAVParams
-initUAVParams x = UAVParams {
-  _varNames = ps,
-  _pNames = ps
-} where
-    ps = fmap (("p" ++) . show) [0..(x-1)]
 
 -- Functions for converting specification to SMT-readable form
 
@@ -168,7 +153,8 @@ generateVars ds = Vars {
   _tvars = ts,
   _xvars = xs,
   _bvars = bs,
-  _qvars = qs
+  _qvars = qs,
+  _pvars = ps
 }
   where
     numModes = length (_modeDefs ds)
@@ -184,7 +170,7 @@ generateVars ds = Vars {
     xdoms = zip xs (replicate numModes (_varDomains ds ! "x" ))
     bdoms = zip bs (replicate (numModes + 1) (_varDomains ds ! "b" ))
     qdoms = zip sqs (replicate (numSensors * (numModes + 1)) (_varDomains ds ! "q" ))
-    ps = fmap (("p" ++) . show) [0..((_numHoles ds)-1)]
+    ps = fmap (("p" ++) . show) [0..(_numHoles ds - 1)]
 
 -- Get corresponding sensor mode from a UAV mode
 uavModeToSensor :: String -> CompleteSpec -> Maybe String
@@ -205,7 +191,6 @@ initializeParams spec = vdecls ++ cxdecs ++ defs ++ tmin ++ doms ++ choice ++ ho
   where
     env = _environment . _declarations $ spec
     hole = ["\nbatteryvalue\n"]
-    params = _uavParams spec
     numSensors = _numSensors spec
     cxs = mkvars "c"
     ivs = mkvars "i"
@@ -224,7 +209,7 @@ initializeParams spec = vdecls ++ cxdecs ++ defs ++ tmin ++ doms ++ choice ++ ho
 initializeParamConsts :: CompleteSpec -> [String]
 initializeParamConsts spec = logic : (vdecls ++ defs ++ pbounds ++ slocs)
   where
-    params = (_pNames . _uavParams) spec
+    params = (_pvars . _vars) spec
     vdecls = fmap declFun params ++ keys ((_defns . _declarations) spec)
     defList = assocs $ (_defns . _declarations) spec
     defs = zipWith initConstant (fmap fst defList) (fmap (show . snd) defList)
@@ -242,7 +227,6 @@ initializeSMT spec = logic : (vdecls ++ defs ++ slocs ++ tmin ++ doms ++ hole ++
   where
     env = _environment . _declarations $ spec
     hole = ["\nparametervalues\n"]
-    params = _uavParams spec
     choice = initChoice env (_numSensors spec)
     vdecls = fmap declFun ((_allVars . _vars) spec)
     defList = assocs $ (_defns . _declarations) spec
@@ -293,7 +277,6 @@ printProgMode name spec = fmap (printConstraint ((_environment . _declarations) 
 printCharge :: String -> CompleteSpec -> [String]
 printCharge name spec = preamble "charging" ++ fmap (replace " t" " t0") (pos : dyn ++ prog)
   where
-    params = _uavParams spec
     pos = initConstant "xi" "0"
     dyn = printDynamics name spec (show 0) "i"
     prog = printProgMode name spec
@@ -302,7 +285,6 @@ printCharge name spec = preamble "charging" ++ fmap (replace " t" " t0") (pos : 
 printFlyFrom :: String -> CompleteSpec -> [String]
 printFlyFrom name spec = preamble "flying back" ++ fmap (replace " t" " t3") (pos : dyn ++ prog)
   where
-    params = _uavParams spec
     pos = initConstant "x3" "0"
     dyn = printDynamics name spec (show 3) (show 2)
     prog = printProgMode name spec
@@ -316,7 +298,6 @@ printCollect :: String -> CompleteSpec -> [String]
 printCollect name spec = preamble "Collecting data" ++ fmap (replace " t" " t2") (pos : battery ++ fmap (printConstraint env) completePred ++ prog)
   where
     env = _environment . _declarations $ spec
-    params = _uavParams spec
     -- battery dynamics
     uavm = sensorModeToUAV name spec
     battery = printDEs (fromMaybe name uavm) spec "b" "2" "1" bde
@@ -368,7 +349,6 @@ printFlyTo :: String -> CompleteSpec -> [String]
 printFlyTo name spec = preamble "flying to sensors" ++ fmap (replace " t" " t1") (fmap (printConstraint env) impls ++ dyn ++ prog)
   where
     env = _environment . _declarations $ spec
-    params = _uavParams spec
     numm = _numModes spec
     nums = _numSensors spec
     mkSensor x = "s" ++ show x ++ "_loc"
@@ -445,7 +425,7 @@ decMin :: String -> Double -> String
 decMin s v = "(assert (>= " ++ s ++ " " ++ show v ++ "))"
 
 declBound :: (String, Domain) -> String
-declBound (v, d) = case ((vmin d), (vmax d)) of
+declBound (v, d) = case (vmin d, vmax d) of
   (Nothing, Nothing) -> ""
   (Just low, Nothing) -> "(assert (>= " ++ v ++ " " ++ show low ++ "))"
   (Nothing, Just high) -> "(assert (<= " ++ v ++ " " ++ show high ++ "))"
@@ -455,6 +435,6 @@ z3Footer :: CompleteSpec -> [String]
 z3Footer spec = [sat, ps', ex]
   where
     sat = "(check-sat)"
-    ps = unwords $ (_pNames . _uavParams) spec
+    ps = unwords $ (_pvars . _vars) spec
     ps' = "(get-value (" ++ ps ++ "))"
     ex = "(exit)"

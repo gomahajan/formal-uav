@@ -50,7 +50,6 @@ cargs = Args {
 
 
 data Params = Params {
-  constraint :: Pred,
   completeFile :: String,
   templateFile :: String,
   paramTempFile :: String,
@@ -136,7 +135,10 @@ cegisLoop p =
         if unsatResp new_params_output_string
         then return $ Just (params p, False)
         else do
-          let p0 = getValue "p0" new_params_output_string
+          let ps' = fmap ((flip getValue) new_params_output_string) (fmap fst (params p))
+              params' = zip (fmap fst (params p)) ps'
+              {-
+              p0 = getValue "p0" new_params_output_string
               p1 = getValue "p1" new_params_output_string
               p2 = getValue "p2" new_params_output_string
               p3 = getValue "p3" new_params_output_string
@@ -146,8 +148,9 @@ cegisLoop p =
               p7 = getValue "p7" new_params_output_string
               p8 = getValue "p8" new_params_output_string
               p9 = getValue "p9" new_params_output_string
-              currentIter = iterations p
               params' = [("p0", p0), ("p1", p1), ("p2", p2), ("p3", p3), ("p4", p4), ("p5", p5), ("p6", p6), ("p7", p7), ("p8", p8), ("p9", p9)]
+              -}
+              currentIter = iterations p
         --putStrLn $ "Solved Params: " ++ show params'
         --putStrLn $ "Previous params: " ++ show (params p)
           cegisLoop p { previous_b = Just c1,
@@ -284,6 +287,7 @@ mode = cmdArgsMode $ cargs &=
 printParam :: (String, Double) -> String
 printParam (p,x) = p ++ " = " ++ show x
 
+-- Entry point
 main :: IO ()
 main = do
   conf <- readConfig "config/solver.cfg"
@@ -295,10 +299,7 @@ main = do
           paramtf = file ++ "_parameter_template.smt2"
           paramcf = file ++ "_parameter_complete.smt2"
           paramcons = file ++ "_parameter_constant_template.smt2"
-          -- Initial invariant predicate: not currently used
-          initp = And [Expr (EBin Geq (EVar "b") (ERealLit 100)), Expr (EBin Leq (EVar "q") (ERealLit 20))]
           synthesisParams = Params {
-            constraint = initp,
             completeFile = cmpf,
             templateFile = tmpf,
             paramTempFile = paramtf,
@@ -311,41 +312,37 @@ main = do
             bcxs = [],
             qcxs = [],
             qcxs2 = [],
-            -- Initial param values for program
-            params = [("p0",9), ("p1",9), ("p2",10), ("p3",1), ("p4",9), ("p5",9), ("p6",10), ("p7",1), ("p8",9), ("p9",9)],
+            params = [], -- updated in prepareTemplates
             previous_b = Nothing,
             previous_q = Nothing,
             verboseMode = v,
             solverConfig = conf
           }
       when v $ putStrLn $ "Intial point: " ++ "(" ++ show b ++"," ++ show q ++ ")"
-      p <- cegisLoop synthesisParams
-      case p of
-        Nothing -> putStrLn "Synthesis error"
-        Just pr -> putStrLn $ case pr of
-          (_, False) -> "\nThe given system is unverifiable in " ++ show iters ++ " iterations"
-          (ps, True)  -> "\nSynthesized a program with the following parameters: \n" ++ unlines (fmap printParam ps) ++
-            "\nAnd the following invariant:\n" ++ "b >= " ++ show (snd (head ps)) ++ "\nq <= " ++ show (snd (head (tail ps)))
+      -- parse declarations etc
+      x <- parseFromFile parseDecls file
+      case x of
+        Left e -> error $ show e
+        Right decls -> do
+          -- TODO: update params synthesisParams with the initial values parsed from spec!!
+          let spec = finishSpec decls
+          writeTemplate synthesisParams spec
+          writeParamTemplate synthesisParams spec
+          writeParamConstTemplate synthesisParams spec
+          p <- cegisLoop synthesisParams
+          case p of
+            Nothing -> putStrLn "Synthesis error"
+            Just pr -> putStrLn $ case pr of
+              (_, False) -> "\nThe given system is unverifiable in " ++ show iters ++ " iterations"
+              (ps, True)  -> "\nSynthesized a program with the following parameters: \n" ++ unlines (fmap printParam ps) ++
+                "\nAnd the following invariant:\n" ++ "b >= " ++ show (snd (head ps)) ++ "\nq <= " ++ show (snd (head (tail ps)))
 
--- Test function
-writeSMT :: String -> String -> IO ()
-writeSMT infile outfile = do
-  x <- parseFromFile parseDecls infile
-  case x of
-    Left e -> error $ show e
-    Right decls -> do
-      let spec = finishSpec decls
-          smt = initializeSMT spec
-          charge = printCharge "charge" spec
-          flyto = printFlyTo "fly_to" spec
-          collect = printCollect "download" spec
-          flyfrom = printFlyFrom "fly_back" spec
-      writeFile outfile (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initGoal spec ++ endSMT))
+
 
 -- Create uav_dreal_template.smt2
-writeTemplate :: String -> CompleteSpec -> IO ()
-writeTemplate f spec = do
-  let --f = templateFile p
+writeTemplate :: Params -> CompleteSpec -> IO ()
+writeTemplate p spec = do
+  let f = templateFile p
       smt = initializeSMT spec
       charge = printCharge "charge" spec
       flyto = printFlyTo "fly_to" spec
@@ -374,7 +371,7 @@ writeParamConstTemplate p spec = do
       footer = z3Footer spec
   writeFile f (unlines (top ++ hole ++ footer))
 
-
+{-
 testWrite :: String -> String -> IO ()
 testWrite infile outfile = do
   x <- parseFromFile parseDecls infile
@@ -383,3 +380,4 @@ testWrite infile outfile = do
     Right decls -> do
       let spec = finishSpec decls
       writeTemplate outfile spec
+-}

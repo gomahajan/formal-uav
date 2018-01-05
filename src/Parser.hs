@@ -110,11 +110,11 @@ parseDecls = do
   ignore
   doms <- many $ try parseDomain
   ignore
+  params <- try parseParams <|> return defaultPs <?> "initial parameters"
   modes <- try parseCD <|> return [] <?> "relational dynamics"
   ignore
   vars <- try parseEnv <|> return [] <?> "environment"
   ignore
-  numh <- parseHoles
   string "#uav" -- uav dynamics
   ignore
   uavms <- many1 (try parseUAV) <?> "uav dynamics"
@@ -137,9 +137,12 @@ parseDecls = do
     _uavModes = uavms,
     _sensors = s,
     _environment = vars,
-    _numHoles = numh,
-    _invt = convert inv
+    _numHoles = length params,
+    _invt = convert inv,
+    _paramValues = params
   }
+    where
+      defaultPs = [("p0",9), ("p1",9), ("p2",10), ("p3",1), ("p4",9), ("p5",9), ("p6",10), ("p7",1), ("p8",9), ("p9",9)]
 
 
 opNames :: [String]
@@ -178,6 +181,15 @@ parseEnv = do
   vars <- many1 $ try parseVar
   ignore
   return vars
+
+parseConst :: Parser (String, Double)
+parseConst = do
+  whitespace
+  s <- name
+  whitespace
+  v <- parseNum
+  ignore
+  return (s,v)
 
 parseVar :: Parser (String, Pred)
 parseVar = do
@@ -219,13 +231,7 @@ parseDynamics c = do
 parseDef :: Parser (String, Double)
 parseDef = do
   string "#define"
-  whitespace
-  s <- name
-  whitespace
-  v <- parseNum
-  ignore
-  --whitespace
-  return (s, v)
+  parseConst
 
 parseDomain :: Parser (String, Domain)
 parseDomain = do
@@ -243,6 +249,16 @@ parseDomain = do
   char ']'
   ignore
   return (v, Domain { vmin = Just x, vmax = Just y } )
+
+parseParams :: Parser [(String, Double)]
+parseParams = do
+  whitespace
+  string "#params"
+  ignore
+  vs <- many $ try parseConst
+  ignore
+  return vs
+
 
 parseCD :: Parser [Mode]
 parseCD = do
