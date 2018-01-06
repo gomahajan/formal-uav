@@ -1,0 +1,51 @@
+(set-logic QF_NRA)
+(declare-fun p0 () Real)
+(declare-fun p1 () Real)
+(declare-fun p2 () Real)
+(declare-fun p3 () Real)
+(declare-fun p4 () Real)
+(declare-fun p5 () Real)
+(declare-fun p6 () Real)
+(declare-fun p7 () Real)
+(declare-fun p8 () Real)
+(declare-fun p9 () Real)
+battery_charging_rate
+battery_discharge_rate_fly
+battery_discharge_rate_hover
+drone_velocity
+queue_data_rate
+queue_upload_rate
+(assert (= battery_charging_rate 50.0))
+(assert (= battery_discharge_rate_fly 1.0))
+(assert (= battery_discharge_rate_hover 1.0))
+(assert (= drone_velocity 10.0))
+(assert (= queue_data_rate 1.0))
+(assert (= queue_upload_rate 1.0))
+(assert (>= p0 0.0))
+(assert (<= p0 100.0))
+(assert (>= p1 0.0))
+(assert (<= p1 100.0))
+(assert (>= p2 0.0))
+(assert (<= p2 100.0))
+(assert (>= p3 0.0))
+(assert (<= p3 100.0))
+(assert (>= p4 0.0))
+(assert (<= p4 100.0))
+(assert (>= p5 0.0))
+(assert (<= p5 100.0))
+(assert (>= p6 0.0))
+(assert (<= p6 100.0))
+(assert (>= p7 0.0))
+(assert (<= p7 100.0))
+(assert (>= p8 0.0))
+(assert (<= p8 100.0))
+(assert (>= p9 0.0))
+(assert (<= p9 100.0))
+(assert (= s0_loc 10.0))
+(assert (= s1_loc 15.0))
+
+counterexamples
+
+(check-sat)
+(get-value (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9))
+(exit)

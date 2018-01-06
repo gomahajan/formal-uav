@@ -332,7 +332,7 @@ unchosenSensors mode otherQs otherPrevQs sensors = Just $ zipWith (assemblePred 
 
 -- Assemble differential equation dynamics into usable form via integration essentially
 assemblePred :: String -> [Sensor] -> [String] -> [String] -> [Pred]
-assemblePred mode s qs pqs = zipWith (\q pq -> Expr (EBin Plus (EStrLit pq) (EBin Eq (EStrLit q) (getDE mode (extractId pq) s)))) qs pqs
+assemblePred mode s qs pqs = zipWith (\q pq -> Expr (EBin Eq (EStrLit pq) (EBin Plus (EStrLit q) (getDE mode (extractId pq) s)))) qs pqs
 
 -- Get ID number out of a string describing a sensor
 extractId :: String -> Int
@@ -352,7 +352,7 @@ printFlyTo name spec = preamble "flying to sensors" ++ fmap (replace " t" " t1")
     numm = _numModes spec
     nums = _numSensors spec
     mkSensor x = "s" ++ show x ++ "_loc"
-    impls = fmap ((\x -> Impl (Expr (EBin Eq (EStrLit "choice") (ERealLit x))) (Expr (EBin Eq (EStrLit "x1") (EStrLit (mkSensor x))))) . fromIntegral) [0..(nums - 1)]
+    impls = fmap ((\x -> Impl (Expr (EBin Eq (EStrLit "choice") (ERealLit (fromIntegral x)))) (Expr (EBin Eq (EStrLit "x1") (EStrLit (mkSensor x)))))) [0..(nums - 1)]
     dyn = printDynamics name spec (show 1) (show 0)
     prog = printProgMode name spec
 
@@ -378,7 +378,7 @@ initSafety spec = printConstraint' env (And (bbounds ++ sbounds))
     numSensors = _numSensors spec
     env = _environment . _declarations $ spec
     qs = fmap (("_q" ++) . show) [0..3]
-    s = fmap (("s" ++) . show) [1..numSensors]
+    s = fmap (("s" ++) . show) [0..(numSensors - 1)]
     sqs = concatMap (\sen -> fmap (sen ++) qs) s
     smax = vmax $ (_varDomains . _declarations) spec ! "q"
     smax' = fromMaybe 100.0 smax
@@ -395,7 +395,7 @@ initInvariant spec index = printConstraint' env invt''
   where env =_environment . _declarations $ spec
         invt = _invt . _declarations $ spec
         invt' = replacePred "b" ("b" ++ index) invt
-        invt'' = replacePred "q" ("q" ++ index) invt
+        invt'' = replacePred "q" ("q" ++ index) invt'
 
 -- Initialize choice variable
 initChoice :: Env -> Int -> [String]

@@ -326,6 +326,7 @@ main = do
         Right decls -> do
           -- TODO: update params synthesisParams with the initial values parsed from spec!!
           let spec = finishSpec decls
+              p = p { params = (_paramValues . _declarations) spec }
           writeTemplate synthesisParams spec
           writeParamTemplate synthesisParams spec
           writeParamConstTemplate synthesisParams spec
