@@ -8,8 +8,8 @@
 
 // Variable domains
 #domain x [0,10]
-#domain b [0,100]
-#domain q [0,100]
+#domain b [,100]
+#domain q [0,]
 
 // Initial parameters (optional)
 #params

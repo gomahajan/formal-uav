@@ -240,15 +240,22 @@ parseDomain = do
   v <- name
   whitespace
   char '['
-  x <- parseNum
+  whitespace
+  x <- many parseNum
   whitespace
   char ','
   whitespace
-  y <- parseNum
+  y <- many parseNum
   whitespace
   char ']'
   ignore
-  return (v, Domain { vmin = Just x, vmax = Just y } )
+  let x' = case x of
+             [] -> Nothing
+             xs -> Just $ head xs
+      y' = case y of
+             [] -> Nothing
+             ys -> Just $ head ys
+  return (v, Domain { vmin = x', vmax = y' } )
 
 parseParams :: Parser [(String, Double)]
 parseParams = do
