@@ -82,6 +82,7 @@ data Pred = Lit Bool
 type Env = [(String, Pred)]
 
 -- Convert preliminary BAnd to regular And (or Or)
+{-
 convert :: Pred -> Pred
 convert p@(BAnd p1 p2) = And $ convert <$> getps p
 convert p@(BOr p1 p2)  = Or $ convert <$> getps p
@@ -90,6 +91,15 @@ convert (Or ps)        = Or $ fmap convert ps
 convert (Not p)        = Not $ convert p
 convert (Impl p1 p2)   = Impl (convert p1) (convert p2)
 convert p              = p
+-}
+convert :: Pred -> Pred
+convert (BAnd p1 p2) = And [convert p1, convert p2]
+convert (BOr p1 p2)  = Or [convert p1, convert p2]
+convert (And ps)     = And $ fmap convert ps
+convert (Or ps)      = Or $ fmap convert ps
+convert (Not p)      = Not $ convert p
+convert (Impl p1 p2) = Impl (convert p1) (convert p2)
+convert p            = p
 
 -- Helper function
 getps :: Pred -> [Pred]

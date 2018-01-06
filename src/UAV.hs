@@ -5,6 +5,7 @@ module Main where
 import System.IO
 import Data.String.Utils
 import System.Environment
+import System.Directory
 import Debug.Trace
 import System.Console.CmdArgs
 import Data.Map (fromList, (!))
@@ -333,11 +334,15 @@ main = do
           p <- cegisLoop synthesisParams
           case p of
             Nothing -> putStrLn "Synthesis error"
-            Just pr -> putStrLn $ case pr of
-              (_, False) -> "\nThe given system is unverifiable in " ++ show iters ++ " iterations"
-              (ps, True)  -> "\nSynthesized a program with the following parameters: \n" ++ unlines (fmap printParam ps) ++
-                "\nAnd the following invariant:\n" ++ "b >= " ++ show (snd (head ps)) ++ "\nq <= " ++ show (snd (head (tail ps)))
-
+            Just pr -> do
+              putStrLn $ case pr of
+                (_, False) -> "\nThe given system is unverifiable in " ++ show iters ++ " iterations"
+                (ps, True)  -> "\nSynthesized a program with the following parameters: \n" ++ unlines (fmap printParam ps) ++
+                  "\nAnd the following invariant:\n" ++ "b >= " ++ show (snd (head ps)) ++ "\nq <= " ++ show (snd (head (tail ps)))
+              removeFile (templateFile synthesisParams)
+              removeFile (paramTempFile synthesisParams)
+              removeFile (paramConstantFile synthesisParams)
+              -- Commenet out the above to keep the smt2 files for reference.
 
 
 -- Create uav_dreal_template.smt2

@@ -39,6 +39,7 @@ executable uav
                        , ConfigFile
                        , lens
                        , text
+                       , directory
 
   default-language:    Haskell2010
   If !flag(uav)
