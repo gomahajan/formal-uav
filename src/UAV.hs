@@ -107,6 +107,7 @@ cegisLoop p =
         ballStr = case balls of
           [] -> ""
           bs -> printConstraint [] (And (fmap Not bs))
+    putStrLn $ show $ params p
     addParams (paramStr ++ "\n" ++ ballStr) (templateFile p) (completeFile p)
     when (verboseMode p) $ putStrLn "Finding counterexample..."
     output <- run (dRealVersion (solverConfig p)) (solverConfig p) (completeFile p) (solverPrecision p)
@@ -327,11 +328,11 @@ main = do
         Right decls -> do
           -- TODO: update params synthesisParams with the initial values parsed from spec!!
           let spec = finishSpec decls
-              p = p { params = (_paramValues . _declarations) spec }
-          writeTemplate synthesisParams spec
-          writeParamTemplate synthesisParams spec
-          writeParamConstTemplate synthesisParams spec
-          p <- cegisLoop synthesisParams
+              ps = synthesisParams { params = (_paramValues . _declarations) spec }
+          writeTemplate ps spec
+          writeParamTemplate ps spec
+          writeParamConstTemplate ps spec
+          p <- cegisLoop ps
           case p of
             Nothing -> putStrLn "Synthesis error"
             Just pr -> do
