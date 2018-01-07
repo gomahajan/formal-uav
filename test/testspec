@@ -1,10 +1,10 @@
 // Constants
 #define drone_velocity 10
 #define battery_charging_rate 50
-#define battery_discharge_rate_fly 1
-#define battery_discharge_rate_hover 1
+#define battery_charge_rate_fly -1
+#define battery_charge_rate_hover -1
 #define queue_data_rate 1
-#define queue_upload_rate 1
+#define queue_upload_rate 50
 
 // Variable domains
 #domain x [0,10]
@@ -40,17 +40,17 @@ charge:
   }
 fly_to:
   d/dt[x] = drone_velocity * t
-  d/dt[b] = battery_discharge_rate_fly * t
+  d/dt[b] = battery_charge_rate_fly * t
 download:
   d/dt[x] = 0
-  d/dt[b] = battery_discharge_rate_hover * t
+  d/dt[b] = battery_charge_rate_hover * t
   program {
   (choice == 0) => ((s0_q1 <= p7) => (s0_q2 == s0_q1)) && ((s0_q1 > p7) => (s0_q2 == p7))
   (choice == 1) => ((s1_q1 <= p8) => (s1_q2 == s1_q1)) && ((s1_q1 > p8) => (s1_q2 == p8))
   }
 fly_back:
   d/dt[x] = -(drone_velocity * t)
-  d/dt[b] = battery_discharge_rate_fly * t
+  d/dt[b] = battery_charge_rate_fly * t
 
 // Sensor dynamics
 #sensor 0
@@ -61,7 +61,7 @@ upload:
   d/dt[q] = queue_upload_rate * t
 
 #sensor 1
-x = 15
+x = 10
 collect:
   d/dt[q] = queue_data_rate * t
 upload:

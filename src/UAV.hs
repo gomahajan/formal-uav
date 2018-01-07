@@ -340,9 +340,9 @@ main = do
                 (_, False) -> "\nThe given system is unverifiable in " ++ show iters ++ " iterations"
                 (ps, True)  -> "\nSynthesized a program with the following parameters: \n" ++ unlines (fmap printParam ps) ++
                   "\nAnd the following invariant:\n" ++ "b >= " ++ show (snd (head ps)) ++ "\nq <= " ++ show (snd (head (tail ps)))
-              removeFile (templateFile synthesisParams)
-              removeFile (paramTempFile synthesisParams)
-              removeFile (paramConstantFile synthesisParams)
+              --removeFile (templateFile synthesisParams)
+              --removeFile (paramTempFile synthesisParams)
+              --removeFile (paramConstantFile synthesisParams)
               -- Commenet out the above to keep the smt2 files for reference.
 
 
@@ -366,7 +366,9 @@ writeParamTemplate p spec = do
       flyto = printFlyTo "fly_to" spec
       collect = printCollect "download" spec
       flyfrom = printFlyFrom "fly_back" spec
-  writeFile f $ unlines (top ++ charge ++ flyto ++ collect ++ flyfrom)
+      hole = ["\nbatteryvalue\n"]
+      safety = initEnd spec ++ initGoal spec
+  writeFile f $ unlines (top ++ charge ++ flyto ++ collect ++ flyfrom ++ hole ++ safety)
 
 -- Create uav_dreal_parameter_constant_template.smt2
 -- TODO: doesn't do the norm function for now -- is that necessary? we don't use it...

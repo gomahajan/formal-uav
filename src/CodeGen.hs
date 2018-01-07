@@ -187,10 +187,9 @@ sensorModeToUAV s spec = fmap uavMode mode
     mode = find (\m -> sensorMode m == s) ms
 
 initializeParams :: CompleteSpec -> [String]
-initializeParams spec = vdecls ++ cxdecs ++ defs ++ tmin ++ doms ++ choice ++ hole ++  [(printConstraint env cxgoal)]
+initializeParams spec = vdecls ++ cxdecs ++ defs ++ tmin ++ doms ++ choice ++  [(printConstraint env cxgoal)]
   where
     env = _environment . _declarations $ spec
-    hole = ["\nbatteryvalue\n"]
     numSensors = _numSensors spec
     cxs = mkvars "c"
     ivs = mkvars "i"
@@ -198,11 +197,11 @@ initializeParams spec = vdecls ++ cxdecs ++ defs ++ tmin ++ doms ++ choice ++ ho
     cxgoal = And (zipWith (\x y -> (Expr (EBin Eq (EStrLit x) (EStrLit y)))) cxs ivs)
     mkvars v = ("b" ++ v) : fmap ((++ ("_q" ++ v)) . ("s" ++) . show) [0..(numSensors - 1)]
     choice = initChoice env (_numSensors spec)
-    vdecls = fmap declFun $ ((_allVars . _vars) spec) ++ cxs
+    vdecls = fmap declFun $ ((_allVars . _vars) spec)
     defList = assocs $ (_defns . _declarations) spec
     defs = zipWith initConstant (fmap fst defList) (fmap (show . snd) defList)
     tmin = fmap (`decMin` 0) ((_tvars . _vars) spec)
-    doms = fmap declBound ((_allDomains . _vars) spec)
+    doms = (fmap declBound ((_allDomains . _vars) spec)) ++ ["(assert (<= s0_qi 100.0))\n(assert (<= s1_qi 100.0))"]
     sensors = (_sensors . _declarations) spec
 
 
@@ -210,7 +209,7 @@ initializeParamConsts :: CompleteSpec -> [String]
 initializeParamConsts spec = logic : (vdecls ++ defs ++ pbounds ++ slocs)
   where
     params = (_pvars . _vars) spec
-    vdecls = fmap declFun params ++ keys ((_defns . _declarations) spec)
+    vdecls = fmap declFun $ params ++ keys ((_defns . _declarations) spec)
     defList = assocs $ (_defns . _declarations) spec
     defs = zipWith initConstant (fmap fst defList) (fmap (show . snd) defList)
     -- TODO: generalize pmax below
@@ -365,6 +364,15 @@ printSensors spec (Just mode) modeNum prevModeNum sensors = fmap ((printConstrai
         prevIds = fmap ((++ ("_" ++ prevModeNum)) . ("s" ++) . show . sId) sensors
         dyn = fmap ((! mode) . modes) sensors
         s = zipWith3 (\p c d -> (EBin Eq (EStrLit c) (EBin Plus (EStrLit p) d))) prevIds ids dyn
+
+-- set s0qi = s0qc, etc, for parameter template
+initEnd :: CompleteSpec -> [String]
+initEnd spec = [printConstraint [] (And es)]
+  where
+    base = "b" : fmap ((++ "_q") . ("s" ++) . show) [0..(_numSensors spec - 1)]
+    ps = fmap (++ "i") base
+    cs = fmap (++ "c") base
+    es = zipWith (\p c -> Expr (EBin Eq (EStrLit p) (EStrLit c))) ps cs
 
 
 --TODO: automate this! (especially once we actually add the program)
