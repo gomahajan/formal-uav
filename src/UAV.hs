@@ -12,6 +12,7 @@ import Data.Map (fromList, (!))
 import Control.Monad
 import Data.ConfigFile
 import Data.Either.Utils
+import Data.Maybe
 import Control.Monad.Except
 import Numeric
 
@@ -48,7 +49,7 @@ cargs = Args {
   verbose       = False &= help "Verbose mode.",
   b_init        = 50    &= help "Initial battery level",
   q_init        = 50    &= help "Initial queue level",
-  cx_balls      = False &= help "Adjust counterexamples using delta-ball"
+  cx_balls      = False &= help "Adjust counterexamples using delta-ball (probably unnecessary and potentially damaging!)"
 }
 
 
@@ -65,9 +66,8 @@ data Params = Params {
   bcxs :: [Double],
   qcxs :: [Double],
   qcxs2 :: [Double],
+  allcxs :: [[(String, Double)]],
   params :: [(String, Double)],
-  previous_b :: Maybe Double, -- could rename to previous counter-example
-  previous_q :: Maybe Double,
   verboseMode :: Bool,
   solverConfig :: SolverConfig,
   cxBalls :: Bool
@@ -106,7 +106,7 @@ cegisLoop p spec =
   then return $ Just (params p, False)
   else do
     let paramStr = unlines (fmap ((printConstraint []) . Expr) (zipWith (EBin Eq) (fmap (EStrLit . fst) (params p)) (fmap (ERealLit . snd) (params p))))
-        balls = findAllCXBalls (synthesisPrecision p) (zip3 (bcxs p) (qcxs p) (qcxs2 p))
+        balls = findAllCXBalls (synthesisPrecision p) (allcxs p)
         ballStr = case (cxBalls p, balls) of
           (False, _) -> ""
           (True, [])    -> ""
@@ -117,25 +117,26 @@ cegisLoop p spec =
     output <- run (dRealVersion (solverConfig p)) (solverConfig p) (completeFile p) (solverPrecision p)
     resp <- Main.read (dRealVersion (solverConfig p)) output
     --putStrLn $ show resp
-    let cxs = getCX "bi" "s0_qi" "s1_qi" resp
+    let cxs = getCX ((_init_vars . _vars) spec) resp
     --print cxs
     case cxs of
       Nothing -> do
         putStrLn $ "\n\nIn " ++ show (originalIters p - iterations p) ++ " iterations:"
         return $ Just (params p, True)
-      Just (c1, c2, c3) -> do
+      Just cxs -> do
         let --(c1,c2) = findCXBall (previous_b p) (previous_q p) c1_naive c2_naive (synthesisPrecision p)
-            bcxs' = c1 : bcxs p
-            qcxs' = c2 : qcxs p
-            qcxs2' = c3 : qcxs2 p
+            allcxs' = cxs : allcxs p
+            --bcxs' = c1 : bcxs p
+            --qcxs' = c2 : qcxs p
+            --qcxs2' = c3 : qcxs2 p
             --constraintbq = "(assert (=> (and (and (>= bi p0) (<= qi p1)) constraintbq) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))"
             -- replace "constraintbq" with
             -- battery_constraint = printConstraint $ generateVarConstraints "bi" "qi" bcxs' qcxs'
             --battery_constraint = unlines $ fmap (((flip (replace "constraintbq")) constraintbq) . printConstraint') (zipWith (findCXBall (synthesisPrecision p)) bcxs' qcxs')
         --putStrLn $ "bcxs: " ++ show bcxs'
         --putStrLn $ "qcxs: " ++ show qcxs'
-        when (verboseMode p) $ putStrLn $ "Adding Counterexample: " ++ show (c1, c2, c3)
-        addAllPhis p spec $ zip3 bcxs' qcxs' qcxs2'
+        when (verboseMode p) $ putStrLn $ "Adding Counterexample: " ++ show cxs
+        addAllPhis p spec allcxs'
         when (verboseMode p) $ putStrLn "Finding parameters..."
         new_params_output <- run 2 (solverConfig p) (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read 2 new_params_output
@@ -161,12 +162,8 @@ cegisLoop p spec =
               currentIter = iterations p
         --putStrLn $ "Solved Params: " ++ show params'
         --putStrLn $ "Previous params: " ++ show (params p)
-          cegisLoop p { previous_b = Just c1,
-                        previous_q = Just c2,
-                        iterations = currentIter - 1,
-                        bcxs = bcxs',
-                        qcxs = qcxs',
-                        qcxs2 = qcxs2',
+          cegisLoop p { iterations = currentIter - 1,
+                        allcxs = allcxs',
                         params = params'
                         } spec
 
@@ -181,7 +178,7 @@ createParameterSum :: [(String, Double)] -> String
 createParameterSum [(a,b)] = "(norm (- "++ a ++" "++ show b ++ "))"
 createParameterSum (x:xs) = "(+ " ++ (createParameterSum [x]) ++ " " ++ (createParameterSum xs) ++ ")"
 
-addAllPhis :: Params -> CompleteSpec -> [(Double, Double, Double)] -> IO ()
+addAllPhis :: Params -> CompleteSpec -> [[(String, Double)]] -> IO ()
 addAllPhis p spec cxs = do
   str <- addAllPhis' spec (paramTempFile p) (length cxs) cxs
   let parameterBalls = createParameterBall (params p) (synthesisPrecision p)
@@ -194,22 +191,25 @@ addAllPhis p spec cxs = do
 defaultPhis :: IO [String]
 defaultPhis = return [""]
 
-addAllPhis' :: CompleteSpec -> String -> Int -> [(Double, Double, Double)] -> IO [String]
+addAllPhis' :: CompleteSpec -> String -> Int -> [[(String, Double)]] -> IO [String]
 addAllPhis' spec file k [x] = do s <- createPhi spec file x (show k)
                                  return [s]
 addAllPhis' spec file n (x:xs) = do s <- createPhi spec file x (show n)
                                     s' <- addAllPhis' spec file (n - 1) xs
                                     return $ s : s'
 
-createPhi :: CompleteSpec -> String -> (Double, Double,Double) -> String -> IO String
-createPhi spec file (c1,c2,c3) name = do
+createPhi :: CompleteSpec -> String -> [(String, Double)] -> String -> IO String
+createPhi spec file cxs name = do
   s <- readFile file
   -- TODO: automate this
-  let andTerm = "(assert (and (= bc " ++ (Numeric.showFFloat Nothing c1 "") ++ ") (= s0_qc " ++ (Numeric.showFFloat Nothing c2 "") ++ ") (= s1_qc " ++ (Numeric.showFFloat Nothing c3 "") ++ ")))"
+  let cvars = _cx_vars vars
+      andTerm = "(assert (and " ++ unwords eqs ++ "))"
+      mkeq c (_,v) = "(= " ++ c ++ " " ++ (Numeric.showFFloat Nothing v "") ++ ")"
+      eqs = zipWith mkeq cvars cxs
       s_i = replace "batteryvalue" andTerm s
       -- TODO: automate this
       vars = _vars spec
-      variables = tail (_xvars vars) ++ _bvars vars ++ _expanded_qvars vars ++ _tvars vars ++ _cx_vars vars ++ ["choice"]
+      variables = tail (_xvars vars) ++ _bvars vars ++ _expanded_qvars vars ++ _tvars vars ++ cvars ++ ["choice"]
       --variables = ["x0", "x1", "x2", "x3", "bi", "b0", "b1", "b2", "b3", "s1_qi", "s1_q0", "s1_q1", "s1_q2", "s1_q3", "s2_qi", "s2_q0", "s2_q1", "s2_q2", "s2_q3", "t0", "t1", "t2", "t3", "bc", "s1_qc", "s2_qc", "choice"]
       s_i_g = foldl (\str v -> (replace v (v ++ "_" ++ name) str)) s_i variables
   return s_i_g
@@ -242,15 +242,19 @@ read n src = return $ parseDRealSat n src
 
 
 -- Extract Counterexample from solver response
-getCX :: String -> String -> String -> Response -> Maybe (Double, Double, Double)
-getCX _ _ _ (Response _ []) = Nothing
-getCX s1 s2 s3 (Response r vs) = case lookup s1 vs of
-  Nothing -> Nothing
-  Just x -> case lookup s2 vs of
-    Nothing -> Nothing
-    Just y -> case lookup s3 vs of
-      Nothing -> Nothing
-      Just z -> Just (x, y, z)
+getCX :: [String] -> Response -> Maybe [(String, Double)]
+getCX s (Response _ []) = Nothing
+getCX s (Response r vs) = vals
+  where
+    ms = fmap (`lookup` vs) s
+    exists m = case m of
+      Nothing -> False
+      Just _  -> True
+    bothJust m1 m2 = m1 && exists m2
+    allFound = foldl bothJust True ms
+    vals = if allFound
+           then Just $ zip s (fmap (fromMaybe 0.0) ms)
+           else Nothing
 
 getValue :: String -> Response -> Double
 getValue s (Response r vs) = (fromList vs) ! s
@@ -259,12 +263,17 @@ getValue s (Response r vs) = (fromList vs) ! s
 --findCXBalls [] [] x y _ = (x,y)
 --findCXBalls []
 
-findAllCXBalls :: Double -> [(Double, Double, Double)] -> [Pred]
+findAllCXBalls :: Double -> [[(String, Double)]] -> [Pred]
 findAllCXBalls epsilon = fmap (findCXBall epsilon)
 
-findCXBall :: Double -> (Double, Double, Double) -> Pred
+findCXBall :: Double -> [(String, Double)] -> Pred
 --findCXBall x y epsilon = (bi - x)^2 + (qi - y)^2 <= epsilon^2
-findCXBall epsilon (x, y, z) = Expr $ EBin Geq (EBin Pow (ERealLit epsilon) (ERealLit 2)) (EBin Plus (EBin Plus (EBin Pow (EBin Minus (EVar "bi") (ERealLit x)) (ERealLit 2)) (EBin Pow (EBin Minus (EVar "s0_qi") (ERealLit y)) (ERealLit 2))) (EBin Pow (EBin Minus (EVar "s1_qi") (ERealLit z)) (ERealLit 2)))
+findCXBall epsilon cxs = Expr $ EBin Geq (EBin Pow (ERealLit epsilon) (ERealLit 2)) plus
+  where
+    mknorm (s,v) = (EBin Pow (EBin Minus (EVar s) (ERealLit v)) (ERealLit 2))
+    norms = fmap mknorm cxs
+    plus = foldl (\p1 p2 -> EBin Plus p1 p2) (ERealLit 0) norms
+
 
 getTheta :: Double -> Double -> Double
 getTheta y x = if x == 0
@@ -328,9 +337,8 @@ main = do
             bcxs = [],
             qcxs = [],
             qcxs2 = [],
+            allcxs = [],
             params = [], -- updated in prepareTemplates
-            previous_b = Nothing,
-            previous_q = Nothing,
             verboseMode = v,
             solverConfig = conf,
             cxBalls = balls
