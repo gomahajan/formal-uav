@@ -45,8 +45,8 @@ download:
   d/dt[x] = 0
   d/dt[b] = battery_charge_rate_hover * t
   program {
-  (choice == 0) => ((s0_q1 <= p7) => (s0_q2 == s0_q1)) && ((s0_q1 > p7) => (s0_q2 == p7))
-  (choice == 1) => ((s1_q1 <= p8) => (s1_q2 == s1_q1)) && ((s1_q1 > p8) => (s1_q2 == p8))
+  (choice == 0) => (((s0_q1 <= p7) => (s0_q2 == s0_q1)) && ((s0_q1 > p7) => (s0_q2 == p7)))
+  (choice == 1) => (((s1_q1 <= p8) => (s1_q2 == s1_q1)) && ((s1_q1 > p8) => (s1_q2 == p8)))
   }
 fly_back:
   d/dt[x] = -(drone_velocity * t)
