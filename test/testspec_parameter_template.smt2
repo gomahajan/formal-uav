@@ -90,4 +90,4 @@ batteryvalue
 
 
 ;Goal
-(assert (not (=>(or (and (and (>= bi p0) (<= s0_qi p1)) (<= (+ s1_qi p2) s0_qi)) (and (and (>= bi p3) (<= s1_qi p5)) (<= (+ s0_qi p4) s1_qi)))(and (and (> b0 0.0) (> b1 0.0) (> b2 0.0) (> b3 0.0) (< s0_q0 100.0) (< s0_q1 100.0) (< s0_q2 100.0) (< s0_q3 100.0) (< s1_q0 100.0) (< s1_q1 100.0) (< s1_q2 100.0) (< s1_q3 100.0))(or (and (and (>= b3 p0) (<= s0_q3 p1)) (<= (+ s1_q3 p2) s0_q3)) (and (and (>= b3 p3) (<= s1_q3 p5)) (<= (+ s0_q3 p4) s1_q3)))))))
+(assert (=>(or (and (and (>= bi p0) (<= s0_qi p1)) (<= (+ s1_qi p2) s0_qi)) (and (and (>= bi p3) (<= s1_qi p5)) (<= (+ s0_qi p4) s1_qi)))(and (and (> b0 0.0) (> b1 0.0) (> b2 0.0) (> b3 0.0) (< s0_q0 100.0) (< s0_q1 100.0) (< s0_q2 100.0) (< s0_q3 100.0) (< s1_q0 100.0) (< s1_q1 100.0) (< s1_q2 100.0) (< s1_q3 100.0))(or (and (and (>= b3 p0) (<= s0_q3 p1)) (<= (+ s1_q3 p2) s0_q3)) (and (and (>= b3 p3) (<= s1_q3 p5)) (<= (+ s0_q3 p4) s1_q3))))))

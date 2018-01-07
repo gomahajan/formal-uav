@@ -36,7 +36,8 @@ data CommandLineArgs = Args {
   smt_precision :: Double,
   verbose :: Bool,
   b_init :: Double,
-  q_init :: Double
+  q_init :: Double,
+  cx_balls :: Bool
 } deriving (Data, Typeable, Show, Eq)
 
 cargs = Args {
@@ -46,7 +47,8 @@ cargs = Args {
   smt_precision = 0.001 &= help "Delta-precision for SMT solver.",
   verbose       = False &= help "Verbose mode.",
   b_init        = 50    &= help "Initial battery level",
-  q_init        = 50    &= help "Initial queue level"
+  q_init        = 50    &= help "Initial queue level",
+  cx_balls      = False &= help "Adjust counterexamples using delta-ball"
 }
 
 
@@ -67,7 +69,8 @@ data Params = Params {
   previous_b :: Maybe Double, -- could rename to previous counter-example
   previous_q :: Maybe Double,
   verboseMode :: Bool,
-  solverConfig :: SolverConfig
+  solverConfig :: SolverConfig,
+  cxBalls :: Bool
 } deriving (Show, Eq)
 
 
@@ -180,7 +183,10 @@ createParameterSum (x:xs) = "(+ " ++ (createParameterSum [x]) ++ " " ++ (createP
 addAllPhis :: Params -> CompleteSpec -> [(Double, Double, Double)] -> IO ()
 addAllPhis p spec cxs = do
   str <- addAllPhis' spec (paramTempFile p) (length cxs) cxs
-  let parameterBalls = (createParameterBall (params p) (synthesisPrecision p))
+  let parameterBalls =
+        if cxBalls p
+        then createParameterBall (params p) (synthesisPrecision p)
+        else ""
   let phis = unlines (parameterBalls : str) --fmap
   s <- readFile (paramConstantFile p)
   --putStrLn $ "PHIS:\n" ++ phis
@@ -302,7 +308,7 @@ main = do
   conf <- readConfig "config/solver.cfg"
   args <- cmdArgsRun mode
   case args of
-    (Args file iters precision delta v b q) -> do
+    (Args file iters precision delta v b q balls) -> do
       let tmpf = file ++ "_template.smt2"
           cmpf = file ++ "_complete.smt2"
           paramtf = file ++ "_parameter_template.smt2"
@@ -325,7 +331,8 @@ main = do
             previous_b = Nothing,
             previous_q = Nothing,
             verboseMode = v,
-            solverConfig = conf
+            solverConfig = conf,
+            cxBalls = balls
           }
       when v $ putStrLn $ "Intial point: " ++ "(" ++ show b ++"," ++ show q ++ ")"
       --parse declarations etc
