@@ -129,10 +129,6 @@ cegisLoop p spec =
             --bcxs' = c1 : bcxs p
             --qcxs' = c2 : qcxs p
             --qcxs2' = c3 : qcxs2 p
-            --constraintbq = "(assert (=> (and (and (>= bi p0) (<= qi p1)) constraintbq) (and (> b0 0) (> b1 0) (> b2 0) (> b3 0) (< q0 100) (< q1 100) (< q2 100) (< q3 100) (and (>= b3 p0) (<= q3 p1)))))"
-            -- replace "constraintbq" with
-            -- battery_constraint = printConstraint $ generateVarConstraints "bi" "qi" bcxs' qcxs'
-            --battery_constraint = unlines $ fmap (((flip (replace "constraintbq")) constraintbq) . printConstraint') (zipWith (findCXBall (synthesisPrecision p)) bcxs' qcxs')
         --putStrLn $ "bcxs: " ++ show bcxs'
         --putStrLn $ "qcxs: " ++ show qcxs'
         when (verboseMode p) $ putStrLn $ "Adding Counterexample: " ++ show cxs
@@ -146,19 +142,6 @@ cegisLoop p spec =
         else do
           let ps' = fmap ((flip getValue) new_params_output_string) (fmap fst (params p))
               params' = zip (fmap fst (params p)) ps'
-              {-
-              p0 = getValue "p0" new_params_output_string
-              p1 = getValue "p1" new_params_output_string
-              p2 = getValue "p2" new_params_output_string
-              p3 = getValue "p3" new_params_output_string
-              p4 = getValue "p4" new_params_output_string
-              p5 = getValue "p5" new_params_output_string
-              p6 = getValue "p6" new_params_output_string
-              p7 = getValue "p7" new_params_output_string
-              p8 = getValue "p8" new_params_output_string
-              p9 = getValue "p9" new_params_output_string
-              params' = [("p0", p0), ("p1", p1), ("p2", p2), ("p3", p3), ("p4", p4), ("p5", p5), ("p6", p6), ("p7", p7), ("p8", p8), ("p9", p9)]
-              -}
               currentIter = iterations p
         --putStrLn $ "Solved Params: " ++ show params'
         --putStrLn $ "Previous params: " ++ show (params p)

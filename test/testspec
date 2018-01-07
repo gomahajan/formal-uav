@@ -74,6 +74,13 @@ collect:
 upload:
   d/dt[q] = queue_upload_rate * t
 
+#sensor 2
+x = 15
+collect:
+  d/dt[q] = queue_data_rate * t
+upload:
+  d/dt[q] = queue_upload_rate * t
+
 // Declared without indices!! (ie b instead of bi)
 #invariant
 ((b >= p0) && (s0_q <= p1) && ((s1_q + p2) <= s0_q) && ((s2_q + p3) <= s0_q)) || ((b >= p4) && (s1_q <= p5) && ((s0_q + p6) <= s1_q) && ((s2_q + p7) <= s1_q)) || ((b >= p8) && (s2_q <= p9) && ((s1_q + p10) <= s2_q) && ((s0_q + p11) <= s2_q))
