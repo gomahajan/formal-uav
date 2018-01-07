@@ -78,7 +78,8 @@ data Vars = Vars {
   _pvars :: [String],
   _expanded_qvars :: [String],
   _locvars :: [String],
-  _cx_vars :: [String]
+  _cx_vars :: [String],
+  _init_vars :: [String]
 } deriving (Show, Eq)
 
 makeLenses ''Vars
@@ -160,7 +161,8 @@ generateVars ds = Vars {
   _pvars = ps,
   _expanded_qvars = sqs,
   _locvars = sls,
-  _cx_vars = cxs
+  _cx_vars = cxs,
+  _init_vars = inits
 }
   where
     numModes = length (_modeDefs ds)
@@ -178,6 +180,7 @@ generateVars ds = Vars {
     qdoms = zip sqs (replicate (numSensors * (numModes + 1)) (_varDomains ds ! "q" ))
     ps = fmap (("p" ++) . show) [0..(_numHoles ds - 1)]
     cxs = "bc" : fmap ((++ "_qc") . ("s" ++) . show) [0..(numSensors - 1)]
+    inits = "bi" : fmap ((++ "_qi") . ("s" ++) . show) [0..(numSensors - 1)]
 
 -- Get corresponding sensor mode from a UAV mode
 uavModeToSensor :: String -> CompleteSpec -> Maybe String
