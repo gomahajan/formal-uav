@@ -114,7 +114,7 @@ getps (BOr p1 p2) = p1 : case p2 of
 replacePred :: String -> String -> Pred -> Pred
 replacePred x y (Expr e)     = Expr $ replaceExp x y e
 replacePred x y (And ps)     = And $ fmap (replacePred x y) ps
-replacePred x y (Or ps)      = And $ fmap (replacePred x y) ps
+replacePred x y (Or ps)      = Or $ fmap (replacePred x y) ps
 replacePred x y (Not p)      = Not $ replacePred x y p
 replacePred x y (Impl p1 p2) = Impl (replacePred x y p1) (replacePred x y p2)
 

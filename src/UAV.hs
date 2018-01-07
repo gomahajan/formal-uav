@@ -107,7 +107,7 @@ cegisLoop p =
         ballStr = case balls of
           [] -> ""
           bs -> printConstraint [] (And (fmap Not bs))
-    putStrLn $ show $ params p
+    putStrLn paramStr
     addParams (paramStr ++ "\n" ++ ballStr) (templateFile p) (completeFile p)
     when (verboseMode p) $ putStrLn "Finding counterexample..."
     output <- run (dRealVersion (solverConfig p)) (solverConfig p) (completeFile p) (solverPrecision p)
@@ -340,9 +340,9 @@ main = do
                 (_, False) -> "\nThe given system is unverifiable in " ++ show iters ++ " iterations"
                 (ps, True)  -> "\nSynthesized a program with the following parameters: \n" ++ unlines (fmap printParam ps) ++
                   "\nAnd the following invariant:\n" ++ "b >= " ++ show (snd (head ps)) ++ "\nq <= " ++ show (snd (head (tail ps)))
-              --removeFile (templateFile synthesisParams)
-              --removeFile (paramTempFile synthesisParams)
-              --removeFile (paramConstantFile synthesisParams)
+              removeFile (templateFile synthesisParams)
+              removeFile (paramTempFile synthesisParams)
+              removeFile (paramConstantFile synthesisParams)
               -- Commenet out the above to keep the smt2 files for reference.
 
 

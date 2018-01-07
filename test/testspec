@@ -69,4 +69,4 @@ upload:
 
 // Declared without indices!! (ie b instead of bi)
 #invariant
-((b >= p0) && (s0_q <= p1) && ((s1_q + p2) <= s0_q)) || ((b >= p3) && (s0_q <= p5) && ((s0_q + p4) <= s1_q))
+((b >= p0) && (s0_q <= p1) && ((s1_q + p2) <= s0_q)) || ((b >= p3) && (s1_q <= p5) && ((s0_q + p4) <= s1_q))
