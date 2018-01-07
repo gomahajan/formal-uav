@@ -107,9 +107,10 @@ cegisLoop p spec =
   else do
     let paramStr = unlines (fmap ((printConstraint []) . Expr) (zipWith (EBin Eq) (fmap (EStrLit . fst) (params p)) (fmap (ERealLit . snd) (params p))))
         balls = findAllCXBalls (synthesisPrecision p) (zip3 (bcxs p) (qcxs p) (qcxs2 p))
-        ballStr = case balls of
-          [] -> ""
-          bs -> printConstraint [] (And (fmap Not bs))
+        ballStr = case (cxBalls p, balls) of
+          (False, _) -> ""
+          (True, [])    -> ""
+          (True, bs) -> printConstraint [] (And (fmap Not bs))
     --putStrLn paramStr
     addParams (paramStr ++ "\n" ++ ballStr) (templateFile p) (completeFile p)
     when (verboseMode p) $ putStrLn "Finding counterexample..."
@@ -189,6 +190,9 @@ addAllPhis p spec cxs = do
   --putStrLn $ "PHIS:\n" ++ phis
   let s_i = replace "counterexamples" phis s
   writeFile (paramCompleteFile p) s_i
+
+defaultPhis :: IO [String]
+defaultPhis = return [""]
 
 addAllPhis' :: CompleteSpec -> String -> Int -> [(Double, Double, Double)] -> IO [String]
 addAllPhis' spec file k [x] = do s <- createPhi spec file x (show k)
