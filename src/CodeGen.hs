@@ -383,9 +383,12 @@ initEnd spec = [printConstraint [] (And es)]
     es = zipWith (\p c -> Expr (EBin Eq (EStrLit p) (EStrLit c))) ps cs
 
 
---TODO: automate this! (especially once we actually add the program)
+initNotGoal :: CompleteSpec -> [String]
+initNotGoal spec = preamble "Goal" ++ ["(assert (not (=>" ++ initInvariant spec "i" ++ "(and "++ initSafety spec ++ initInvariant spec "3" ++ "))))"]
+  where numSensors = _numSensors spec
+
 initGoal :: CompleteSpec -> [String]
-initGoal spec = preamble "Goal" ++ ["(assert (not (=>" ++ initInvariant spec "i" ++ "(and "++ initSafety spec ++ initInvariant spec "3" ++ "))))"]
+initGoal spec = preamble "Goal" ++ ["(assert (=>" ++ initInvariant spec "i" ++ "(and "++ initSafety spec ++ initInvariant spec "3" ++ ")))"]
   where numSensors = _numSensors spec
 
 initSafety :: CompleteSpec -> String

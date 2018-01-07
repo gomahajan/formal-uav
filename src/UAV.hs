@@ -364,7 +364,7 @@ writeTemplate p spec = do
       flyto = printFlyTo "fly_to" spec
       collect = printCollect "download" spec
       flyfrom = printFlyFrom "fly_back" spec
-  writeFile f (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initGoal spec ++ endSMT))
+  writeFile f (unlines (smt ++ charge ++ flyto ++ collect ++ flyfrom ++ initNotGoal spec ++ endSMT))
 
 -- Create uav_dreal_paramterer_template.smt2
 writeParamTemplate :: Params -> CompleteSpec -> IO ()

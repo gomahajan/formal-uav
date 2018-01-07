@@ -70,17 +70,17 @@
 (assert (>= s1_q3 0.0))
 
 (assert (= p0 1.0))
-(assert (= p1 3.0))
-(assert (= p2 0.5))
+(assert (= p1 1.0))
+(assert (= p2 1.0))
 (assert (= p3 1.0))
 (assert (= p4 1.0))
-(assert (= p5 10.0))
-(assert (= p6 97.5))
+(assert (= p5 0.5))
+(assert (= p6 85.0))
 (assert (= p7 3.0))
-(assert (= p8 2.375))
+(assert (= p8 0.9375))
 (assert (= p9 1.0))
 
-(assert (and (not (>= (^ 1.0e-2 2.0) (+ (+ (^ (- bi 85.0) 2.0) (^ (- s0_qi 2.0) 2.0)) (^ (- s1_qi 1.125) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (+ (^ (- bi 60.0) 2.0) (^ (- s0_qi 1.0) 2.0)) (^ (- s1_qi 0.0) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (+ (^ (- bi 10.0) 2.0) (^ (- s0_qi 0.0) 2.0)) (^ (- s1_qi 9.0) 2.0))))))
+(assert (and (not (>= (^ 1.0e-2 2.0) (+ (+ (^ (- bi 60.0) 2.0) (^ (- s0_qi 0.0) 2.0)) (^ (- s1_qi 1.0) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (+ (^ (- bi 10.0) 2.0) (^ (- s0_qi 0.0) 2.0)) (^ (- s1_qi 9.0) 2.0))))))
 
 (declare-fun choice () Real)
 (assert (or (= choice 0.0) (= choice 1.0)))
@@ -92,8 +92,8 @@
 (assert (= s0_q0 (+ s0_qi (* queue_data_rate t0))))
 (assert (= s1_q0 (+ s1_qi (* queue_data_rate t0))))
 (assert (and (=> (>= bi p6) (= b0 bi)) (=> (< bi p6) (= b0 p6))))
-(assert (=> (and (and (>= bi p0) (<= s0_qi p1)) (<= (+ s1_qi p2) s0_q1)) (= choice 0.0)))
-(assert (=> (not (and (and (>= bi p0) (<= s0_qi p1)) (<= (+ s1_qi p2) s0_q1))) (= choice 1.0)))
+(assert (=> (and (and (>= bi p0) (<= s0_qi p1)) (<= (+ s1_qi p2) s0_qi)) (= choice 0.0)))
+(assert (=> (not (and (and (>= bi p0) (<= s0_qi p1)) (<= (+ s1_qi p2) s0_qi))) (= choice 1.0)))
 
 
 ;flying to sensors
@@ -108,8 +108,8 @@
 ;Collecting data
 (assert (= x2 x1))
 (assert (= b2 (+ b1 (* battery_charge_rate_hover t2))))
-(assert (=> (= choice 0.0) (and (= s0_q2 (- s0_q1 (* queue_upload_rate t2))) (= s1_q1 (+ s1_q2 (* queue_data_rate t2))))))
-(assert (=> (= choice 1.0) (and (= s1_q2 (- s1_q1 (* queue_upload_rate t2))) (= s0_q1 (+ s0_q2 (* queue_data_rate t2))))))
+(assert (=> (= choice 0.0) (and (= s0_q2 (- s0_q1 (* queue_upload_rate t2))) (= s1_q2 (+ s1_q1 (* queue_data_rate t2))))))
+(assert (=> (= choice 1.0) (and (= s1_q2 (- s1_q1 (* queue_upload_rate t2))) (= s0_q2 (+ s0_q1 (* queue_data_rate t2))))))
 (assert (and (=> (= choice 0.0) (=> (<= s0_q1 p7) (= s0_q2 s0_q1))) (=> (> s0_q1 p7) (= s0_q2 p7))))
 (assert (and (=> (= choice 1.0) (=> (<= s1_q1 p8) (= s1_q2 s1_q1))) (=> (> s1_q1 p8) (= s1_q2 p8))))
 
