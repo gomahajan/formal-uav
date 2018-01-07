@@ -26,7 +26,7 @@
 (assert (= queue_data_rate 1.0))
 (assert (= queue_upload_rate 50.0))
 (assert (= s0_loc 10.0))
-(assert (= s1_loc 10.0))
+(assert (= s1_loc 20.0))
 (assert (>= p0 0.0))
 (assert (<= p0 100.0))
 (assert (>= p1 0.0))
@@ -48,7 +48,101 @@
 (assert (>= p9 0.0))
 (assert (<= p9 100.0))
 
-(assert (> (+ (norm (- p0 1.0)) (+ (norm (- p1 1.0)) (+ (norm (- p2 1.0)) (+ (norm (- p3 1.0)) (+ (norm (- p4 1.0)) (+ (norm (- p5 1.0)) (+ (norm (- p6 60.0)) (+ (norm (- p7 3.0)) (+ (norm (- p8 4.75)) (norm (- p9 1.0))))))))))) 1))
+(assert (> (+ (norm (- p0 1.0)) (+ (norm (- p1 1.0)) (+ (norm (- p2 1.0)) (+ (norm (- p3 1.0)) (+ (norm (- p4 1.0)) (+ (norm (- p5 0.5)) (+ (norm (- p6 85.0)) (+ (norm (- p7 1.0)) (+ (norm (- p8 0.375)) (norm (- p9 1.0))))))))))) 1))
+(declare-fun x0_3 () Real)
+(declare-fun x1_3 () Real)
+(declare-fun x2_3 () Real)
+(declare-fun x3_3 () Real)
+(declare-fun bi_3 () Real)
+(declare-fun b0_3 () Real)
+(declare-fun b1_3 () Real)
+(declare-fun b2_3 () Real)
+(declare-fun b3_3 () Real)
+(declare-fun s0_qi_3 () Real)
+(declare-fun s0_q0_3 () Real)
+(declare-fun s0_q1_3 () Real)
+(declare-fun s0_q2_3 () Real)
+(declare-fun s0_q3_3 () Real)
+(declare-fun s1_qi_3 () Real)
+(declare-fun s1_q0_3 () Real)
+(declare-fun s1_q1_3 () Real)
+(declare-fun s1_q2_3 () Real)
+(declare-fun s1_q3_3 () Real)
+(declare-fun t0_3 () Real)
+(declare-fun t1_3 () Real)
+(declare-fun t2_3 () Real)
+(declare-fun t3_3 () Real)
+(declare-fun bc_3 () Real)
+(declare-fun s0_qc_3 () Real)
+(declare-fun s1_qc_3 () Real)
+(assert (>= t0_3 0.0))
+(assert (>= t1_3 0.0))
+(assert (>= t2_3 0.0))
+(assert (>= t3_3 0.0))
+(assert (<= bi_3 100.0))
+(assert (<= b0_3 100.0))
+(assert (<= b1_3 100.0))
+(assert (<= b2_3 100.0))
+(assert (<= b3_3 100.0))
+(assert (>= s0_qi_3 0.0))
+(assert (>= s0_q0_3 0.0))
+(assert (>= s0_q1_3 0.0))
+(assert (>= s0_q2_3 0.0))
+(assert (>= s0_q3_3 0.0))
+(assert (>= s1_qi_3 0.0))
+(assert (>= s1_q0_3 0.0))
+(assert (>= s1_q1_3 0.0))
+(assert (>= s1_q2_3 0.0))
+(assert (>= s1_q3_3 0.0))
+(assert (<= s0_qi_3 100.0))
+(assert (<= s1_qi_3 100.0))
+(declare-fun choice_3 () Real)
+(assert (or (= choice_3 0.0) (= choice_3 1.0)))
+
+
+;charging
+(assert (= x0_3 0))
+(assert (= b0_3 (+ bi_3 (* battery_charging_rate t0_3))))
+(assert (= s0_q0_3 (+ s0_qi_3 (* queue_data_rate t0_3))))
+(assert (= s1_q0_3 (+ s1_qi_3 (* queue_data_rate t0_3))))
+(assert (and (=> (>= bi_3 p6) (= b0_3 bi_3)) (=> (< bi_3 p6) (= b0_3 p6))))
+(assert (=> (and (and (>= bi_3 p0) (<= s0_qi_3 p1)) (<= (+ s1_qi_3 p2) s0_qi_3)) (= choice_3 0.0)))
+(assert (=> (not (and (and (>= bi_3 p0) (<= s0_qi_3 p1)) (<= (+ s1_qi_3 p2) s0_qi_3))) (= choice_3 1.0)))
+
+
+;flying to sensors
+(assert (=> (= choice_3 0.0) (= x1_3 s0_loc)))
+(assert (=> (= choice_3 1.0) (= x1_3 s1_loc)))
+(assert (= x1_3 (+ x0_3 (* drone_velocity t1_3))))
+(assert (= b1_3 (+ b0_3 (* battery_charge_rate_fly t1_3))))
+(assert (= s0_q1_3 (+ s0_q0_3 (* queue_data_rate t1_3))))
+(assert (= s1_q1_3 (+ s1_q0_3 (* queue_data_rate t1_3))))
+
+
+;Collecting data
+(assert (= x2_3 x1_3))
+(assert (= b2_3 (+ b1_3 (* battery_charge_rate_hover t2_3))))
+(assert (=> (= choice_3 0.0) (and (= s0_q2_3 (- s0_q1_3 (* queue_upload_rate t2_3))) (= s1_q2_3 (+ s1_q1_3 (* queue_data_rate t2_3))))))
+(assert (=> (= choice_3 1.0) (and (= s1_q2_3 (- s1_q1_3 (* queue_upload_rate t2_3))) (= s0_q2_3 (+ s0_q1_3 (* queue_data_rate t2_3))))))
+(assert (=> (= choice_3 0.0) (and (=> (<= s0_q1_3 p7) (= s0_q2_3 s0_q1_3)) (=> (> s0_q1_3 p7) (= s0_q2_3 p7)))))
+(assert (=> (= choice_3 1.0) (and (=> (<= s1_q1_3 p8) (= s1_q2_3 s1_q1_3)) (=> (> s1_q1_3 p8) (= s1_q2_3 p8)))))
+
+
+;flying back
+(assert (= x3_3 0))
+(assert (= x3_3 (+ x2_3 (- (* drone_velocity t3_3)))))
+(assert (= b3_3 (+ b2_3 (* battery_charge_rate_fly t3_3))))
+(assert (= s0_q3_3 (+ s0_q2_3 (* queue_data_rate t3_3))))
+(assert (= s1_q3_3 (+ s1_q2_3 (* queue_data_rate t3_3))))
+
+(assert (and (= bc_3 85.0) (= s0_qc_3 1.0) (= s1_qc_3 0.0)))
+
+(assert (and (= bi_3 bc_3) (= s0_qi_3 s0_qc_3) (= s1_qi_3 s1_qc_3)))
+
+
+;Goal
+(assert (=>(or (and (and (>= bi_3 p0) (<= s0_qi_3 p1)) (<= (+ s1_qi_3 p2) s0_qi_3)) (and (and (>= bi_3 p3) (<= s1_qi_3 p5)) (<= (+ s0_qi_3 p4) s1_qi_3)))(and (and (> b0_3 0.0) (> b1_3 0.0) (> b2_3 0.0) (> b3_3 0.0) (< s0_q0_3 100.0) (< s0_q1_3 100.0) (< s0_q2_3 100.0) (< s0_q3_3 100.0) (< s1_q0_3 100.0) (< s1_q1_3 100.0) (< s1_q2_3 100.0) (< s1_q3_3 100.0))(or (and (and (>= b3_3 p0) (<= s0_q3_3 p1)) (<= (+ s1_q3_3 p2) s0_q3_3)) (and (and (>= b3_3 p3) (<= s1_q3_3 p5)) (<= (+ s0_q3_3 p4) s1_q3_3))))))
+
 (declare-fun x0_2 () Real)
 (declare-fun x1_2 () Real)
 (declare-fun x2_2 () Real)
@@ -124,8 +218,8 @@
 (assert (= b2_2 (+ b1_2 (* battery_charge_rate_hover t2_2))))
 (assert (=> (= choice_2 0.0) (and (= s0_q2_2 (- s0_q1_2 (* queue_upload_rate t2_2))) (= s1_q2_2 (+ s1_q1_2 (* queue_data_rate t2_2))))))
 (assert (=> (= choice_2 1.0) (and (= s1_q2_2 (- s1_q1_2 (* queue_upload_rate t2_2))) (= s0_q2_2 (+ s0_q1_2 (* queue_data_rate t2_2))))))
-(assert (and (=> (= choice_2 0.0) (=> (<= s0_q1_2 p7) (= s0_q2_2 s0_q1_2))) (=> (> s0_q1_2 p7) (= s0_q2_2 p7))))
-(assert (and (=> (= choice_2 1.0) (=> (<= s1_q1_2 p8) (= s1_q2_2 s1_q1_2))) (=> (> s1_q1_2 p8) (= s1_q2_2 p8))))
+(assert (=> (= choice_2 0.0) (and (=> (<= s0_q1_2 p7) (= s0_q2_2 s0_q1_2)) (=> (> s0_q1_2 p7) (= s0_q2_2 p7)))))
+(assert (=> (= choice_2 1.0) (and (=> (<= s1_q1_2 p8) (= s1_q2_2 s1_q1_2)) (=> (> s1_q1_2 p8) (= s1_q2_2 p8)))))
 
 
 ;flying back
@@ -218,8 +312,8 @@
 (assert (= b2_1 (+ b1_1 (* battery_charge_rate_hover t2_1))))
 (assert (=> (= choice_1 0.0) (and (= s0_q2_1 (- s0_q1_1 (* queue_upload_rate t2_1))) (= s1_q2_1 (+ s1_q1_1 (* queue_data_rate t2_1))))))
 (assert (=> (= choice_1 1.0) (and (= s1_q2_1 (- s1_q1_1 (* queue_upload_rate t2_1))) (= s0_q2_1 (+ s0_q1_1 (* queue_data_rate t2_1))))))
-(assert (and (=> (= choice_1 0.0) (=> (<= s0_q1_1 p7) (= s0_q2_1 s0_q1_1))) (=> (> s0_q1_1 p7) (= s0_q2_1 p7))))
-(assert (and (=> (= choice_1 1.0) (=> (<= s1_q1_1 p8) (= s1_q2_1 s1_q1_1))) (=> (> s1_q1_1 p8) (= s1_q2_1 p8))))
+(assert (=> (= choice_1 0.0) (and (=> (<= s0_q1_1 p7) (= s0_q2_1 s0_q1_1)) (=> (> s0_q1_1 p7) (= s0_q2_1 p7)))))
+(assert (=> (= choice_1 1.0) (and (=> (<= s1_q1_1 p8) (= s1_q2_1 s1_q1_1)) (=> (> s1_q1_1 p8) (= s1_q2_1 p8)))))
 
 
 ;flying back
