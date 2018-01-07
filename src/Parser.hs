@@ -411,21 +411,30 @@ binOpTokens = Map.fromList [ (Times, "*")
 -- TODO: typecheck the predicates? it's possible to have real-valued
 --   preds, which are meaningless in an And for example
 
-parsePred :: Parser Pred
-parsePred = do
+parseAnd :: Parser Pred
+parseAnd = do
   whitespace
   p <- chainl1 parseTerm parsePEx
   whitespace
   return p
 
+parseImplOp :: Parser (Pred -> Pred -> Pred)
+parseImplOp = do
+  onelineWS
+  string "=>"
+  onelineWS
+  return Impl
+
+-- Implication binds tightest
+parsePred = chainl1 parseAnd parseImplOp
+
 -- Parser for predicate expressions (and, or, etc)
 parsePEx :: Parser (Pred -> Pred -> Pred)
 parsePEx = do
   onelineWS
-  s <- string "=>" <|> string "&&" <|> string "||"
+  s <-  string "||" <|> string "&&"
   onelineWS
   case s of
-    "=>" -> return Impl
     "&&" -> return BAnd
     "||" -> return BOr
 
