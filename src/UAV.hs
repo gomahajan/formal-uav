@@ -112,7 +112,7 @@ cegisLoop p spec =
     when (verboseMode p) $ putStrLn "Finding counterexample..."
     output <- run (dRealVersion (solverConfig p)) (solverConfig p) (completeFile p) (solverPrecision p)
     resp <- Main.read (dRealVersion (solverConfig p)) output
-    putStrLn $ show resp
+    --putStrLn $ show resp
     let cxs = getCX "bi" "s0_qi" "s1_qi" resp
     --print cxs
     case cxs of
