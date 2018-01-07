@@ -71,13 +71,13 @@
 
 (assert (= p0 1.0))
 (assert (= p1 1.0))
-(assert (= p2 1.0))
+(assert (= p2 2.0))
 (assert (= p3 1.0))
 (assert (= p4 1.0))
 (assert (= p5 0.5))
-(assert (= p6 85.0))
-(assert (= p7 3.0))
-(assert (= p8 0.9375))
+(assert (= p6 97.5))
+(assert (= p7 1.0))
+(assert (= p8 1.0))
 (assert (= p9 1.0))
 
 
@@ -110,8 +110,8 @@
 (assert (= b2 (+ b1 (* battery_charge_rate_hover t2))))
 (assert (=> (= choice 0.0) (and (= s0_q2 (- s0_q1 (* queue_upload_rate t2))) (= s1_q2 (+ s1_q1 (* queue_data_rate t2))))))
 (assert (=> (= choice 1.0) (and (= s1_q2 (- s1_q1 (* queue_upload_rate t2))) (= s0_q2 (+ s0_q1 (* queue_data_rate t2))))))
-(assert (and (=> (= choice 0.0) (=> (<= s0_q1 p7) (= s0_q2 s0_q1))) (=> (> s0_q1 p7) (= s0_q2 p7))))
-(assert (and (=> (= choice 1.0) (=> (<= s1_q1 p8) (= s1_q2 s1_q1))) (=> (> s1_q1 p8) (= s1_q2 p8))))
+(assert (=> (= choice 0.0) (and (=> (<= s0_q1 p7) (= s0_q2 s0_q1)) (=> (> s0_q1 p7) (= s0_q2 p7)))))
+(assert (=> (= choice 1.0) (and (=> (<= s1_q1 p8) (= s1_q2 s1_q1)) (=> (> s1_q1 p8) (= s1_q2 p8)))))
 
 
 ;flying back
