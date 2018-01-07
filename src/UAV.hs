@@ -183,10 +183,7 @@ createParameterSum (x:xs) = "(+ " ++ (createParameterSum [x]) ++ " " ++ (createP
 addAllPhis :: Params -> CompleteSpec -> [(Double, Double, Double)] -> IO ()
 addAllPhis p spec cxs = do
   str <- addAllPhis' spec (paramTempFile p) (length cxs) cxs
-  let parameterBalls =
-        if cxBalls p
-        then createParameterBall (params p) (synthesisPrecision p)
-        else ""
+  let parameterBalls = createParameterBall (params p) (synthesisPrecision p)
   let phis = unlines (parameterBalls : str) --fmap
   s <- readFile (paramConstantFile p)
   --putStrLn $ "PHIS:\n" ++ phis

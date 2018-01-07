@@ -48,7 +48,7 @@
 (assert (>= p9 0.0))
 (assert (<= p9 100.0))
 
-
+(assert (> (+ (norm (- p0 9.0)) (+ (norm (- p1 0.0)) (+ (norm (- p2 10.0)) (+ (norm (- p3 1.0)) (+ (norm (- p4 9.0)) (+ (norm (- p5 9.0)) (+ (norm (- p6 10.0)) (+ (norm (- p7 1.0)) (+ (norm (- p8 9.0)) (norm (- p9 9.0))))))))))) 1))
 (declare-fun x0_1 () Real)
 (declare-fun x1_1 () Real)
 (declare-fun x2_1 () Real)
