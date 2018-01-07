@@ -97,8 +97,8 @@ Otherwise, it gives us counterexample bi,qi. We ask another question to dReal, s
 and other examples, find parameters for invariant and program which work. And this continues.
 -}
 
-cegisLoop :: Params -> IO (Maybe ([(String, Double)], Bool))
-cegisLoop p =
+cegisLoop :: Params -> CompleteSpec -> IO (Maybe ([(String, Double)], Bool))
+cegisLoop p spec =
   if iterations p <= 0
   then return $ Just (params p, False)
   else do
@@ -107,12 +107,14 @@ cegisLoop p =
         ballStr = case balls of
           [] -> ""
           bs -> printConstraint [] (And (fmap Not bs))
-    putStrLn paramStr
+    --putStrLn paramStr
     addParams (paramStr ++ "\n" ++ ballStr) (templateFile p) (completeFile p)
     when (verboseMode p) $ putStrLn "Finding counterexample..."
     output <- run (dRealVersion (solverConfig p)) (solverConfig p) (completeFile p) (solverPrecision p)
     resp <- Main.read (dRealVersion (solverConfig p)) output
-    let cxs = getCX "bi" "s1_qi" "s2_qi" resp
+    putStrLn $ show resp
+    let cxs = getCX "bi" "s0_qi" "s1_qi" resp
+    --print cxs
     case cxs of
       Nothing -> do
         putStrLn $ "\n\nIn " ++ show (originalIters p - iterations p) ++ " iterations:"
@@ -129,11 +131,11 @@ cegisLoop p =
         --putStrLn $ "bcxs: " ++ show bcxs'
         --putStrLn $ "qcxs: " ++ show qcxs'
         when (verboseMode p) $ putStrLn $ "Adding Counterexample: " ++ show (c1, c2, c3)
-        addAllPhis p $ zip3 bcxs' qcxs' qcxs2'
+        addAllPhis p spec $ zip3 bcxs' qcxs' qcxs2'
         when (verboseMode p) $ putStrLn "Finding parameters..."
         new_params_output <- run 2 (solverConfig p) (paramCompleteFile p) (solverPrecision p)
         new_params_output_string <- Main.read 2 new_params_output
-        putStrLn $ "Previous params: " ++ show (params p)
+        --putStrLn $ "Previous params: " ++ show (params p)
         if unsatResp new_params_output_string
         then return $ Just (params p, False)
         else do
@@ -156,13 +158,13 @@ cegisLoop p =
         --putStrLn $ "Solved Params: " ++ show params'
         --putStrLn $ "Previous params: " ++ show (params p)
           cegisLoop p { previous_b = Just c1,
-                       previous_q = Just c2,
-                       iterations = currentIter - 1,
-                       bcxs = bcxs',
-                       qcxs = qcxs',
-                       qcxs2 = qcxs2',
-                       params = params'
-                       }
+                        previous_q = Just c2,
+                        iterations = currentIter - 1,
+                        bcxs = bcxs',
+                        qcxs = qcxs',
+                        qcxs2 = qcxs2',
+                        params = params'
+                        } spec
 
 unsatResp :: Response -> Bool
 unsatResp (Response _ []) = True
@@ -175,28 +177,33 @@ createParameterSum :: [(String, Double)] -> String
 createParameterSum [(a,b)] = "(norm (- "++ a ++" "++ show b ++ "))"
 createParameterSum (x:xs) = "(+ " ++ (createParameterSum [x]) ++ " " ++ (createParameterSum xs) ++ ")"
 
-addAllPhis :: Params -> [(Double, Double, Double)] -> IO ()
-addAllPhis p cxs = do
-  str <- addAllPhis' (paramTempFile p) (length cxs) cxs
+addAllPhis :: Params -> CompleteSpec -> [(Double, Double, Double)] -> IO ()
+addAllPhis p spec cxs = do
+  str <- addAllPhis' spec (paramTempFile p) (length cxs) cxs
   let parameterBalls = (createParameterBall (params p) (synthesisPrecision p))
   let phis = unlines (parameterBalls : str) --fmap
   s <- readFile (paramConstantFile p)
+  --putStrLn $ "PHIS:\n" ++ phis
   let s_i = replace "counterexamples" phis s
   writeFile (paramCompleteFile p) s_i
 
-addAllPhis' :: String -> Int -> [(Double, Double, Double)] -> IO [String]
-addAllPhis' file k [x] = do s <- createPhi file x (show k)
-                            return [s]
-addAllPhis' file n (x:xs) = do s <- createPhi file x (show n)
-                               s' <- addAllPhis' file (n - 1) xs
-                               return $ s : s'
+addAllPhis' :: CompleteSpec -> String -> Int -> [(Double, Double, Double)] -> IO [String]
+addAllPhis' spec file k [x] = do s <- createPhi spec file x (show k)
+                                 return [s]
+addAllPhis' spec file n (x:xs) = do s <- createPhi spec file x (show n)
+                                    s' <- addAllPhis' spec file (n - 1) xs
+                                    return $ s : s'
 
-createPhi :: String -> (Double, Double,Double) -> String -> IO String
-createPhi file (c1,c2,c3) name = do
+createPhi :: CompleteSpec -> String -> (Double, Double,Double) -> String -> IO String
+createPhi spec file (c1,c2,c3) name = do
   s <- readFile file
-  let andTerm = "(assert (and (= bc " ++ (Numeric.showFFloat Nothing c1 "") ++ ") (= s1_qc " ++ (Numeric.showFFloat Nothing c2 "") ++ ") (= s2_qc " ++ (Numeric.showFFloat Nothing c3 "") ++ ")))"
+  -- TODO: automate this
+  let andTerm = "(assert (and (= bc " ++ (Numeric.showFFloat Nothing c1 "") ++ ") (= s0_qc " ++ (Numeric.showFFloat Nothing c2 "") ++ ") (= s1_qc " ++ (Numeric.showFFloat Nothing c3 "") ++ ")))"
       s_i = replace "batteryvalue" andTerm s
-      variables = ["x0", "x1", "x2", "x3", "bi", "b0", "b1", "b2", "b3", "s1_qi", "s1_q0", "s1_q1", "s1_q2", "s1_q3", "s2_qi", "s2_q0", "s2_q1", "s2_q2", "s2_q3", "t0", "t1", "t2", "t3", "bc", "s1_qc", "s2_qc", "choice"]
+      -- TODO: automate this
+      vars = _vars spec
+      variables = tail (_xvars vars) ++ _bvars vars ++ _expanded_qvars vars ++ _tvars vars ++ _cx_vars vars ++ ["choice"]
+      --variables = ["x0", "x1", "x2", "x3", "bi", "b0", "b1", "b2", "b3", "s1_qi", "s1_q0", "s1_q1", "s1_q2", "s1_q3", "s2_qi", "s2_q0", "s2_q1", "s2_q2", "s2_q3", "t0", "t1", "t2", "t3", "bc", "s1_qc", "s2_qc", "choice"]
       s_i_g = foldl (\str v -> (replace v (v ++ "_" ++ name) str)) s_i variables
   return s_i_g
 
@@ -250,7 +257,7 @@ findAllCXBalls epsilon = fmap (findCXBall epsilon)
 
 findCXBall :: Double -> (Double, Double, Double) -> Pred
 --findCXBall x y epsilon = (bi - x)^2 + (qi - y)^2 <= epsilon^2
-findCXBall epsilon (x, y, z) = Expr $ EBin Geq (EBin Pow (ERealLit epsilon) (ERealLit 2)) (EBin Plus (EBin Plus (EBin Pow (EBin Minus (EVar "bi") (ERealLit x)) (ERealLit 2)) (EBin Pow (EBin Minus (EVar "s1_qi") (ERealLit y)) (ERealLit 2))) (EBin Pow (EBin Minus (EVar "s2_qi") (ERealLit z)) (ERealLit 2)))
+findCXBall epsilon (x, y, z) = Expr $ EBin Geq (EBin Pow (ERealLit epsilon) (ERealLit 2)) (EBin Plus (EBin Plus (EBin Pow (EBin Minus (EVar "bi") (ERealLit x)) (ERealLit 2)) (EBin Pow (EBin Minus (EVar "s0_qi") (ERealLit y)) (ERealLit 2))) (EBin Pow (EBin Minus (EVar "s1_qi") (ERealLit z)) (ERealLit 2)))
 
 getTheta :: Double -> Double -> Double
 getTheta y x = if x == 0
@@ -321,7 +328,7 @@ main = do
             solverConfig = conf
           }
       when v $ putStrLn $ "Intial point: " ++ "(" ++ show b ++"," ++ show q ++ ")"
-      -- parse declarations etc
+      --parse declarations etc
       x <- parseFromFile parseDecls file
       case x of
         Left e -> error $ show e
@@ -329,10 +336,11 @@ main = do
           -- TODO: update params synthesisParams with the initial values parsed from spec!!
           let spec = finishSpec decls
               ps = synthesisParams { params = (_paramValues . _declarations) spec }
+              --ps = synthesisParams { params = [("p0", 9), ("p1", 0), ("p2", 10), ("p3", 1), ("p4", 9), ("p5", 9), ("p6", 10), ("p7", 1), ("p8", 9), ("p9", 9)] }
           writeTemplate ps spec
           writeParamTemplate ps spec
           writeParamConstTemplate ps spec
-          p <- cegisLoop ps
+          p <- cegisLoop ps spec
           case p of
             Nothing -> putStrLn "Synthesis error"
             Just pr -> do
@@ -343,7 +351,8 @@ main = do
               removeFile (templateFile synthesisParams)
               removeFile (paramTempFile synthesisParams)
               removeFile (paramConstantFile synthesisParams)
-              -- Commenet out the above to keep the smt2 files for reference.
+              removeFile (paramCompleteFile synthesisParams)
+              --comment out the above to keep the smt2 files for reference.
 
 
 -- Create uav_dreal_template.smt2

@@ -28,6 +28,7 @@ run n sconf f delta = do
                   2 -> genSolverCallZ3
                   3 -> genSolverCall
                   4 -> genSolverCall
+    putStrLn (solver sconf f delta)
     let p = (shell (solver sconf f delta))
             { std_in  = Inherit
             , std_out = CreatePipe

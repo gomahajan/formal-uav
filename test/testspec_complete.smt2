@@ -69,26 +69,25 @@
 (assert (>= s1_q2 0.0))
 (assert (>= s1_q3 0.0))
 
-(assert (= p0 9.0))
-(assert (= p1 0.0))
-(assert (= p2 10.0))
+(assert (= p0 1.0))
+(assert (= p1 3.0))
+(assert (= p2 0.5))
 (assert (= p3 1.0))
-(assert (= p4 9.0))
-(assert (= p5 9.0))
-(assert (= p6 10.0))
-(assert (= p7 1.0))
-(assert (= p8 9.0))
-(assert (= p9 9.0))
+(assert (= p4 1.0))
+(assert (= p5 10.0))
+(assert (= p6 97.5))
+(assert (= p7 3.0))
+(assert (= p8 2.375))
+(assert (= p9 1.0))
 
-
+(assert (and (not (>= (^ 1.0e-2 2.0) (+ (+ (^ (- bi 85.0) 2.0) (^ (- s0_qi 2.0) 2.0)) (^ (- s1_qi 1.125) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (+ (^ (- bi 60.0) 2.0) (^ (- s0_qi 1.0) 2.0)) (^ (- s1_qi 0.0) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (+ (^ (- bi 10.0) 2.0) (^ (- s0_qi 0.0) 2.0)) (^ (- s1_qi 9.0) 2.0))))))
 
 (declare-fun choice () Real)
 (assert (or (= choice 0.0) (= choice 1.0)))
 
 
 ;charging
-(assert (= xi 0))
-(assert (= x0 (+ xi 0.0)))
+(assert (= x0 0))
 (assert (= b0 (+ bi (* battery_charging_rate t0))))
 (assert (= s0_q0 (+ s0_qi (* queue_data_rate t0))))
 (assert (= s1_q0 (+ s1_qi (* queue_data_rate t0))))

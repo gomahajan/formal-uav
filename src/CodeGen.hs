@@ -75,7 +75,10 @@ data Vars = Vars {
   _xvars :: [String],
   _bvars :: [String],
   _qvars :: [String],
-  _pvars :: [String]
+  _pvars :: [String],
+  _expanded_qvars :: [String],
+  _locvars :: [String],
+  _cx_vars :: [String]
 } deriving (Show, Eq)
 
 makeLenses ''Vars
@@ -154,7 +157,10 @@ generateVars ds = Vars {
   _xvars = xs,
   _bvars = bs,
   _qvars = qs,
-  _pvars = ps
+  _pvars = ps,
+  _expanded_qvars = sqs,
+  _locvars = sls,
+  _cx_vars = cxs
 }
   where
     numModes = length (_modeDefs ds)
@@ -171,6 +177,7 @@ generateVars ds = Vars {
     bdoms = zip bs (replicate (numModes + 1) (_varDomains ds ! "b" ))
     qdoms = zip sqs (replicate (numSensors * (numModes + 1)) (_varDomains ds ! "q" ))
     ps = fmap (("p" ++) . show) [0..(_numHoles ds - 1)]
+    cxs = "bc" : fmap ((++ "_qc") . ("s" ++) . show) [0..(numSensors - 1)]
 
 -- Get corresponding sensor mode from a UAV mode
 uavModeToSensor :: String -> CompleteSpec -> Maybe String
@@ -187,17 +194,17 @@ sensorModeToUAV s spec = fmap uavMode mode
     mode = find (\m -> sensorMode m == s) ms
 
 initializeParams :: CompleteSpec -> [String]
-initializeParams spec = vdecls ++ cxdecs ++ defs ++ tmin ++ doms ++ choice ++  [(printConstraint env cxgoal)]
+initializeParams spec = vdecls ++ cxdecs ++ tmin ++ doms ++ choice
   where
     env = _environment . _declarations $ spec
     numSensors = _numSensors spec
     cxs = mkvars "c"
     ivs = mkvars "i"
     cxdecs = fmap declFun cxs
-    cxgoal = And (zipWith (\x y -> (Expr (EBin Eq (EStrLit x) (EStrLit y)))) cxs ivs)
     mkvars v = ("b" ++ v) : fmap ((++ ("_q" ++ v)) . ("s" ++) . show) [0..(numSensors - 1)]
     choice = initChoice env (_numSensors spec)
-    vdecls = fmap declFun $ ((_allVars . _vars) spec)
+    allvars = _vars spec
+    vdecls = fmap declFun $ tail (_xvars allvars) ++ _bvars allvars ++ _expanded_qvars allvars ++ _tvars allvars
     defList = assocs $ (_defns . _declarations) spec
     defs = zipWith initConstant (fmap fst defList) (fmap (show . snd) defList)
     tmin = fmap (`decMin` 0) ((_tvars . _vars) spec)
@@ -206,10 +213,11 @@ initializeParams spec = vdecls ++ cxdecs ++ defs ++ tmin ++ doms ++ choice ++  [
 
 
 initializeParamConsts :: CompleteSpec -> [String]
-initializeParamConsts spec = logic : (vdecls ++ defs ++ pbounds ++ slocs)
+initializeParamConsts spec = logic : (vdecls ++ initNorm ++ defs ++ slocs ++ pbounds)
   where
     params = (_pvars . _vars) spec
-    vdecls = fmap declFun $ params ++ keys ((_defns . _declarations) spec)
+    locs = _locvars . _vars $ spec
+    vdecls = fmap declFun $ params ++ keys ((_defns . _declarations) spec) ++ locs
     defList = assocs $ (_defns . _declarations) spec
     defs = zipWith initConstant (fmap fst defList) (fmap (show . snd) defList)
     -- TODO: generalize pmax below
@@ -276,8 +284,8 @@ printProgMode name spec = fmap (printConstraint ((_environment . _declarations) 
 printCharge :: String -> CompleteSpec -> [String]
 printCharge name spec = preamble "charging" ++ fmap (replace " t" " t0") (pos : dyn ++ prog)
   where
-    pos = initConstant "xi" "0"
-    dyn = printDynamics name spec (show 0) "i"
+    pos = initConstant "x0" "0"
+    dyn = tail $ printDynamics name spec (show 0) "i" --take tail to eliminate x dynamics
     prog = printProgMode name spec
 
 -- Print mode flying from sensor to charge
@@ -412,6 +420,9 @@ initChoice env n = top : [ors]
     top = declFun "choice"
     con = Or (fmap ((Expr . EBin Eq (EStrLit "choice") . ERealLit) . fromIntegral) [0..(n-1)])
     ors = printConstraint env con
+
+initNorm :: [String]
+initNorm = ["(define-fun norm ((a Real)) Real\n  (ite (< a 0) (* -1 a) a))"]
 
 -- SMT syntax printing utilities
 

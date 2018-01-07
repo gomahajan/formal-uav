@@ -87,18 +87,18 @@
 (assert (>= s1_q3 0))
 
 ;template
-(assert (= p0 1.0))
-(assert (= p1 1.0))
-(assert (= p2 2.0))
+(assert (= p0 9.0))
+(assert (= p1 0.0))
+(assert (= p2 10.0))
 (assert (= p3 1.0))
-(assert (= p4 1.0))
-(assert (= p5 0.5))
-(assert (= p6 97.5))
+(assert (= p4 9.0))
+(assert (= p5 9.0))
+(assert (= p6 10.0))
 (assert (= p7 1.0))
-(assert (= p8 1.0))
-(assert (= p9 1.0))
+(assert (= p8 9.0))
+(assert (= p9 9.0))
 
-(assert (and (not (>= (^ 1.0e-2 2.0) (+ (+ (^ (- bi 85.0) 2.0) (^ (- s1_qi 1.0) 2.0)) (^ (- s2_qi 0.0) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (+ (^ (- bi 60.0) 2.0) (^ (- s1_qi 0.0) 2.0)) (^ (- s2_qi 1.0) 2.0)))) (not (>= (^ 1.0e-2 2.0) (+ (+ (^ (- bi 10.0) 2.0) (^ (- s1_qi 0.0) 2.0)) (^ (- s2_qi 9.0) 2.0))))))
+
 ;sample (assert (= p0 1))
 ;sample (assert (= p1 1))
 ;sample (assert (= p2 1))
