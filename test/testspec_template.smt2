@@ -69,18 +69,7 @@
 (assert (>= s1_q2 0.0))
 (assert (>= s1_q3 0.0))
 
-(assert (= p0 9.0))
-(assert (= p1 0.0))
-(assert (= p2 10.0))
-(assert (= p3 1.0))
-(assert (= p4 9.0))
-(assert (= p5 9.0))
-(assert (= p6 10.0))
-(assert (= p7 1.0))
-(assert (= p8 9.0))
-(assert (= p9 9.0))
-
-
+parametervalues
 
 (declare-fun choice () Real)
 (assert (or (= choice 0.0) (= choice 1.0)))

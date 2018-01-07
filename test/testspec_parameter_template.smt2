@@ -1,5 +1,3 @@
-(set-logic QF_NRA)
-(declare-fun xi () Real)
 (declare-fun x0 () Real)
 (declare-fun x1 () Real)
 (declare-fun x2 () Real)
@@ -23,32 +21,9 @@
 (declare-fun t1 () Real)
 (declare-fun t2 () Real)
 (declare-fun t3 () Real)
-(declare-fun battery_charge_rate_fly () Real)
-(declare-fun battery_charge_rate_hover () Real)
-(declare-fun battery_charging_rate () Real)
-(declare-fun drone_velocity () Real)
-(declare-fun queue_data_rate () Real)
-(declare-fun queue_upload_rate () Real)
-(declare-fun s0_loc () Real)
-(declare-fun s1_loc () Real)
-(declare-fun p0 () Real)
-(declare-fun p1 () Real)
-(declare-fun p2 () Real)
-(declare-fun p3 () Real)
-(declare-fun p4 () Real)
-(declare-fun p5 () Real)
-(declare-fun p6 () Real)
-(declare-fun p7 () Real)
-(declare-fun p8 () Real)
-(declare-fun p9 () Real)
-(assert (= battery_charge_rate_fly -1.0))
-(assert (= battery_charge_rate_hover -1.0))
-(assert (= battery_charging_rate 50.0))
-(assert (= drone_velocity 10.0))
-(assert (= queue_data_rate 1.0))
-(assert (= queue_upload_rate 50.0))
-(assert (= s0_loc 10.0))
-(assert (= s1_loc 10.0))
+(declare-fun bc () Real)
+(declare-fun s0_qc () Real)
+(declare-fun s1_qc () Real)
 (assert (>= t0 0.0))
 (assert (>= t1 0.0))
 (assert (>= t2 0.0))
@@ -68,20 +43,8 @@
 (assert (>= s1_q1 0.0))
 (assert (>= s1_q2 0.0))
 (assert (>= s1_q3 0.0))
-
-(assert (= p0 9.0))
-(assert (= p1 0.0))
-(assert (= p2 10.0))
-(assert (= p3 1.0))
-(assert (= p4 9.0))
-(assert (= p5 9.0))
-(assert (= p6 10.0))
-(assert (= p7 1.0))
-(assert (= p8 9.0))
-(assert (= p9 9.0))
-
-
-
+(assert (<= s0_qi 100.0))
+(assert (<= s1_qi 100.0))
 (declare-fun choice () Real)
 (assert (or (= choice 0.0) (= choice 1.0)))
 
@@ -121,8 +84,10 @@
 (assert (= s0_q3 (+ s0_q2 (* queue_data_rate t3))))
 (assert (= s1_q3 (+ s1_q2 (* queue_data_rate t3))))
 
+batteryvalue
+
+(assert (and (= bi bc) (= s0_qi s0_qc) (= s1_qi s1_qc)))
+
 
 ;Goal
 (assert (not (=>(or (and (and (>= bi p0) (<= s0_qi p1)) (<= (+ s1_qi p2) s0_qi)) (and (and (>= bi p3) (<= s1_qi p5)) (<= (+ s0_qi p4) s1_qi)))(and (and (> b0 0.0) (> b1 0.0) (> b2 0.0) (> b3 0.0) (< s0_q0 100.0) (< s0_q1 100.0) (< s0_q2 100.0) (< s0_q3 100.0) (< s1_q0 100.0) (< s1_q1 100.0) (< s1_q2 100.0) (< s1_q3 100.0))(or (and (and (>= b3 p0) (<= s0_q3 p1)) (<= (+ s1_q3 p2) s0_q3)) (and (and (>= b3 p3) (<= s1_q3 p5)) (<= (+ s0_q3 p4) s1_q3)))))))
-(check-sat)
-(exit)
