@@ -348,10 +348,10 @@ main = do
                 (_, False) -> "\nThe given system is unverifiable in " ++ show iters ++ " iterations"
                 (ps, True)  -> "\nSynthesized a program with the following parameters: \n" ++ unlines (fmap printParam ps) ++
                   "\nAnd the following invariant:\n" ++ "b >= " ++ show (snd (head ps)) ++ "\nq <= " ++ show (snd (head (tail ps)))
-              removeFile (templateFile synthesisParams)
-              removeFile (paramTempFile synthesisParams)
-              removeFile (paramConstantFile synthesisParams)
-              removeFile (paramCompleteFile synthesisParams)
+              --removeFile (templateFile synthesisParams)
+              --removeFile (paramTempFile synthesisParams)
+              --removeFile (paramConstantFile synthesisParams)
+              --removeFile (paramCompleteFile synthesisParams)
               --comment out the above to keep the smt2 files for reference.
 
 

@@ -335,7 +335,7 @@ getDE mode s sensors = case find (\x -> sId x == s) sensors of
 --    not chosen
 unchosenSensors :: String -> [[String]] -> [[String]] -> [Sensor] -> Maybe [[Pred]]
 unchosenSensors _ [[]] _ _ = Nothing
-unchosenSensors mode otherQs otherPrevQs sensors = Just $ zipWith (assemblePred mode sensors) otherQs otherPrevQs
+unchosenSensors mode otherQs otherPrevQs sensors = Just $ zipWith (assemblePred mode sensors) otherPrevQs otherQs
 
 -- Assemble differential equation dynamics into usable form via integration essentially
 assemblePred :: String -> [Sensor] -> [String] -> [String] -> [Pred]
