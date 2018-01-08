@@ -421,7 +421,7 @@ parseAOOp = do
     "&&" -> return BAnd
     "||" -> return BOr
 
-parseAO = chainl1 parseTerm parseAOOp
+parseImpl = chainl1 parseTerm (try parseImplOp)
 
 parseImplOp :: Parser (Pred -> Pred -> Pred)
 parseImplOp = do
@@ -431,7 +431,11 @@ parseImplOp = do
   return Impl
 
 -- Implication binds tightest
-parsePred = chainl1 parseAO parseImplOp
+parsePred = do
+  whitespace
+  p <- chainl1 parseImpl (try parseAOOp)
+  whitespace
+  return p
 
 -- Parser for predicate terminals
 parseTerm :: Parser Pred
