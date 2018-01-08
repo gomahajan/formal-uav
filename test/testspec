@@ -28,6 +28,7 @@ p11 9
 p12 9
 p13 9
 p14 9
+p15 9
 
 // Environment: variable definitions
 //#variables
@@ -39,10 +40,10 @@ charge:
   d/dt[x] = 0
   d/dt[b] = battery_charging_rate * t
   program {
-  ((bi >= p6) => (b0 == bi)) && ((bi < p6) => (b0 == p6))
+  ((bi >= p15) => (b0 == bi)) && ((bi < p15) => (b0 == p15))
   (((bi >= p0) && (s0_qi <= p1) && ((s1_qi + p2) <= s0_qi) && ((s2_qi + p3) <= s0_qi))) => (choice == 0)
-  (((bi >= p4) && (s1_qi <= p5) && ((s0_qi + p6) <= s1_qi) && ((s2_qi + p7) <= s1_qi))) => (choice == 1)
-  (((bi >= p8) && (s2_qi <= p9) && ((s1_qi + p10) <= s2_qi) && ((s0_qi + p11) <= s2_qi))) => (choice == 2)
+  ((!(((bi >= p0) && (s0_qi <= p1) && ((s1_qi + p2) <= s0_qi) && ((s2_qi + p3) <= s0_qi)))) && ((bi >= p4) && (s1_qi <= p5) && ((s0_qi + p6) <= s1_qi) && ((s2_qi + p7) <= s1_qi))) => (choice == 1)
+  ((!(((bi >= p0) && (s0_qi <= p1) && ((s1_qi + p2) <= s0_qi) && ((s2_qi + p3) <= s0_qi)))) && (!(((bi >= p4) && (s1_qi <= p5) && ((s0_qi + p6) <= s1_qi) && ((s2_qi + p7) <= s1_qi)))) && ((bi >= p8) && (s2_qi <= p9) && ((s1_qi + p10) <= s2_qi) && ((s0_qi + p11) <= s2_qi))) => (choice == 2)
   }
 fly_to:
   d/dt[x] = drone_velocity * t
@@ -68,14 +69,14 @@ upload:
   d/dt[q] = queue_upload_rate * t
 
 #sensor 1
-x = 20
+x = 10
 collect:
   d/dt[q] = queue_data_rate * t
 upload:
   d/dt[q] = queue_upload_rate * t
 
 #sensor 2
-x = 15
+x = 10
 collect:
   d/dt[q] = queue_data_rate * t
 upload:
