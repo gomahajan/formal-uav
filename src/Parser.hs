@@ -113,9 +113,7 @@ parseDecls = do
   params <- try parseParams <|> return defaultPs <?> "initial parameters"
   modes <- try parseCD <|> return [] <?> "relational dynamics"
   ignore
-  println $ "modes: " ++ show modes
   vars <- try parseEnv <|> return [] <?> "environment"
-  println $ "vars: " ++ show vars
   ignore
   string "#uav" -- uav dynamics
   ignore
