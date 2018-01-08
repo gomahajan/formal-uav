@@ -10,6 +10,7 @@
 *.model
 .stack-work/*
 UAV
+test/testspec_*
 
 # Packages #
 ############
