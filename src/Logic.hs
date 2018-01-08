@@ -22,7 +22,7 @@ data BinOp =
 
 -- Unary operations
 data UnOp =
-  Neg | Sin | Cos | Tan
+  Neg | UNot | Sin | Cos | Tan
   deriving (Ord, Eq, Show)
 
 -- Expressions: real-valued

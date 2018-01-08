@@ -113,7 +113,9 @@ parseDecls = do
   params <- try parseParams <|> return defaultPs <?> "initial parameters"
   modes <- try parseCD <|> return [] <?> "relational dynamics"
   ignore
+  println $ "modes: " ++ show modes
   vars <- try parseEnv <|> return [] <?> "environment"
+  println $ "vars: " ++ show vars
   ignore
   string "#uav" -- uav dynamics
   ignore
@@ -375,7 +377,7 @@ parseLit = try (parens parseODE) <|> try pNum <|> pStr
 
 -- Expression table
 exprTable mkUnary mkBinary = [
-  [unary Neg],
+  [unary Neg, unary UNot],
   [unary Sin, unary Cos, unary Tan],
   [binary Pow AssocNone],
   [binary Times AssocLeft, binary Div AssocLeft],
@@ -388,23 +390,24 @@ exprTable mkUnary mkBinary = [
 -- Expr tokens
 unOpTokens :: Map UnOp String
 unOpTokens = Map.fromList [ (Neg, "-")
-                      , (Sin, "sin")
-                      , (Cos, "cos")
-                      , (Tan, "tan")
-                      ]
+                          , (UNot, "!")
+                          , (Sin, "sin")
+                          , (Cos, "cos")
+                          , (Tan, "tan")
+                          ]
 
 binOpTokens :: Map BinOp String
-binOpTokens = Map.fromList [ (Times, "*")
-                       , (Plus,      "+")
-                       , (Minus,     "-")
-                       , (Div,       "/")
-                       , (Pow,       "^")
-                       , (Eq,        "==")
-                       , (Lt,        "<")
-                       , (Leq,       "<=")
-                       , (Gt,        ">")
-                       , (Geq,       ">=")
-                       ]
+binOpTokens = Map.fromList [ (Times,  "*")
+                           , (Plus,   "+")
+                           , (Minus,  "-")
+                           , (Div,    "/")
+                           , (Pow,    "^")
+                           , (Eq,    "==")
+                           , (Lt,     "<")
+                           , (Leq,   "<=")
+                           , (Gt,     ">")
+                           , (Geq,   ">=")
+                           ]
 
 
 -- Predicate parsers:

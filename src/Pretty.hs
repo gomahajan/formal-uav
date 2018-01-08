@@ -34,16 +34,20 @@ printE env (EVar s)        = case lookup s env of
   Just p -> printConstraint' env p
 
 printUOp :: UnOp -> String
-printUOp Neg = "-"
+printUOp Neg  = "-"
+printUOp UNot = "not"
+printUOp Sin  = "sin"
+printUOp Cos  = "cos"
+printUOp Tan  = "tan"
 
 printBOp :: BinOp -> String
-printBOp Lt = "<"
-printBOp Gt = ">"
-printBOp Leq = "<="
-printBOp Geq = ">="
-printBOp Plus = "+"
+printBOp Lt    = "<"
+printBOp Gt    = ">"
+printBOp Leq   = "<="
+printBOp Geq   = ">="
+printBOp Plus  = "+"
 printBOp Times = "*"
-printBOp Div = "/"
-printBOp Eq = "="
-printBOp Pow = "^"
+printBOp Div   = "/"
+printBOp Eq    = "="
+printBOp Pow   = "^"
 printBOp Minus = "-"
