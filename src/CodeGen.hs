@@ -178,7 +178,7 @@ generateVars ds = Vars {
     xdoms = zip xs (replicate numModes (_varDomains ds ! "x" ))
     bdoms = zip bs (replicate (numModes + 1) (_varDomains ds ! "b" ))
     qdoms = zip sqs (replicate (numSensors * (numModes + 1)) (_varDomains ds ! "q" ))
-    ps = fmap (("p" ++) . show) [0..(_numHoles ds - 1)]
+    ps = fmap fst (_paramValues ds)
     cxs = "bc" : fmap ((++ "_qc") . ("s" ++) . show) [0..(numSensors - 1)]
     inits = "bi" : fmap ((++ "_qi") . ("s" ++) . show) [0..(numSensors - 1)]
 
