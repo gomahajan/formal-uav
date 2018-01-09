@@ -44,7 +44,7 @@ data CommandLineArgs = Args {
 cargs = Args {
   smt_file      = ""    &= argPos 0,
   depth         = 1000    &= help "Maximum number of iterations when running synthesis algorithm.",
-  precision     = 0.01  &= help "Precision for hybrid system synthesis.",
+  precision     = 0.1  &= help "Precision for hybrid system synthesis.",
   smt_precision = 0.001 &= help "Delta-precision for SMT solver.",
   verbose       = False &= help "Verbose mode.",
   b_init        = 50    &= help "Initial battery level",

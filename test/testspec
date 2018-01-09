@@ -13,40 +13,33 @@
 
 // Initial parameters (optional)
 #params
-p0 1
-p1 90
-p2 40
-p3 40
-p4 90
-p5 40
-p6 30
-p7 3
+p0 10
+p1 2
+p2 1
+p3 1
+p4 1
 
 // Environment: variable definitions
 //#variables
 //r = t * t
 
 // UAV Dynamics
-//p0 == p3
-//p6 == 30
-//p7 == 3
+//p0 1
+//p1 90
+//p2 40
+//p3 30
+//p4 3
 
 #uav
 charge:
   d/dt[x] = 0
   d/dt[b] = battery_charging_rate * t
   program {
-  ((bi >= p6) => (b0 == bi)) && ((bi < p6) => (b0 == p6))
+  ((bi >= p3) => (b0 == bi)) && ((bi < p3) => (b0 == p3))
   ((s1_qi < s0_qi)) => (choice == 0)
   (!(s1_qi < s0_qi)) => (choice == 1)
-  p2 < p1
-  p5 < p4
-  p1 == p4
-  p2 == p5
-  p4 == 90
-  p5 == 40
-  p6 == 30
-  p7 == 3
+  p1 > p2
+  p0 == 10
   }
 fly_to:
   d/dt[x] = drone_velocity * t
@@ -55,7 +48,7 @@ download:
   d/dt[x] = 0
   d/dt[b] = battery_charge_rate_hover * t
   program {
-  ((b1 >= p7) => ((b2 == p7) || (s0_q2 == 0) || (s1_q2 == 0))) && ((b1 < p7) => (b2 == b1))
+  ((b1 >= p4) => ((b2 == p4) || (s0_q2 == 0) || (s1_q2 == 0))) && ((b1 < p4) => (b2 == b1))
   }
 fly_back:
   d/dt[x] = -(drone_velocity * t)
@@ -78,4 +71,4 @@ upload:
 
 // Declared without indices!! (ie b instead of bi)
 #invariant
-((b >= p0) && (s0_q <= p1) && ((s1_q + p2) <= p1)) || ((b >= p3) && (s1_q <= p4) && ((s0_q + p5) <= p4))
+((b >= p0) && (s0_q <= p1) && ((s1_q + p2) <= p1)) || ((b >= p0) && (s1_q <= p1) && ((s0_q + p2) <= p1))
