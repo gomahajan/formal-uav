@@ -21,6 +21,7 @@ import Parser
 import SMTSolver
 import Pretty
 import CodeGen
+import Utils
 
 programName = "TBD"
 versionName = "0.0"
@@ -38,18 +39,20 @@ data CommandLineArgs = Args {
   verbose :: Bool,
   b_init :: Double,
   q_init :: Double,
-  cx_balls :: Bool
+  cx_balls :: Bool,
+  log_file :: String
 } deriving (Data, Typeable, Show, Eq)
 
 cargs = Args {
-  smt_file      = ""    &= argPos 0,
-  depth         = 1000    &= help "Maximum number of iterations when running synthesis algorithm.",
-  precision     = 0.1  &= help "Precision for hybrid system synthesis.",
-  smt_precision = 0.001 &= help "Delta-precision for SMT solver.",
-  verbose       = False &= help "Verbose mode.",
-  b_init        = 50    &= help "Initial battery level",
-  q_init        = 50    &= help "Initial queue level",
-  cx_balls      = False &= help "Adjust counterexamples using delta-ball (probably unnecessary and potentially damaging!)"
+  smt_file      = ""         &= argPos 0,
+  depth         = 1000       &= help "Maximum number of iterations when running synthesis algorithm.",
+  precision     = 0.1        &= help "Precision for hybrid system synthesis.",
+  smt_precision = 0.001      &= help "Delta-precision for SMT solver.",
+  verbose       = False      &= help "Verbose mode.",
+  b_init        = 50         &= help "Initial battery level",
+  q_init        = 50         &= help "Initial queue level",
+  cx_balls      = False      &= help "Adjust counterexamples using delta-ball (probably unnecessary and potentially damaging!)",
+  log_file      = "test/log" &= help "File for logging intermediate details."
 }
 
 
@@ -70,7 +73,9 @@ data Params = Params {
   params :: [(String, Double)],
   verboseMode :: Bool,
   solverConfig :: SolverConfig,
-  cxBalls :: Bool
+  cxBalls :: Bool,
+  shouldLog :: Bool,
+  logFile :: String
 } deriving (Show, Eq)
 
 
@@ -117,7 +122,7 @@ cegisLoop p spec =
     output <- run (dRealVersion (solverConfig p)) (solverConfig p) (completeFile p) (solverPrecision p)
     resp <- Main.read (dRealVersion (solverConfig p)) output
     --putStrLn $ show resp
-    let cxs = getCX ((_init_vars . _vars) spec) resp
+    let cxs = getCX ((_initVars . _vars) spec) resp
     --print cxs
     case cxs of
       Nothing -> do
@@ -143,6 +148,7 @@ cegisLoop p spec =
           let ps' = fmap ((flip getValue) new_params_output_string) (fmap fst (params p))
               params' = zip (fmap fst (params p)) ps'
               currentIter = iterations p
+          when (shouldLog p) $ appendFile (logFile p) (genCSV (fmap snd (cxs ++ params')))
           putStrLn $ "Solved Params: " ++ show params'
         --putStrLn $ "Previous params: " ++ show (params p)
           cegisLoop p { iterations = currentIter - 1,
@@ -185,7 +191,7 @@ createPhi :: CompleteSpec -> String -> [(String, Double)] -> String -> IO String
 createPhi spec file cxs name = do
   s <- readFile file
   -- TODO: automate this
-  let cvars = _cx_vars vars
+  let cvars = _cxVars vars
       andTerm = "(assert (and " ++ unwords eqs ++ "))"
       mkeq c (_,v) = "(= " ++ c ++ " " ++ (Numeric.showFFloat Nothing v "") ++ ")"
       eqs = zipWith mkeq cvars cxs
@@ -295,65 +301,6 @@ mode = cmdArgsMode $ cargs &=
 printParam :: (String, Double) -> String
 printParam (p,x) = p ++ " = " ++ show x
 
--- Entry point
-main :: IO ()
-main = do
-  conf <- readConfig "config/solver.cfg"
-  args <- cmdArgsRun mode
-  case args of
-    (Args file iters precision delta v b q balls) -> do
-      let tmpf = file ++ "_template.smt2"
-          cmpf = file ++ "_complete.smt2"
-          paramtf = file ++ "_parameter_template.smt2"
-          paramcf = file ++ "_parameter_complete.smt2"
-          paramcons = file ++ "_parameter_constant_template.smt2"
-          synthesisParams = Params {
-            completeFile = cmpf,
-            templateFile = tmpf,
-            paramTempFile = paramtf,
-            paramCompleteFile = paramcf,
-            paramConstantFile = paramcons,
-            originalIters = iters,
-            iterations = iters,
-            synthesisPrecision = precision,
-            solverPrecision = delta,
-            bcxs = [],
-            qcxs = [],
-            qcxs2 = [],
-            allcxs = [],
-            params = [], -- updated in prepareTemplates
-            verboseMode = v,
-            solverConfig = conf,
-            cxBalls = balls
-          }
-      when v $ putStrLn $ "Intial point: " ++ "(" ++ show b ++"," ++ show q ++ ")"
-      --parse declarations etc
-      x <- parseFromFile parseDecls file
-      case x of
-        Left e -> error $ show e
-        Right decls -> do
-          -- TODO: update params synthesisParams with the initial values parsed from spec!!
-          let spec = finishSpec decls
-              ps = synthesisParams { params = (_paramValues . _declarations) spec }
-              --ps = synthesisParams { params = [("p0", 9), ("p1", 0), ("p2", 10), ("p3", 1), ("p4", 9), ("p5", 9), ("p6", 10), ("p7", 1), ("p8", 9), ("p9", 9)] }
-          writeTemplate ps spec
-          writeParamTemplate ps spec
-          writeParamConstTemplate ps spec
-          p <- cegisLoop ps spec
-          case p of
-            Nothing -> putStrLn "Synthesis error"
-            Just pr -> do
-              putStrLn $ case pr of
-                (_, False) -> "\nThe given system is unverifiable in " ++ show iters ++ " iterations"
-                (ps, True)  -> "\nSynthesized a program with the following parameters: \n" ++ unlines (fmap printParam ps) ++
-                  "\nAnd the following invariant:\n" ++ "b >= " ++ show (snd (head ps)) ++ "\nq <= " ++ show (snd (head (tail ps)))
-              --removeFile (templateFile synthesisParams)
-              --removeFile (paramTempFile synthesisParams)
-              --removeFile (paramConstantFile synthesisParams)
-              --removeFile (paramCompleteFile synthesisParams)
-              --comment out the above to keep the smt2 files for reference.
-
-
 -- Create uav_dreal_template.smt2
 writeTemplate :: Params -> CompleteSpec -> IO ()
 writeTemplate p spec = do
@@ -388,13 +335,65 @@ writeParamConstTemplate p spec = do
       footer = z3Footer spec
   writeFile f (unlines (top ++ hole ++ footer))
 
-{-
-testWrite :: String -> String -> IO ()
-testWrite infile outfile = do
-  x <- parseFromFile parseDecls infile
-  case x of
-    Left e -> error $ show e
-    Right decls -> do
-      let spec = finishSpec decls
-      writeTemplate outfile spec
--}
+
+-- Entry point
+main :: IO ()
+main = do
+  conf <- readConfig "config/solver.cfg"
+  args <- cmdArgsRun mode
+  case args of
+    (Args file iters precision delta v b q balls lf) -> do
+      let tmpf = file ++ "_template.smt2"
+          cmpf = file ++ "_complete.smt2"
+          paramtf = file ++ "_parameter_template.smt2"
+          paramcf = file ++ "_parameter_complete.smt2"
+          paramcons = file ++ "_parameter_constant_template.smt2"
+          synthesisParams = Params {
+            completeFile = cmpf,
+            templateFile = tmpf,
+            paramTempFile = paramtf,
+            paramCompleteFile = paramcf,
+            paramConstantFile = paramcons,
+            originalIters = iters,
+            iterations = iters,
+            synthesisPrecision = precision,
+            solverPrecision = delta,
+            bcxs = [],
+            qcxs = [],
+            qcxs2 = [],
+            allcxs = [],
+            params = [], -- updated in prepareTemplates
+            verboseMode = v,
+            solverConfig = conf,
+            cxBalls = balls,
+            shouldLog = True, -- Change to false to turn off logging
+            logFile = lf
+          }
+      when v $ putStrLn $ "Intial point: " ++ "(" ++ show b ++"," ++ show q ++ ")"
+      --parse declarations etc
+      x <- parseFromFile parseDecls file
+      case x of
+        Left e -> error $ show e
+        Right decls -> do
+          -- TODO: update params synthesisParams with the initial values parsed from spec!!
+          let spec = finishSpec decls
+              ps = synthesisParams { params = (_paramValues . _declarations) spec }
+              --ps = synthesisParams { params = [("p0", 9), ("p1", 0), ("p2", 10), ("p3", 1), ("p4", 9), ("p5", 9), ("p6", 10), ("p7", 1), ("p8", 9), ("p9", 9)] }
+          writeTemplate ps spec
+          writeParamTemplate ps spec
+          writeParamConstTemplate ps spec
+          -- Prep log file
+          when (shouldLog synthesisParams) $ writeFile (logFile synthesisParams) (genCSV (((_initVars . _vars) spec) ++ ((_pvars . _vars) spec)))
+          p <- cegisLoop ps spec
+          case p of
+            Nothing -> putStrLn "Synthesis error"
+            Just pr -> do
+              putStrLn $ case pr of
+                (_, False) -> "\nThe given system is unverifiable in " ++ show iters ++ " iterations"
+                (ps, True)  -> "\nSynthesized a program with the following parameters: \n" ++ unlines (fmap printParam ps) ++
+                  "\nAnd the following invariant:\n" ++ "b >= " ++ show (snd (head ps)) ++ "\nq <= " ++ show (snd (head (tail ps)))
+              --removeFile (templateFile synthesisParams)
+              --removeFile (paramTempFile synthesisParams)
+              --removeFile (paramConstantFile synthesisParams)
+              --removeFile (paramCompleteFile synthesisParams)
+              --comment out the above to keep the smt2 files for reference.

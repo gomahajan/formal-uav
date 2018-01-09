@@ -11,6 +11,8 @@
 .stack-work/*
 UAV
 test/testspec_*
+test/log
+test/temp.smt2
 
 # Packages #
 ############

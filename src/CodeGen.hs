@@ -78,8 +78,8 @@ data Vars = Vars {
   _pvars :: [String],
   _expanded_qvars :: [String],
   _locvars :: [String],
-  _cx_vars :: [String],
-  _init_vars :: [String]
+  _cxVars :: [String],
+  _initVars :: [String]
 } deriving (Show, Eq)
 
 makeLenses ''Vars
@@ -161,8 +161,8 @@ generateVars ds = Vars {
   _pvars = ps,
   _expanded_qvars = sqs,
   _locvars = sls,
-  _cx_vars = cxs,
-  _init_vars = inits
+  _cxVars = cxs,
+  _initVars = inits
 }
   where
     numModes = length (_modeDefs ds)
