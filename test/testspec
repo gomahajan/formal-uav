@@ -13,36 +13,40 @@
 
 // Initial parameters (optional)
 #params
-p0 9
-p1 0
-p2 10
-p3 1
-p4 9
-p5 9
-p6 10
-p7 1
-p8 9
-p9 9
-p10 9
-p11 9
-p12 9
-p13 9
-p14 9
-p15 9
+p0 1
+p1 90
+p2 40
+p3 40
+p4 90
+p5 40
+p6 30
+p7 3
 
-// Variable declarations
+// Environment: variable definitions
 //#variables
+//r = t * t
 
 // UAV Dynamics
+//p0 == p3
+//p6 == 30
+//p7 == 3
+
 #uav
 charge:
   d/dt[x] = 0
   d/dt[b] = battery_charging_rate * t
   program {
-  ((bi >= p15) => (b0 == bi)) && ((bi < p15) => (b0 == p15))
-  (((bi >= p0) && (s0_qi <= p1) && ((s1_qi + p2) <= s0_qi) && ((s2_qi + p3) <= s0_qi))) => (choice == 0)
-  ((!(((bi >= p0) && (s0_qi <= p1) && ((s1_qi + p2) <= s0_qi) && ((s2_qi + p3) <= s0_qi)))) && ((bi >= p4) && (s1_qi <= p5) && ((s0_qi + p6) <= s1_qi) && ((s2_qi + p7) <= s1_qi))) => (choice == 1)
-  ((!(((bi >= p0) && (s0_qi <= p1) && ((s1_qi + p2) <= s0_qi) && ((s2_qi + p3) <= s0_qi)))) && (!(((bi >= p4) && (s1_qi <= p5) && ((s0_qi + p6) <= s1_qi) && ((s2_qi + p7) <= s1_qi)))) && ((bi >= p8) && (s2_qi <= p9) && ((s1_qi + p10) <= s2_qi) && ((s0_qi + p11) <= s2_qi))) => (choice == 2)
+  ((bi >= p6) => (b0 == bi)) && ((bi < p6) => (b0 == p6))
+  ((s1_qi < s0_qi)) => (choice == 0)
+  (!(s1_qi < s0_qi)) => (choice == 1)
+  p2 < p1
+  p5 < p4
+  p1 == p4
+  p2 == p5
+  p4 == 90
+  p5 == 40
+  p6 == 30
+  p7 == 3
   }
 fly_to:
   d/dt[x] = drone_velocity * t
@@ -51,9 +55,7 @@ download:
   d/dt[x] = 0
   d/dt[b] = battery_charge_rate_hover * t
   program {
-  (choice == 0) => (((s0_q1 <= p12) => (s0_q2 == s0_q1)) && ((s0_q1 > p12) => (s0_q2 == p12)))
-  (choice == 1) => (((s1_q1 <= p13) => (s1_q2 == s1_q1)) && ((s1_q1 > p13) => (s1_q2 == p13)))
-  (choice == 2) => (((s2_q1 <= p14) => (s2_q2 == s2_q1)) && ((s2_q1 > p14) => (s2_q2 == p14)))
+  ((b1 >= p7) => ((b2 == p7) || (s0_q2 == 0) || (s1_q2 == 0))) && ((b1 < p7) => (b2 == b1))
   }
 fly_back:
   d/dt[x] = -(drone_velocity * t)
@@ -68,14 +70,7 @@ upload:
   d/dt[q] = queue_upload_rate * t
 
 #sensor 1
-x = 12
-collect:
-  d/dt[q] = queue_data_rate * t
-upload:
-  d/dt[q] = queue_upload_rate * t
-
-#sensor 2
-x = 15
+x = 20
 collect:
   d/dt[q] = queue_data_rate * t
 upload:
@@ -83,4 +78,4 @@ upload:
 
 // Declared without indices!! (ie b instead of bi)
 #invariant
-((b >= p0) && (s0_q <= p1) && ((s1_q + p2) <= s0_q) && ((s2_q + p3) <= s0_q)) || ((b >= p4) && (s1_q <= p5) && ((s0_q + p6) <= s1_q) && ((s2_q + p7) <= s1_q)) || ((b >= p8) && (s2_q <= p9) && ((s1_q + p10) <= s2_q) && ((s0_q + p11) <= s2_q))
+((b >= p0) && (s0_q <= p1) && ((s1_q + p2) <= p1)) || ((b >= p3) && (s1_q <= p4) && ((s0_q + p5) <= p4))

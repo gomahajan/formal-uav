@@ -143,7 +143,7 @@ cegisLoop p spec =
           let ps' = fmap ((flip getValue) new_params_output_string) (fmap fst (params p))
               params' = zip (fmap fst (params p)) ps'
               currentIter = iterations p
-        --putStrLn $ "Solved Params: " ++ show params'
+          putStrLn $ "Solved Params: " ++ show params'
         --putStrLn $ "Previous params: " ++ show (params p)
           cegisLoop p { iterations = currentIter - 1,
                         allcxs = allcxs',
