@@ -39,7 +39,6 @@ charge:
   ((s1_qi < s0_qi)) => (choice == 0)
   (!(s1_qi < s0_qi)) => (choice == 1)
   p1 > p2
-  p0 == 10
   }
 fly_to:
   d/dt[x] = drone_velocity * t

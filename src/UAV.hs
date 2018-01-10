@@ -69,7 +69,7 @@ data Params = Params {
   bcxs :: [Double],
   qcxs :: [Double],
   qcxs2 :: [Double],
-  allcxs :: [[(String, Double)]],
+  allcxs :: [[(String, String)]],
   params :: [(String, Double)],
   verboseMode :: Bool,
   solverConfig :: SolverConfig,
@@ -148,7 +148,7 @@ cegisLoop p spec =
           let ps' = fmap ((flip getValue) new_params_output_string) (fmap fst (params p))
               params' = zip (fmap fst (params p)) ps'
               currentIter = iterations p
-          when (shouldLog p) $ appendFile (logFile p) (genCSV (fmap snd (cxs ++ params')))
+          --when (shouldLog p) $ appendFile (logFile p) (genCSV (fmap snd (cxs ++ params')))
           putStrLn $ "Solved Params: " ++ show params'
         --putStrLn $ "Previous params: " ++ show (params p)
           cegisLoop p { iterations = currentIter - 1,
@@ -167,7 +167,7 @@ createParameterSum :: [(String, Double)] -> String
 createParameterSum [(a,b)] = "(norm (- "++ a ++" "++ show b ++ "))"
 createParameterSum (x:xs) = "(+ " ++ (createParameterSum [x]) ++ " " ++ (createParameterSum xs) ++ ")"
 
-addAllPhis :: Params -> CompleteSpec -> [[(String, Double)]] -> IO ()
+addAllPhis :: Params -> CompleteSpec -> [[(String, String)]] -> IO ()
 addAllPhis p spec cxs = do
   str <- addAllPhis' spec (paramTempFile p) (length cxs) cxs
   let parameterBalls = createParameterBall (params p) (synthesisPrecision p)
@@ -180,20 +180,20 @@ addAllPhis p spec cxs = do
 defaultPhis :: IO [String]
 defaultPhis = return [""]
 
-addAllPhis' :: CompleteSpec -> String -> Int -> [[(String, Double)]] -> IO [String]
+addAllPhis' :: CompleteSpec -> String -> Int -> [[(String, String)]] -> IO [String]
 addAllPhis' spec file k [x] = do s <- createPhi spec file x (show k)
                                  return [s]
 addAllPhis' spec file n (x:xs) = do s <- createPhi spec file x (show n)
                                     s' <- addAllPhis' spec file (n - 1) xs
                                     return $ s : s'
 
-createPhi :: CompleteSpec -> String -> [(String, Double)] -> String -> IO String
+createPhi :: CompleteSpec -> String -> [(String, String)] -> String -> IO String
 createPhi spec file cxs name = do
   s <- readFile file
   -- TODO: automate this
   let cvars = _cxVars vars
       andTerm = "(assert (and " ++ unwords eqs ++ "))"
-      mkeq c (_,v) = "(= " ++ c ++ " " ++ (Numeric.showFFloat Nothing v "") ++ ")"
+      mkeq c (_,v) = "(= " ++ c ++ " " ++ v ++ ")"
       eqs = zipWith mkeq cvars cxs
       s_i = replace "batteryvalue" andTerm s
       -- TODO: automate this
@@ -231,7 +231,7 @@ read n src = return $ parseDRealSat n src
 
 
 -- Extract Counterexample from solver response
-getCX :: [String] -> Response -> Maybe [(String, Double)]
+getCX :: [String] -> Response -> Maybe [(String, String)]
 getCX s (Response _ []) = Nothing
 getCX s (Response r vs) = vals
   where
@@ -242,7 +242,7 @@ getCX s (Response r vs) = vals
     bothJust m1 m2 = m1 && exists m2
     allFound = foldl bothJust True ms
     vals = if allFound
-           then Just $ zip s (fmap (fromMaybe 0.0) ms)
+           then Just $ zip s (fmap (\num -> (Numeric.showFFloat Nothing num "")) (fmap (fromMaybe 0.0) ms))
            else Nothing
 
 getValue :: String -> Response -> Double
@@ -252,14 +252,14 @@ getValue s (Response r vs) = (fromList vs) ! s
 --findCXBalls [] [] x y _ = (x,y)
 --findCXBalls []
 
-findAllCXBalls :: Double -> [[(String, Double)]] -> [Pred]
+findAllCXBalls :: Double -> [[(String, String)]] -> [Pred]
 findAllCXBalls epsilon = fmap (findCXBall epsilon)
 
-findCXBall :: Double -> [(String, Double)] -> Pred
+findCXBall :: Double -> [(String, String)] -> Pred
 --findCXBall x y epsilon = (bi - x)^2 + (qi - y)^2 <= epsilon^2
 findCXBall epsilon cxs = Expr $ EBin Geq (EBin Pow (ERealLit epsilon) (ERealLit 2)) plus
   where
-    mknorm (s,v) = (EBin Pow (EBin Minus (EVar s) (ERealLit v)) (ERealLit 2))
+    mknorm (s,v) = (EBin Pow (EBin Minus (EVar s) (EVar v)) (ERealLit 2))
     norms = fmap mknorm cxs
     plus = foldl (\p1 p2 -> EBin Plus p1 p2) (ERealLit 0) norms
 
@@ -361,7 +361,7 @@ main = do
             bcxs = [],
             qcxs = [],
             qcxs2 = [],
-            allcxs = [],
+            allcxs = [[("bi","p0"),("s0_qi","p1"),("s1_qi","(- p1 p2)")],[("bi","p0"),("s0_qi","(- p1 p2)"),("s1_qi","p1")], [("bi","p3"),("s0_qi","p1"),("s1_qi","(- p1 p2)")], [("bi","p3"),("s0_qi","(- p1 p2)"),("s1_qi","p1")]],
             params = [], -- updated in prepareTemplates
             verboseMode = v,
             solverConfig = conf,
