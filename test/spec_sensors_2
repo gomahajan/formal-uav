@@ -1,0 +1,73 @@
+// Constants
+#define drone_velocity 10
+#define battery_charging_rate 50
+#define battery_charge_rate_fly -1
+#define battery_charge_rate_hover -1
+#define queue_data_rate 1
+#define queue_upload_rate 50
+
+// Variable domains
+#domain x [0,10]
+#domain b [,100]
+#domain q [0,]
+
+// Initial parameters (optional)
+#params
+p0 10
+p1 2
+p2 1
+p3 1
+p4 1
+
+// Environment: variable definitions
+//#variables
+//r = t * t
+
+// UAV Dynamics
+//p0 1
+//p1 90
+//p2 40
+//p3 30
+//p4 3
+
+#uav
+charge:
+  d/dt[x] = 0
+  d/dt[b] = battery_charging_rate * t
+  program {
+  ((bi >= p3) => (b0 == bi)) && ((bi < p3) => (b0 == p3))
+  ((s1_qi < s0_qi)) => (choice == 0)
+  (!(s1_qi < s0_qi)) => (choice == 1)
+  p1 > p2
+  }
+fly_to:
+  d/dt[x] = drone_velocity * t
+  d/dt[b] = battery_charge_rate_fly * t
+download:
+  d/dt[x] = 0
+  d/dt[b] = battery_charge_rate_hover * t
+  program {
+  ((b1 >= p4) => ((b2 == p4) || (s0_q2 == 0) || (s1_q2 == 0))) && ((b1 < p4) => (b2 == b1))
+  }
+fly_back:
+  d/dt[x] = -(drone_velocity * t)
+  d/dt[b] = battery_charge_rate_fly * t
+
+// Sensor dynamics
+#sensor 0
+x = 10
+collect:
+  d/dt[q] = queue_data_rate * t
+upload:
+  d/dt[q] = queue_upload_rate * t
+
+#sensor 1
+x = 20
+collect:
+  d/dt[q] = queue_data_rate * t
+upload:
+  d/dt[q] = queue_upload_rate * t
+
+// Declared without indices!! (ie b instead of bi)
+#invariant
+((b >= p0) && (s0_q <= p1) && ((s1_q + p2) <= p1)) || ((b >= p0) && (s1_q <= p1) && ((s0_q + p2) <= p1))
