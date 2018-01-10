@@ -12,7 +12,7 @@
 UAV
 test/testspec_*
 test/log
-test/temp.smt2
+test/*.smt2
 
 # Packages #
 ############

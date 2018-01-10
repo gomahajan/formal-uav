@@ -5,6 +5,7 @@
 #define battery_charge_rate_hover -1
 #define queue_data_rate 1
 #define queue_upload_rate 50
+#define epsilon 0.01
 
 // Variable domains
 #domain x [0,10]
