@@ -387,11 +387,11 @@ initEnd spec = [printConstraint [] (And es)]
 
 
 initNotGoal :: CompleteSpec -> [String]
-initNotGoal spec = preamble "Goal" ++ ["(assert (not (=>" ++ initInvariant spec "i" ++ "(and "++ initSafety spec ++ initInvariant spec "3" ++ "))))"]
+initNotGoal spec = preamble "Goal" ++ ["(assert (not (=>" ++ initInvariant spec False "i" ++ "(and "++ initSafety spec ++ initInvariant spec False "3" ++ "))))"]
   where numSensors = _numSensors spec
 
 initGoal :: CompleteSpec -> [String]
-initGoal spec = preamble "Goal" ++ ["(assert (=>" ++ initInvariant spec "i" ++ "(and "++ initSafety spec ++ initInvariant spec "3" ++ ")))"]
+initGoal spec = preamble "Goal" ++ ["(assert (=>" ++ initInvariant spec True "i" ++ "(and "++ initSafety spec ++ initInvariant spec True "3" ++ ")))"]
   where numSensors = _numSensors spec
 
 initSafety :: CompleteSpec -> String
@@ -412,11 +412,12 @@ initSafety spec = printConstraint' env (And (bbounds ++ sbounds))
 
 
 -- This is wrong right now
-initInvariant :: CompleteSpec -> String -> String
-initInvariant spec index = printConstraint' env invt''
+initInvariant :: CompleteSpec -> Bool -> String -> String
+initInvariant spec strengthen index = printConstraint' env invt''
   where env =_environment . _declarations $ spec
         invt = _invt . _declarations $ spec
-        invt' = replacePred "b" ("b" ++ index) invt
+        i = if strengthen then strengthenPred invt else invt
+        invt' = replacePred "b" ("b" ++ index) i
         invt'' = replacePred "q" ("q" ++ index) invt'
 
 -- Initialize choice variable

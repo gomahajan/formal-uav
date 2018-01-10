@@ -127,6 +127,34 @@ replaceExp x y (EBin op e1 e2) = EBin op (replaceExp x y e1) (replaceExp x y e2)
 replaceExp x y (EVar s)        = EVar (replace x y s)
 replaceExp x y e               = e
 
+-- strengthen a comparison predicate by some epsilon error
+strengthenPred :: Pred -> Pred
+strengthenPred (Expr e)     = Expr $ strengthenExp e
+strengthenPred (And es)     = And $ fmap strengthenPred es
+strengthenPred (Or es)      = Or $ fmap strengthenPred es
+strengthenPred (Not e)      = Not $ strengthenPred e
+strengthenPred (Impl e1 e2) = Impl (strengthenPred e1) (strengthenPred e2)
+strengthenPred _            = error "Binary predicate still exists"
+
+-- strengthen a comparison expression by some epsilon error
+strengthenExp :: Exp -> Exp
+strengthenExp e@(EBin op e1 e2)
+  | isGT op   = EBin op e1 (EBin Plus e2 (EStrLit "epsilon"))
+  | isLT op   = EBin op e1 (EBin Minus e2 (EStrLit "epsilon"))
+  | otherwise = e
+strengthenExp e = e
+
+
+isLT :: BinOp -> Bool
+isLT Lt  = True
+isLT Leq = True
+isLT _   = False
+
+isGT :: BinOp -> Bool
+isGT Gt  = True
+isGT Geq = True
+isGT _   = False
+
 {- Currently unused!
 -- Checks that predicate is well formed (ie all terms are booleans)
 checkPred :: Env -> Pred -> Bool
