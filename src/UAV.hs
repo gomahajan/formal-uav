@@ -156,6 +156,11 @@ cegisLoop p spec =
                         params = params'
                         } spec
 
+-- As an alternative to CEGIS for generating the invariant, we propose simply expressing the entire problem as an existential logic formula
+existentialSynthesis :: Params -> CompleteSpec -> IO (Maybe ([(String, Double)], Bool))
+existentialSynthesis p spec =
+  return Nothing
+
 unsatResp :: Response -> Bool
 unsatResp (Response _ []) = True
 unsatResp _               = False
@@ -383,7 +388,7 @@ main = do
           writeParamTemplate ps spec
           writeParamConstTemplate ps spec
           -- Prep log file
-          when (shouldLog synthesisParams) $ writeFile (logFile synthesisParams) (genCSV (((_initVars . _vars) spec) ++ ((_pvars . _vars) spec)))
+          when (shouldLog ps) $ writeFile (logFile ps) (genCSV (((_initVars . _vars) spec) ++ ((_pvars . _vars) spec)))
           p <- cegisLoop ps spec
           case p of
             Nothing -> putStrLn "Synthesis error"

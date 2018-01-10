@@ -110,7 +110,7 @@ parseDecls = do
   ignore
   doms <- many $ try parseDomain
   ignore
-  params <- try parseParams <|> return defaultPs <?> "initial parameters"
+  params <- parseParams <?> "initial parameters"
   modes <- try parseCD <|> return [] <?> "relational dynamics"
   ignore
   vars <- try parseEnv <|> return [] <?> "environment"
@@ -141,8 +141,6 @@ parseDecls = do
     _invt = convert inv,
     _paramValues = params
   }
-    where
-      defaultPs = [("p0",9), ("p1",9), ("p2",10), ("p3",1), ("p4",9), ("p5",9), ("p6",10), ("p7",1), ("p8",9), ("p9",9)]
 
 
 opNames :: [String]
