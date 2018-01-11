@@ -391,7 +391,7 @@ initNotGoal spec = preamble "Goal" ++ ["(assert (not (=>" ++ initInvariant spec 
   where numSensors = _numSensors spec
 
 initGoal :: CompleteSpec -> [String]
-initGoal spec = preamble "Goal" ++ ["(assert (=>" ++ initInvariant spec True "i" ++ "(and "++ initSafety spec ++ initInvariant spec True "3" ++ ")))"]
+initGoal spec = preamble "Goal" ++ ["(assert (=>" ++ initInvariant spec False "i" ++ "(and "++ initSafety spec ++ initInvariant spec True "3" ++ ")))"]
   where numSensors = _numSensors spec
 
 initSafety :: CompleteSpec -> String

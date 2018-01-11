@@ -63,7 +63,7 @@ upload:
   d/dt[q] = queue_upload_rate * t
 
 #sensor 1
-x = 20
+x = 10
 collect:
   d/dt[q] = queue_data_rate * t
 upload:
