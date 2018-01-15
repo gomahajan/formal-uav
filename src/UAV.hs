@@ -166,7 +166,7 @@ unsatResp (Response _ []) = True
 unsatResp _               = False
 
 createParameterBall :: [(String, Double)] -> Double -> String
-createParameterBall a eps = "(assert (> "++ (createParameterSum a)++ " "++ "1" ++ "))"
+createParameterBall a eps = "(assert (> "++ (createParameterSum a)++ " " ++ "1" ++ "))"
 
 createParameterSum :: [(String, Double)] -> String
 createParameterSum [(a,b)] = "(norm (- "++ a ++" "++ show b ++ "))"
@@ -298,7 +298,7 @@ addInitialConstraint ps infile outfile = do
   writeFile outfile pstr
 
 mode = cmdArgsMode $ cargs &=
-  help "Hybrid system synthesizer" &=
+  help "Hybrid system synthesizer\nConfigure Solver in ./config/solver.cfg" &=
   program programName &=
   summary (programName ++ " v" ++ versionName)
 
@@ -339,6 +339,15 @@ writeParamConstTemplate p spec = do
       hole = ["\ncounterexamples\n"]
       footer = z3Footer spec
   writeFile f (unlines (top ++ hole ++ footer))
+
+-- Utility for readably printing resultant program
+printProgram :: Env -> CompleteSpec -> String
+printProgram env spec = unlines $ (fmap (printConstraint env) modeProgs) ++ ["\nInvariant:\n"] 
+                        ++ [printConstraint env invt]
+  where
+    decs = _declarations spec
+    invt = _invt decs
+    modeProgs = concatMap prog $  _uavModes decs
 
 
 -- Entry point
@@ -397,8 +406,12 @@ main = do
                 (_, False) -> "\nThe given system is unverifiable in " ++ show iters ++ " iterations"
                 (ps, True)  -> "\nSynthesized a program with the following parameters: \n" ++ unlines (fmap printParam ps) ++
                   "\nAnd the following invariant:\n" ++ "b >= " ++ show (snd (head ps)) ++ "\nq <= " ++ show (snd (head (tail ps)))
+              let env' = fmap (\(x,y) -> (x, (Expr . ERealLit) y)) (fst pr)
+                  env = env' ++ (_environment . _declarations) spec
+              when (verboseMode synthesisParams) $ putStrLn $ "Program: \n" ++ printProgram env spec
               --removeFile (templateFile synthesisParams)
               --removeFile (paramTempFile synthesisParams)
               --removeFile (paramConstantFile synthesisParams)
               --removeFile (paramCompleteFile synthesisParams)
+              --removeFile (completeFile synthesisParams)
               --comment out the above to keep the smt2 files for reference.

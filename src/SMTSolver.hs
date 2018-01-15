@@ -76,18 +76,34 @@ parseDReal3Var = do
   (x,y) <- parseDRealRange
   return (s, x) -- TODO: be smarter about which val to return
 
-parseDRealRange :: Parser (Double, Double)
-parseDRealRange = do
-  whitespace
-  char '['
+parsePair :: Parser (Double, Double)
+parsePair = do
   whitespace
   x <- parseNum
   char ','
   whitespace
   y <- parseNum
+  whitespace
+  return (x, y)
+
+-- Place holder return values for now.
+-- TODO: find max/min double to use as pair. Though currently we just grab one
+-- of the extremal values from the cx pair....?
+parseEntire :: Parser (Double, Double)
+parseEntire = do
+  whitespace
+  string "ENTIRE"
+  whitespace
+  return (0.0, 0.0)
+
+parseDRealRange :: Parser (Double, Double)
+parseDRealRange = do
+  whitespace
+  char '['
+  xs <- try parseEntire <|> parsePair
   char ']'
   whitespace
-  return (x,y)
+  return xs 
 
 parseDRealResponse :: Int -> Parser Response
 parseDRealResponse v = do
